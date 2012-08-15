@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: Andreas Bertsch $
+// $Maintainer: Hannes Roest $
+// $Authors: Andreas Bertsch, Hannes Roest $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_TRAMLHANDLER_H
@@ -32,23 +32,26 @@
 #include <OpenMS/FORMAT/ControlledVocabulary.h>
 #include <OpenMS/ANALYSIS/TARGETED/TargetedExperiment.h>
 #include <OpenMS/METADATA/CVTermList.h>
+#include <OpenMS/CONCEPT/ProgressLogger.h>
 
 namespace OpenMS
 {
-	class ProgressLogger;
+  namespace Internal
+  {
 
-	namespace Internal
-	{
+    /**
+      @brief XML handler for TraMLFile
+      
+      @note Do not use this class. It is only needed in TraMLFile.
+    */
+    class OPENMS_DLLAPI TraMLHandler
+      : public XMLHandler
+    {
+     public:
 
-		/**
-			@brief XML handler for TraMLFile
-			
-			@note Do not use this class. It is only needed in TraMLFile.
-		*/
-		class OPENMS_DLLAPI TraMLHandler
-			: public XMLHandler
-		{
-		 public:
+      typedef std::vector<ReactionMonitoringTransition::Product> ProductListType;
+      typedef std::vector<ReactionMonitoringTransition::Configuration> ConfigurationListType;
+
       /**@name Constructors and destructor */
       //@{
       /// Constructor for a write-only handler
@@ -62,89 +65,99 @@ namespace OpenMS
       //@}
 
 
-			// Docu in base class
+      // Docu in base class
       virtual void endElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname);
-			
-			// Docu in base class
-      virtual void startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const xercesc::Attributes& attributes);
-			
-			// Docu in base class
-      virtual void characters(const XMLCh* const chars, const XMLSize_t length);
-			
-			//Docu in base class
-			virtual void writeTo(std::ostream& os);
-			
-		 protected:
       
-			/// Progress logger
-			const ProgressLogger& logger_;
-			
-			///Controlled vocabulary (psi-ms from OpenMS/share/OpenMS/CV/psi-ms.obo)
-			ControlledVocabulary cv_;
-		
-			String tag_;
+      // Docu in base class
+      virtual void startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const xercesc::Attributes& attributes);
+      
+      // Docu in base class
+      virtual void characters(const XMLCh* const chars, const XMLSize_t length);
+      
+      //Docu in base class
+      virtual void writeTo(std::ostream& os);
+      
+     protected:
+      
+      /// Progress logger
+      const ProgressLogger& logger_;
+      
+      ///Controlled vocabulary (psi-ms from OpenMS/share/OpenMS/CV/psi-ms.obo)
+      ControlledVocabulary cv_;
+    
+      String tag_;
 
-			TargetedExperiment* exp_;
+      TargetedExperiment* exp_;
 
-			const TargetedExperiment* cexp_;
+      const TargetedExperiment* cexp_;
 
-			CVTermList actual_publication_;
+      TargetedExperiment::Publication actual_publication_;
 
-			CVTermList actual_contact_;
+      TargetedExperiment::Contact actual_contact_;
 
-			CVTermList actual_instrument_;
+      TargetedExperiment::Instrument actual_instrument_;
 
-			CVTermList actual_prediction_;
-			
-			Software actual_software_;
+      TargetedExperiment::Prediction actual_prediction_;
+      
+      Software actual_software_;
 
-			TargetedExperiment::Protein actual_protein_;
+      TargetedExperiment::Protein actual_protein_;
 
-			TargetedExperiment::RetentionTime actual_rt_;
+      TargetedExperiment::RetentionTime actual_rt_;
 
-			TargetedExperiment::Peptide actual_peptide_;
+      TargetedExperiment::Peptide actual_peptide_;
 
-			TargetedExperiment::Compound actual_compound_;
-			
-			ReactionMonitoringTransition actual_transition_;
+      TargetedExperiment::Compound actual_compound_;
+      
+      ReactionMonitoringTransition actual_transition_;
 
-			IncludeExcludeTarget actual_target_;
+      IncludeExcludeTarget actual_target_;
 
-			CVTermList actual_validation_;
-	
-			CVTermList actual_interpretation_;
-			
-			ReactionMonitoringTransition::Configuration actual_configuration_;
+      CVTermList actual_validation_;
+  
+      CVTermList actual_interpretation_;
 
-			SourceFile actual_sourcefile_;
+      std::vector<ReactionMonitoringTransition::Product> actual_intermediate_products_;
 
-			/// Handles CV terms
-			void handleCVParam_(const String& parent_parent_tag, const String& parent_tag, const CVTerm& cv_term);
+      ReactionMonitoringTransition::Product actual_product_;
+      
+      ReactionMonitoringTransition::Configuration actual_configuration_;
 
-			/// Handles user terms
-			void handleUserParam_(const String& parent_parent_tag, const String& parent_tag, const String& name, const String& type, const String& value);
-			
-			/// Writes user terms
-			void writeUserParam_(std::ostream& os, const MetaInfoInterface& meta, UInt indent) const;
+      SourceFile actual_sourcefile_;
 
-			void writeUserParams_(std::ostream& os, const std::vector<MetaInfoInterface>& meta, UInt indent) const;
+      /// Handles CV terms
+      void handleCVParam_(const String& parent_parent_tag, const String& parent_tag, const CVTerm& cv_term);
 
-			void writeCVParams_(std::ostream& os, const CVTermList& cv_terms, UInt indent) const;
+      /// Handles user terms
+      void handleUserParam_(const String& parent_parent_tag, const String& parent_tag, const String& name, const String& type, const String& value);
+      
+      /// Writes user terms
+      void writeUserParam_(std::ostream& os, const MetaInfoInterface& meta, UInt indent) const;
 
-			
-			/// Looks up a child CV term of @p parent_accession with the name @p name. If no such term is found, an empty term is returned.
-			ControlledVocabulary::CVTerm getChildWithName_(const String& parent_accession, const String& name) const;
-			
-			/// Helper method that writes a source file
-			//void writeSourceFile_(std::ostream& os, const String& id, const SourceFile& software);
+      void writeUserParams_(std::ostream& os, const std::vector<MetaInfoInterface>& meta, UInt indent) const;
 
-			private:
+      void writeCVParams_(std::ostream& os, const CVTermList& cv_terms, UInt indent) const;
 
-				TraMLHandler();
-				TraMLHandler(const TraMLHandler& rhs);
-				TraMLHandler& operator = (const TraMLHandler& rhs);
-		};
-	} // namespace Internal
+      // subfunctions of write
+      void write_target_ (std::ostream& os, const std::vector<IncludeExcludeTarget>::const_iterator& it) const;
+
+      void write_product_ (std::ostream& os, const std::vector<ReactionMonitoringTransition::Product>::const_iterator& prod_it) const;
+
+      void write_configuration_ (std::ostream& os, const std::vector<ReactionMonitoringTransition::Configuration>::const_iterator& cit) const;
+      
+      /// Looks up a child CV term of @p parent_accession with the name @p name. If no such term is found, an empty term is returned.
+      ControlledVocabulary::CVTerm getChildWithName_(const String& parent_accession, const String& name) const;
+      
+      /// Helper method that writes a source file
+      //void writeSourceFile_(std::ostream& os, const String& id, const SourceFile& software);
+
+      private:
+
+        TraMLHandler();
+        TraMLHandler(const TraMLHandler& rhs);
+        TraMLHandler& operator = (const TraMLHandler& rhs);
+    };
+  } // namespace Internal
 } // namespace OpenMS
 
 #endif

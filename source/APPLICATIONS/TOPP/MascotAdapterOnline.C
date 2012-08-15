@@ -87,6 +87,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_MascotAdapterOnline.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_MascotAdapterOnline.html
 
 	For the parameters of the algorithm section see the algorithms documentation: @n
 	@ref OpenMS::MascotRemoteQuery "Mascot_server" @n
@@ -132,8 +134,10 @@ class TOPPMascotAdapterOnline
 
 			if (section == "Mascot_parameters")
 			{
-				MascotGenericFile mascot_infile;
-				return mascot_infile.getParameters();
+				MascotGenericFile mgf_file;
+				Param p = mgf_file.getParameters();
+        p.remove("internal:");
+        return p;
 			}
 
       return Param();
@@ -156,20 +160,28 @@ class TOPPMascotAdapterOnline
       //-------------------------------------------------------------
 
 			PeakMap exp;
+      // keep only Level2
+      fh.getOptions().addMSLevel(2);
 			fh.loadExperiment(in, exp, in_type, log_type_);
+      writeDebug_(String("Spectra loaded: ") + exp.size(), 2);
 
       //-------------------------------------------------------------
       // calculations
       //-------------------------------------------------------------
 
 			Param mascot_param = getParam_().copy("Mascot_parameters:", true);
-      MascotGenericFile mascot_infile;
-			mascot_infile.setParameters(mascot_param);
+      MascotGenericFile mgf_file;
+      Param p;
+      // TODO: switch this to mzML (much smaller)
+      p.setValue("internal:format", "Mascot generic", "Sets the format type of the peak list, this should not be changed unless you write the header only.", StringList::create("advanced"));
+      p.setValue("internal:HTTP_format", "true", "Write header with MIME boundaries instead of simple key-value pairs. For HTTP submission only.", StringList::create("advanced"));
+      p.setValue("internal:content", "all", "Use parameter header + the peak lists with BEGIN IONS... or only one of them.", StringList::create("advanced"));
+			mgf_file.setParameters(mascot_param);
 
 			// get the spectra into string stream
-			writeDebug_("Writing Mascot mgf file to stringstream", 1);
+			writeDebug_("Writing Mascot MGF file to stringstream", 1);
 			stringstream ss;
-			mascot_infile.store(ss, in, exp);
+			mgf_file.store(ss, in, exp);
 
 			// Usage of a QCoreApplication is overkill here (and ugly too), but we just use the
 			// QEventLoop to process the signals and slots and grab the results afterwards from
@@ -212,8 +224,19 @@ class TOPPMascotAdapterOnline
 			vector<PeptideIdentification> pep_ids;
 			ProteinIdentification prot_id;
 
-			// read the response
-			MascotXMLFile().load(mascot_tmp_file_name, prot_id, pep_ids);
+      // create mapping from scan indices to RT:
+      // (this should not be required, as the RT is directly contained in
+      // <pep_scan_title>305.147376424496_802.099</pep_scan_title>
+      // , but on user-generated mascotXML files on might find:
+      // <pep_scan_title>scan=18427</pep_scan_title>
+      // . Our query should return the correct version, but as we have the RT's available anyways, we provide them as fall back.
+      MascotXMLFile::RTMapping rt_mapping;
+      for (Size i=0; i<exp.size(); ++i)
+      {
+        rt_mapping[exp[i].getNativeID()] = exp[i].getRT();
+      }
+      // read the response
+			MascotXMLFile().load(mascot_tmp_file_name, prot_id, pep_ids, rt_mapping);
       writeDebug_("Read " + String(pep_ids.size()) + " peptide ids and " + String(prot_id.getHits().size()) + " protein identifications from Mascot", 5);
 
 			// for debugging errors relating to unexpected response files

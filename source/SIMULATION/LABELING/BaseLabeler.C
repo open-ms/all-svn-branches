@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche $
-// $Authors: Stephan Aiche $
+// $Authors: Stephan Aiche, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/SIMULATION/LABELING/BaseLabeler.h>
@@ -39,10 +39,26 @@ namespace OpenMS
 
   BaseLabeler::BaseLabeler()
     : DefaultParamHandler("BaseLabeler"),
-      rng_(0)
+      rng_(0),
+      channel_description_()
   {
     warn_empty_defaults_=false;
   }
+
+  BaseLabeler::~BaseLabeler()
+  {
+  }
+
+  Param BaseLabeler::getDefaultParameters() const
+  {
+    return this->defaults_;
+  }
+
+  void BaseLabeler::setRnd(const SimRandomNumberGenerator& rng)
+  {
+    rng_ = &rng;
+  }
+
 
   String BaseLabeler::getChannelIntensityName(const Size channel_index) const
   {
@@ -211,7 +227,7 @@ namespace OpenMS
               std::set<FeatureHandle, FeatureHandle::IndexLess> fh_set;
 
               fh_set.insert(FeatureHandle(map_index, simulated_features[*it]));
-              charge_mapping.insert(std::make_pair<String, std::set<FeatureHandle, FeatureHandle::IndexLess> > (simulated_features[*it].getMetaValue("charge_adducts"),fh_set));
+              charge_mapping.insert(std::make_pair(simulated_features[*it].getMetaValue("charge_adducts"),fh_set));
             }
           }
         }
@@ -253,6 +269,11 @@ namespace OpenMS
   ConsensusMap& BaseLabeler::getConsensus()
   {
     return consensus_;
+  }
+
+  const String& BaseLabeler::getDescription() const
+  {
+    return channel_description_;
   }
   
 } // namespace OpenMS

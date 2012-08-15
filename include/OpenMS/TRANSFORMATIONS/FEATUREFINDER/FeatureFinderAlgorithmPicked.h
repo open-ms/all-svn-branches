@@ -140,7 +140,7 @@ namespace OpenMS
 				defaults_.setValue("isotopic_pattern:optional_fit_improvement",2.0,"Minimal percental improvement of isotope fit to allow leaving out an optional peak.", StringList::create("advanced"));
 				defaults_.setMinFloat("isotopic_pattern:optional_fit_improvement",0.0);
 				defaults_.setMaxFloat("isotopic_pattern:optional_fit_improvement",100.0);
-				defaults_.setValue("isotopic_pattern:mass_window_width",25.0,"Window width in Dalton for precalculation of estimated isotope distribtions.", StringList::create("advanced"));
+				defaults_.setValue("isotopic_pattern:mass_window_width",25.0,"Window width in Dalton for precalculation of estimated isotope distributions.", StringList::create("advanced"));
 				defaults_.setMinFloat("isotopic_pattern:mass_window_width",1.0);
 				defaults_.setMaxFloat("isotopic_pattern:mass_window_width",200.0);
 				defaults_.setSectionDescription("isotopic_pattern","Settings for the calculation of a score indicating if a peak is part of a isotoipic pattern (between 0 and 1).");
@@ -1827,10 +1827,10 @@ if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise
 				DoubleReal dmh = std::fabs(mz_min+(0.5+mh)*intensity_mz_step_-mz)/intensity_mz_step_;
         // Calculate weights for the intensity scores based on the distances to the
         // bin center(the nearer to better)
-				DoubleReal d1 = std::sqrt(std::pow(1.0-drl,2.0)+std::pow(1.0-dml,2.0));
-				DoubleReal d2 = std::sqrt(std::pow(1.0-drh,2.0)+std::pow(1.0-dml,2.0));
-				DoubleReal d3 = std::sqrt(std::pow(1.0-drl,2.0)+std::pow(1.0-dmh,2.0));
-				DoubleReal d4 = std::sqrt(std::pow(1.0-drh,2.0)+std::pow(1.0-dmh,2.0));
+				DoubleReal d1 = std::sqrt(std::pow(1.0-drl,2)+std::pow(1.0-dml,2));
+				DoubleReal d2 = std::sqrt(std::pow(1.0-drh,2)+std::pow(1.0-dml,2));
+				DoubleReal d3 = std::sqrt(std::pow(1.0-drl,2)+std::pow(1.0-dmh,2));
+				DoubleReal d4 = std::sqrt(std::pow(1.0-drh,2)+std::pow(1.0-dmh,2));
 				DoubleReal d_sum = d1 + d2 + d3 + d4;				
         // Final score .. intensityScore in the surrounding bins, weighted by the distance of the
         // bin center to the peak

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@
 // $Authors: Erhan Kenar, Holger Franken $
 // --------------------------------------------------------------------------
 #include <OpenMS/FORMAT/MzMLFile.h>
-#include <OpenMS/FORMAT/PeakFileOptions.h>
+// #include <OpenMS/FORMAT/PeakFileOptions.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
@@ -79,7 +79,7 @@ using namespace std;
 /// @cond TOPPCLASSES
 
 class TOPPMassTraceExtractor
-    : public TOPPBase
+        : public TOPPBase
 {
 public:
     TOPPMassTraceExtractor()
@@ -141,12 +141,12 @@ protected:
         MSExperiment<Peak1D> ms_peakmap;
         std::vector<Int> ms_level(1, 1);
         (mz_data_file.getOptions()).setMSLevels(ms_level);
-        mz_data_file.load(in,ms_peakmap);
+        mz_data_file.load(in, ms_peakmap);
 
         if (ms_peakmap.size()==0)
         {
             LOG_WARN << "The given file does not contain any conventional peak data, but might"
-                    " contain chromatograms. This tool currently cannot handle them, sorry.";
+                        " contain chromatograms. This tool currently cannot handle them, sorry.";
             return INCOMPATIBLE_INPUT_DATA;
         }
 
@@ -202,8 +202,8 @@ protected:
             }
             else
             {
-            m_traces_final = splitted_mtraces;
-        }
+                m_traces_final = splitted_mtraces;
+            }
         }
 
         //-----------------------------------------------------------
@@ -225,7 +225,20 @@ protected:
             f.getConvexHulls().push_back(m_traces_final[i].getConvexhull());
 
             ms_feat_map.push_back(f);
-                }
+
+
+            // debug output
+            DoubleReal cent_rt(m_traces_final[i].getCentroidRT());
+            DoubleReal cent_mz(m_traces_final[i].getCentroidMZ());
+            // DoubleReal cent_int(m_traces_final[i].compute());
+
+            for (MassTrace::const_iterator v_it = m_traces_final[i].begin(); v_it != m_traces_final[i].end(); ++v_it)
+            {
+                std::cout << cent_rt << " " << cent_mz << " " << /* cent_int << " "  << */ v_it->getMZ() << " " << v_it->getIntensity() << std::endl;
+            }
+
+            std::cout << "----" << std::endl;
+        }
 
         ms_feat_map.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 

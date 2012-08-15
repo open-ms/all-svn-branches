@@ -207,14 +207,15 @@ START_SECTION((ConsensusMap& operator+=(const ConsensusMap &rhs)))
   m1.getProteinIdentifications().resize(1);
   m1.getUnassignedPeptideIdentifications().resize(1);
   m1.ensureUniqueId();
+  m1.getFileDescriptions()[0].filename = "m1";
 
   m2.setIdentifier ("321");
   m2.getDataProcessing().resize(2);
   m2.getProteinIdentifications().resize(2);
   m2.getUnassignedPeptideIdentifications().resize(2);
-  m2.push_back(Feature());
-  m2.push_back(Feature());
-
+  m2.push_back(ConsensusFeature());
+  m2.push_back(ConsensusFeature());
+  m2.getFileDescriptions()[1].filename = "m2";
 
   m1+=m2;
   TEST_EQUAL(m1.getIdentifier(), "");
@@ -223,6 +224,7 @@ START_SECTION((ConsensusMap& operator+=(const ConsensusMap &rhs)))
   TEST_EQUAL(m1.getProteinIdentifications().size(),3);
   TEST_EQUAL(m1.getUnassignedPeptideIdentifications().size(),3);
   TEST_EQUAL(m1.size(),3);
+  TEST_EQUAL(m1.getFileDescriptions().size(), 2);
 }
 END_SECTION
 
@@ -475,7 +477,7 @@ START_SECTION((bool operator == (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty==edit, false);
 
 	edit = empty;
-	edit.push_back(feature1);
+	edit.push_back(ConsensusFeature(feature1));
 	TEST_EQUAL(empty==edit, false);
 
 	edit = empty;
@@ -507,8 +509,8 @@ START_SECTION((bool operator == (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty==edit, false);
 
 	edit = empty;
-	edit.push_back(feature1);
-	edit.push_back(feature2);
+	edit.push_back(ConsensusFeature(feature1));
+	edit.push_back(ConsensusFeature(feature2));
 	edit.updateRanges();
 	edit.clear(false);
 	TEST_EQUAL(empty==edit, false);
@@ -523,7 +525,7 @@ START_SECTION((bool operator != (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty!=edit, true);
 
 	edit = empty;
-	edit.push_back(feature1);
+	edit.push_back(ConsensusFeature(feature1));
 	TEST_EQUAL(empty!=edit, true);
 
 	edit = empty;
@@ -551,8 +553,8 @@ START_SECTION((bool operator != (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty!=edit, true);
 
 	edit = empty;
-	edit.push_back(feature1);
-	edit.push_back(feature2);
+	edit.push_back(ConsensusFeature(feature1));
+	edit.push_back(ConsensusFeature(feature2));
 	edit.updateRanges();
 	edit.clear(false);
 	TEST_EQUAL(empty!=edit, true);

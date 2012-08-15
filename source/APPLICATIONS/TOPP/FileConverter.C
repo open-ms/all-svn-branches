@@ -92,6 +92,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FileConverter.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_FileConverter.html
 */
 
 // We do not want this class to show up in the docu:
@@ -301,9 +303,6 @@ class TOPPFileConverter
 			addDataProcessing_(exp, getProcessingInfo_(DataProcessing::
 																								 FORMAT_CONVERSION));
 			MascotGenericFile f;
-			Param p(f.getParameters());
-			p.setValue("peaklists_only", "true");
-			f.setParameters(p);
 			f.store(out, exp);
 		}
 

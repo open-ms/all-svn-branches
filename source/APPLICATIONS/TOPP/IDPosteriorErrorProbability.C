@@ -61,27 +61,30 @@ using namespace std;
 
 	@experimental This tool has not been tested thoroughly and might behave not as expected!
 
-	By default an estimation is performed using the (inverse) gumbel distribution for incorrectly assigned sequences
-	and a gaussian distribution for correctly assigned sequences. The probabilities are calculated by using bayes law, similar to PeptideProphet.
-	Alternatively, a second gaussian distribution can be used for incorreclty assigned sequences.
-	At the moment, IDPosteriorErrorProbability is able to handle Xtandem, Mascot and OMSSA scores.
+	By default an estimation is performed using the (inverse) Gumbel distribution for incorrectly assigned sequences
+	and a Gaussian distribution for correctly assigned sequences. The probabilities are calculated by using Bayes' law, similar to PeptideProphet.
+	Alternatively, a second Gaussian distribution can be used for incorrectly assigned sequences.
+	At the moment, IDPosteriorErrorProbability is able to handle X!Tandem, Mascot, MyriMatch and OMSSA scores.
+  
+  No target/decoy information needs to be provided, since the model fits are done on the mixed distribution.
 
 	In order to validate the computed probabilities one can adjust the fit_algorithm subsection.
-	The easiest way, is to create a default ini file with the parameter -write_ini file_name.
-	Afterwards, it is suggested to open the created ini-file with INIFileEditor.
+
 	There are three parameters for the plot:
-	The parameter output_plots is by default false. If set to true the plot will be created.
+	The parameter 'output_plots' is by default false. If set to true the plot will be created.
 	The scores are plotted in form of bins. Each bin represents a set of scores in a range of (highest_score - smallest_score)/number_of_bins (if all scores have positive values).
 	The midpoint of the bin is the mean of the scores it represents.
 	Finally, the parameter output_name should be used to give the plot a unique name. Two files are created. One with the binned scores and one with all steps of the estimation.
 	If top_hits_only is set, only the top hits of each PeptideIndentification are used for the estimation process.
-	Additionally, if top_hits_onls is set, target_decoy information are avaible and a False Discoveray Rate run was performed before, an additional plot will be plotted with target and decoy bins(output_plot must be true in fit_algorithm subsection).
+	Additionally, if 'top_hits_only' is set, target_decoy information are available and a False Discovery Rate run was performed before, an additional plot will be plotted with target and decoy bins(output_plot must be true in fit_algorithm subsection).
 	A peptide hit is assumed to be a target if its q-value is smaller than fdr_for_targets_smaller.
 	
 	Actually, the plots are saved as a gnuplot file. Therefore, to visualize the plots one has to use gnuplot, e.g. gnuplot file_name. This should output a postscript file which contains all steps of the estimation.
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_IDPosteriorErrorProbability.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_IDPosteriorErrorProbability.html
 
 	For the parameters of the algorithm section see the algorithms documentation: @n
 		@ref OpenMS::Math::PosteriorErrorProbabilityModel "fit_algorithm" @n
@@ -97,7 +100,7 @@ class TOPPIDPosteriorErrorProbability
 {
  public:
 	TOPPIDPosteriorErrorProbability()
-		: TOPPBase("IDPosteriorErrorProbability","Estimates probabilities for incorreclty assigned peptide sequences and a set of search engine scores using a mixture model.")
+		: TOPPBase("IDPosteriorErrorProbability","Estimates probabilities for incorrectly assigned peptide sequences and a set of search engine scores using a mixture model.")
 	{
 
 	}
@@ -110,10 +113,11 @@ class TOPPIDPosteriorErrorProbability
 		registerOutputFile_("out","<file>","","output file ");
 	  setValidFormats_("out",StringList::create("idXML"));
 	  registerDoubleOption_("smallest_e_value","<value>",10e-20,"This value gives a lower bound to E-Values. It should not be 0, as transformation in a real number (log of E-value) is not possible for certain values then.",false,true);
-	  registerFlag_("split_charge", "The search enginge scores are splitted by charge if this flag is set. Thus, for each charge state a new model will be computed.");
+	  registerFlag_("split_charge", "The search engine scores are split by charge if this flag is set. Thus, for each charge state a new model will be computed.");
 		registerFlag_("top_hits_only","If set only the top hits of every PeptideIdentification will be used");
 		registerDoubleOption_("fdr_for_targets_smaller","<value>",0.05,"Only used, when top_hits_only set. Additionally, target_decoy information should be available. The score_type must be q-value from an previous False Discovery Rate run.",false,true);
 	  registerFlag_("ignore_bad_data","If set errors will be written but ignored. Useful for pipelines with many datasets where only a few are bad, but the pipeline should run through.");
+	  registerFlag_("prob_correct","If set scores will be calculated as 1-ErrorProbabilities and can be interpreted as probabilities for correct identifications.");
 	  registerSubsection_("fit_algorithm", "Algorithm parameter subsection");
 		addEmptyLine_();
 	}
@@ -131,17 +135,36 @@ class TOPPIDPosteriorErrorProbability
 		{
 			return ((-1)* log10(max(hit.getScore(),smallest_e_value_)));
 		}
+    else if( engine == "MyriMatch" )
+    {
+      //double e_val = exp(-hit.getScore());
+      //double score_val = ((-1)* log10(max(e_val,smallest_e_value_)));
+      //printf("myri score: %e ; e_val: %e ; score_val: %e\n",hit.getScore(),e_val,score_val);
+      //return score_val;
+      return hit.getScore();
+    }
 		else if(engine.compare("XTandem") == 0)
 		{
 			return((-1)* log10(max((DoubleReal)hit.getMetaValue("E-Value"),smallest_e_value_)));
 		}
 		else if (engine == "MASCOT")
 		{
-			return((-1)* log10(max((DoubleReal)hit.getMetaValue("EValue"),smallest_e_value_)));
-		}
+			if(hit.metaValueExists("EValue"))
+			{
+				return((-1)* log10(max((DoubleReal)hit.getMetaValue("EValue"),smallest_e_value_)));
+			}
+			if(hit.metaValueExists("expect"))
+			{
+				return((-1)* log10(max((DoubleReal)hit.getMetaValue("expect"),smallest_e_value_)));
+			}
+    } 
+		else if (engine == "SpectraST")
+    {
+      return (100*hit.getScore());  // SpectraST f-val
+    }
 		else
 		{
-			throw Exception::UnableToFit(__FILE__,__LINE__,__PRETTY_FUNCTION__,"No parameters for choosen search engine","The choosen search engine is currently not supported");
+			throw Exception::UnableToFit(__FILE__,__LINE__,__PRETTY_FUNCTION__,"No parameters for chosen search engine","The chosen search engine is currently not supported");
 		}
 	}
 	
@@ -162,6 +185,7 @@ class TOPPIDPosteriorErrorProbability
 		DoubleReal fdr_for_targets_smaller = getDoubleOption_("fdr_for_targets_smaller");
 		bool target_decoy_available = false;
 		bool ignore_bad_data = getFlag_("ignore_bad_data");
+		bool prob_correct = getFlag_("prob_correct");
 		//-------------------------------------------------------------
 		// reading input
 		//-------------------------------------------------------------
@@ -177,7 +201,7 @@ class TOPPIDPosteriorErrorProbability
 		vector<Int> charges;
 		PosteriorErrorProbabilityModel PEP_model;
 		PEP_model.setParameters(fit_algorithm);
-		StringList search_engines = StringList::create("XTandem,OMSSA,MASCOT");
+    StringList search_engines = StringList::create("XTandem,OMSSA,MASCOT,SpectraST,MyriMatch");
 		//-------------------------------------------------------------
 		// calculations
 		//-------------------------------------------------------------
@@ -295,7 +319,6 @@ class TOPPIDPosteriorErrorProbability
 		}
 		for(map<String, vector< vector<double> > >::iterator it =all_scores.begin(); it != all_scores.end();++it)
 		{	
-			
 			vector<String> engine_info;
 		  it->first.split(splitter, engine_info);
 			String engine = engine_info[0];
@@ -308,17 +331,17 @@ class TOPPIDPosteriorErrorProbability
 			{
 				String output_name  = fit_algorithm.getValue("output_name");
 				fit_algorithm.setValue("output_name", output_name + "_charge_" + String(charge) , "...",StringList::create("advanced,output file"));	
-					PEP_model.setParameters(fit_algorithm);
-				}
+				PEP_model.setParameters(fit_algorithm);
+			}
 				
 			return_value = PEP_model.fit(it->second[0]);
-			if(!return_value )	 writeLog_("unable to fit data. Algorithm did not run through for the following search engine: "+ engine);
+			if(!return_value )	 writeLog_("unable to fit data. Algorithm did not run through for the following search engine: " + engine);
 			if(!return_value && !ignore_bad_data) return UNEXPECTED_RESULT;
 				//plot target_decoy
 			if(target_decoy_available && it->second[0].size() > 0 && return_value)
-				{
-				PEP_model.plotTargetDecoyEstimation(it->second[1], it->second[2]);//target, decoy
-				}					
+			{
+			  PEP_model.plotTargetDecoyEstimation(it->second[1], it->second[2]);//target, decoy
+			}					
 			if(return_value)
 			{
 				bool unable_to_fit_data =true;
@@ -334,17 +357,26 @@ class TOPPIDPosteriorErrorProbability
 						{
 							if(prot_iter->getIdentifier().compare(it->getIdentifier()) == 0)
 							{
+                String score_type = it->getScoreType() + "_score";
 								vector<PeptideHit> hits = it->getHits();
 									for(std::vector<PeptideHit>::iterator  hit  = hits.begin(); hit < hits.end(); ++hit)
 								{
 		 							if(!split_charge || hit->getCharge() == charge)
 									{
-										DoubleReal score;
-										hit->setMetaValue("Search engine score",hit->getScore());
+                    DoubleReal score;
+                    hit->setMetaValue(score_type, hit->getScore());
 										score = PEP_model.computeProbability(get_score_(engine, *hit));
 										if(score > 0 && score < 1) unable_to_fit_data = false; //only if all it->second[0] are 0 or 1 unable_to_fit_data stays true
 										if(score > 0.2 && score < 0.8) data_might_not_be_well_fit = false;//same as above
 										hit->setScore(score);
+										if(prob_correct)
+										{
+											hit->setScore(1-score);
+										}
+										else
+										{
+											hit->setScore(score);
+										}
 									}
 								}
 								it->setHits(hits);

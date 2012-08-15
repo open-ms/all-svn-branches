@@ -67,9 +67,11 @@ using namespace std;
 </CENTER>
 
 
-Conversion from the TPP file formats pepXML and protXML to OpenMS' idXML is quite comprehensive, to the extent that the original data can be represented in the simpler idXML format.
+Conversion from the TPP file formats pepXML and protXML to OpenMS' idXML is quite comprehensive, to the extent that the original data can be
+represented in the simpler idXML format.
 
-In contrast, support for converting from idXML to pepXML is limited. The purpose here is simply to create pepXML files containing the relevant information for the use of ProteinProphet.
+In contrast, support for converting from idXML to pepXML is limited. The purpose here is simply to create pepXML files containing the relevant
+information for the use of ProteinProphet.
 
 
 Some information about the supported input types:
@@ -77,9 +79,14 @@ Some information about the supported input types:
   @ref OpenMS::PepXMLFile "PepXML"
   @ref OpenMS::ProtXMLFile "ProtXML"
   @ref OpenMS::IdXMLFile "idXML"
+  @ref OpenMS::MascotXML "mascotXML" / "xml"
+  @ref OpenMS::OMSSAFile "OMSSAXML"
+  @ref OpenMS::SequestOutfile ".out" directory
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_IDFileConverter.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_IDFileConverter.html
 
 */
 
@@ -103,7 +110,8 @@ protected:
       "Sequest: Directory containing the .out files\n"
       "pepXML: Single pepXML file.\n"
       "protXML: Single protXML file.\n"
-	    "xml: Single mascot XML file.\n"
+	    "xml: Single Mascot xml file.\n"
+      "OMSSAXML: Single OMSSA xml file.\n"
       "idXML: Single idXML file.\n", true);
     registerOutputFile_("out", "<file>", "", "Output file", true);
 		String formats("idXML,mzid,pepXML,FASTA");
@@ -120,8 +128,8 @@ protected:
       "but do not list extra references in subsequent lines (try -debug 3 or 4)", true);
 
     addEmptyLine_();
-    addText_("pepXML options:");
-    registerStringOption_("mz_file", "<file>", "", "MS data file from which the pepXML was generated. Used to look up retention times (some pepXMLs contain only scan numbers) and/or to define what parts to extract (some pepXMLs contain results from multiple experiments).", false);
+    addText_("pepXML/mascotXML options:");
+    registerStringOption_("mz_file", "<file>", "", "MS data file from which the pepXML/mascotXML was generated. Used to look up retention times (some contain only scan numbers) and/or to define what parts to extract (some pepXMLs contain results from multiple experiments).", false);
 		registerStringOption_("mz_name", "<file>", "", "Experiment filename/path to match in the pepXML file ('base_name' attribute). Only necessary if different from 'mz_file'.", false);
 		registerFlag_("use_precursor_data", "Use precursor RTs (and m/z values) from 'mz_file' for the generated peptide identifications, instead of the RTs of MS2 spectra.", false);
   }
@@ -279,10 +287,10 @@ protected:
 													exp_name, exp, use_precursor_data);
 			}
 		}
-		else if (in_type == FileTypes::IDXML)
-		{
-			IdXMLFile().load(in, protein_identifications, peptide_identifications);
-		}
+    else if (in_type == FileTypes::IDXML)
+    {
+      IdXMLFile().load(in, protein_identifications, peptide_identifications);
+    }
 		else if (in_type == FileTypes::PROTXML)
 		{
 			protein_identifications.resize(1);
@@ -292,14 +300,23 @@ protected:
 		else if (in_type == FileTypes::OMSSAXML)
 		{
 			protein_identifications.resize(1);
-			peptide_identifications.resize(1);
 			OMSSAXMLFile().load(in, protein_identifications[0], peptide_identifications, true);
 		}
 		else if (in_type == FileTypes::MASCOTXML)
 		{
+      String exp_name = getStringOption_("mz_file");
+      MascotXMLFile::RTMapping rt_mapping;
+      if (!exp_name.empty()) 
+      {
+        MSExperiment<> exp;
+        fh.loadExperiment(exp_name, exp);
+        for (Size i=0; i<exp.size(); ++i)
+        {
+          rt_mapping[exp[i].getNativeID()] = exp[i].getRT();
+        }
+      }
 			protein_identifications.resize(1);
-			peptide_identifications.resize(1);
-			MascotXMLFile().load(in, protein_identifications[0], peptide_identifications);
+			MascotXMLFile().load(in, protein_identifications[0], peptide_identifications, rt_mapping);
 		}
 		else
 		{

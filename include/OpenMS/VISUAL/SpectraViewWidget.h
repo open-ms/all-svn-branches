@@ -42,34 +42,38 @@ namespace OpenMS
 
     @ingroup SpectrumWidgets
   */
-  class SpectraViewWidget
-    : public QWidget
+  class SpectraViewWidget :
+    public QWidget
   {
     Q_OBJECT
-    public:
-      /// Constructor
-      SpectraViewWidget(QWidget* parent = 0);
-      /// Destructor
-      virtual ~SpectraViewWidget();
-      QTreeWidget* getTreeWidget();
-      QComboBox* getComboBox();
-      void updateEntries(const LayerData& cl);
-    signals:
-      void spectrumSelected(int);
-      void spectrumDoubleClicked(int);
-      void showSpectrumAs1D(int);
-      void showSpectrumMetaData(int);
-    private:
-      QLineEdit* spectra_search_box_;
-      QComboBox* spectra_combo_box_;
-      QTreeWidget* spectra_treewidget_;
-    private slots:
-      void spectrumSelected_(const QString& text);    
-      void spectrumBrowserHeaderContextMenu_(const QPoint&);
-      void spectrumSelectionChange_(QTreeWidgetItem*, QTreeWidgetItem*);
-      void spectrumDoubleClicked_(QTreeWidgetItem*, int);
-      void spectrumContextMenu_(const QPoint&);
-   };
+public:
+    /// Constructor
+    SpectraViewWidget(QWidget * parent = 0);
+    /// Destructor
+    virtual ~SpectraViewWidget();
+    QTreeWidget * getTreeWidget();
+    QComboBox * getComboBox();
+    void updateEntries(const LayerData & cl);
+signals:
+    void spectrumSelected(int);
+    void spectrumSelected(std::vector<int, std::allocator<int> > indices);
+    void spectrumDoubleClicked(int);
+    void showSpectrumAs1D(int);
+    void showSpectrumAs1D(std::vector<int, std::allocator<int> > indices);
+    void showSpectrumMetaData(int);
+private:
+    QLineEdit * spectra_search_box_;
+    QComboBox * spectra_combo_box_;
+    QTreeWidget * spectra_treewidget_;
+    // cache to store mapping of chromatogram precursors to chromatogram indices
+    std::map<int, std::map<Precursor, std::vector<Size>, Precursor::MZLess> > map_precursor_to_chrom_idx_cache;
+private slots:
+    void spectrumSelected_(const QString & text);
+    void spectrumBrowserHeaderContextMenu_(const QPoint &);
+    void spectrumSelectionChange_(QTreeWidgetItem *, QTreeWidgetItem *);
+    void spectrumDoubleClicked_(QTreeWidgetItem *, int);
+    void spectrumContextMenu_(const QPoint &);
+  };
 }
 
 #endif // OPENMS_VISUAL_SPECTRAVIEWWIDGET_H

@@ -245,10 +245,16 @@ namespace OpenMS
       void editMetadata();
       /// get's called if a layer got activated
       void layerActivated();
+      /// gets called when a layer changes in zoom
+      void layerZoomChanged(); 
+      /// link the zoom of individual windows
+      void linkZoom();
       /// get's called if a layer got deactivated
       void layerDeactivated();
       /// Activation of 1D spectrum
       void activate1DSpectrum(int index);
+      /// Activation of 1D with multiple entries (e.g. chromatograms)
+      void activate1DSpectrum(std::vector<int, std::allocator<int> > indices);
       /// Deactivation of 1D spectrum
       void deactivate1DSpectrum(int index);
       /// closes the active window
@@ -292,6 +298,7 @@ namespace OpenMS
       void showSpectrumAlignmentDialog();
       /// Shows the spectrum with index @p index of the active layer in 1D
       void showSpectrumAs1D(int index);
+      void showSpectrumAs1D(std::vector<int, std::allocator<int> > indices);
       /// Shows the current peak data of the active layer in 2D
       void showCurrentPeaksAs2D();
       /// Shows the current peak data of the active layer in 3D
@@ -482,6 +489,10 @@ namespace OpenMS
       /// Holds the messageboxes for each layer that are currently popped up (to avoid popping them up again, if file changes again before the messagebox is closed)
       bool watcher_msgbox_;
 
+      /// Stores whether the individual windows should zoom together (be linked) or not
+      bool zoom_together_;
+
+      QAction* linkZoom_action_;
 
       /// Log output window
       QTextEdit* log_;

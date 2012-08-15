@@ -31,7 +31,7 @@
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
 #include <OpenMS/FORMAT/ControlledVocabulary.h>
 #include <OpenMS/CONCEPT/UniqueIdGenerator.h>
-#include <OpenMS/KERNEL/ConsensusMap.h>
+#include <OpenMS/METADATA/MSQuantifications.h>
 
 namespace OpenMS
 {
@@ -52,10 +52,10 @@ namespace OpenMS
       /**@name Constructors and destructor */
       //@{
       /// Constructor for a write-only handler
-      MzQuantMLHandler(const ConsensusMap& consensus_map, /* const FeatureMap& feature_map, */ const String& filename, const String& version, const ProgressLogger& logger);
+      MzQuantMLHandler(const MSQuantifications& msq, const String& filename, const String& version, const ProgressLogger& logger);
 
       /// Constructor for a read-only handler
-      MzQuantMLHandler(ConsensusMap& consensus_map, /* FeatureMap& feature_map, */ const String& filename, const String& version, const ProgressLogger& logger);
+      MzQuantMLHandler(MSQuantifications& msq, const String& filename, const String& version, const ProgressLogger& logger);
 
       /// Destructor
       virtual ~MzQuantMLHandler();
@@ -84,22 +84,24 @@ namespace OpenMS
 
 			String tag_;
 
-			//~ FeatureMap* fm_;
-			ConsensusMap* cm_;
+			MSQuantifications* msq_;
 
-			//~ const FeatureMap* cfm_;
-			const ConsensusMap* ccm_;
+			const MSQuantifications* cmsq_;
 
 			/// Handles CV terms
-			void handleCVParam_(const String& parent_parent_tag, const String& parent_tag, const String& accession, /* const String& name, */ /* const String& value, */ const xercesc::Attributes& attributes, const String& cv_ref/* ,  const String& unit_accession="" */);
+			void handleCVParam_(const String& parent_parent_tag, const String& parent_tag, const String& accession, const String& name, const String& value, const xercesc::Attributes& attributes, const String& cv_ref,  const String& unit_accession="");
 
 			/// Handles user terms
 			void handleUserParam_(const String& parent_parent_tag, const String& parent_tag, const String& name, const String& type, const String& value);
 
-			/// Writes user terms
-			void writeUserParam_(std::ostream& os, const MetaInfoInterface& meta, UInt indent);
+		 /// Write CV term
+		 //~ TODO rewirte writeCVParams_ in baseclass to be more convenient
+		 //~ void MzQuantMLHandler::writeCVParams_(std::ostream& os, const Map< String, std::vector < CVTerm > > & , UInt indent);
+		 void writeCVParams_(String& s, const Map< String, std::vector < CVTerm > > & , UInt indent);
 
-			void writeUserParam_(String& s, const MetaInfoInterface& meta, UInt indent);
+			/// Writes user terms
+			void writeUserParams_(std::ostream& os, const MetaInfoInterface& meta, UInt indent);
+			void writeUserParams_(String& s, const MetaInfoInterface& meta, UInt indent);
 
 			/// Looks up a child CV term of @p parent_accession with the name @p name. If no such term is found, an empty term is returned.
 			ControlledVocabulary::CVTerm getChildWithName_(const String& parent_accession, const String& name) const;
@@ -116,9 +118,33 @@ namespace OpenMS
 				MzQuantMLHandler();
 				MzQuantMLHandler(const MzQuantMLHandler& rhs);
 				MzQuantMLHandler& operator = (const MzQuantMLHandler& rhs);
-				enum QUANT_TYPES {MS1LABEL=0, MS2LABEL, LABELFREE, SIZE_OF_QUANT_TYPES};
 
-				//~ Double ratio_;
+				std::map<String, std::vector<ExperimentalSettings> > current_files_; // 1.rawfilesgroup_ref 2.inputfiles for each assay as experimentalsettings
+				String current_id_;
+				String current_cf_id_;
+				int current_count_;
+
+				std::vector<MetaInfo> up_stack_;
+				std::vector<CVTerm> cvp_stack_;
+				MSQuantifications::Assay current_assay_;
+
+				std::multimap<String, String> cm_cf_ids_;
+				std::map<String,String> f_cf_ids_;
+				std::map<String,ConsensusFeature> cf_cf_obj_;
+				std::map<String,FeatureHandle> f_f_obj_;
+				std::map<String,ConsensusFeature::Ratio> r_rtemp_;
+				std::map<String,String> numden_r_ids_;
+				std::map<String,ConsensusFeature::Ratio> r_r_obj_;
+
+				//~ Software current_sw_;
+				std::map<String,Software> current_sws_;
+				std::map<int,DataProcessing> current_orderedps_;
+				std::pair<int,DataProcessing> current_dp_;
+				std::set< DataProcessing::ProcessingAction > current_pas_;
+
+				std::vector<String> current_col_types_;
+				std::vector<DoubleReal> current_dm_values_;
+				std::vector<DoubleReal> current_row_;
 
 		};
 	} // namespace Internal

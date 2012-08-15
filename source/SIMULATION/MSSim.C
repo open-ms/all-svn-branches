@@ -132,6 +132,12 @@ namespace OpenMS {
     {
       BaseLabeler* labeler = Factory<BaseLabeler>::create(*product_name);
       tmp.insert("Labeling:" + *product_name + ":", labeler->getDefaultParameters());
+      if (!tmp.copy("Labeling:" + *product_name).empty())
+      // if parameters of labeler are empty, the section will not exist and
+      // the command below would fail
+      {
+        tmp.setSectionDescription("Labeling:" + *product_name, labeler->getDescription());
+      }
       delete(labeler);
     }
 
@@ -151,7 +157,7 @@ namespace OpenMS {
       General progress should be
         1. Digest Proteins
         2. Predict retention times
-        3. predict detectibility
+        3. predict detectability
         4. simulate ionization
         5. simulate the ms signal
         6. select features for MS2
@@ -162,7 +168,7 @@ namespace OpenMS {
     //param_.store("c:/mssim_param.ini"); // test reconstruction
     syncParams_(param_, false);
     
-    // instanciate and pass params before doing any actual work
+    // instantiate and pass params before doing any actual work
     // ... this way, each module can throw an Exception when the parameters
     // ... do not fit, and the users gets an immediate feedback
     DigestSimulation digest_sim;
@@ -258,7 +264,7 @@ namespace OpenMS {
 
     RawTandemMSSignalSimulation raw_tandemsim(rnd_gen);
     raw_tandemsim.setParameters(param_.copy("RawTandemSignal:", true));
-    raw_tandemsim.generateRawTandemSignals(feature_maps_.front(), experiment_);
+    raw_tandemsim.generateRawTandemSignals(feature_maps_.front(), experiment_, peak_map_);
 
     labeler_->postRawTandemMSHook(feature_maps_,experiment_);
 
@@ -277,14 +283,19 @@ namespace OpenMS {
 
     LOG_INFO << "Final number of simulated features: " << feature_maps_[0].size() << "\n";
 
-    // reindex spectra to avoid naming conflicts
+    // re-index spectra to avoid naming conflicts
     Size id = 1;
     experiment_.sortSpectra();
-    for(MSSimExperiment::Iterator spectrum_iterator = experiment_.begin() ; spectrum_iterator != experiment_.end() ; ++spectrum_iterator)
+    peak_map_.sortSpectra();
+    if (experiment_.size() != peak_map_.size())
     {
-      MSSimExperiment::SpectrumType& spectrum = *spectrum_iterator;
+      throw Exception::InvalidSize(__FILE__,__LINE__,__PRETTY_FUNCTION__, peak_map_.size()-experiment_.size());
+    }
+    for(MSSimExperiment::Iterator it_e = experiment_.begin(), it_ep = peak_map_.begin() ; it_e != experiment_.end() ; ++it_e, ++it_ep)
+    {
       String spec_id = String("scan=") + id++;
-      spectrum.setNativeID(spec_id);
+      it_e->setNativeID(spec_id);
+      it_ep->setNativeID(spec_id);
     }
   }
 

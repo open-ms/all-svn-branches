@@ -26,7 +26,6 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MascotXMLFile.h>
-#include <OpenMS/FORMAT/HANDLERS/MascotXMLHandler.h>
 #include <OpenMS/SYSTEM/File.h>
 
 
@@ -43,54 +42,61 @@ namespace OpenMS
 
   void MascotXMLFile::load(const String& filename, 
 						      					ProteinIdentification& protein_identification, 
-						      					vector<PeptideIdentification>& id_data)
+						      					vector<PeptideIdentification>& id_data,
+                            const RTMapping& rt_mapping)
   {
   	map<String, vector<AASequence> > peptides;
   	
-  	load(filename, protein_identification, id_data, peptides);      
+  	load(filename, protein_identification, id_data, peptides, rt_mapping);      
   }  					 
   					 
   void MascotXMLFile::load(const String& filename, 
 						      					ProteinIdentification& protein_identification, 
 						      					vector<PeptideIdentification>& id_data,
-						      					map<String, vector<AASequence> >& peptides)
+						      					map<String, vector<AASequence> >& peptides,
+                            const RTMapping& rt_mapping)
   {
   	//clear
 		protein_identification = ProteinIdentification();
 		id_data.clear();
 
-		Internal::MascotXMLHandler handler(protein_identification, id_data, filename, peptides);
+		Internal::MascotXMLHandler handler(protein_identification, id_data, filename, peptides, rt_mapping);
 		parse_(filename, &handler);
 				
 		// Since the mascot xml can contain "peptides" without sequences the identifications 
 		// without any real peptide hit are removed
-  	vector<PeptideHit> peptide_hits;
-  	vector<PeptideIdentification>::iterator id_it = id_data.begin();
+    {
+      vector<PeptideIdentification> filtered_hits;
+      filtered_hits.reserve(id_data.size());
+  	  vector<PeptideIdentification>::iterator id_it = id_data.begin();
 
-		while(id_it != id_data.end())
-		{
-			peptide_hits = id_it->getHits();
-			if (peptide_hits.empty() || (peptide_hits.size() == 1 && peptide_hits[0].getSequence() == ""))
-			{
-				id_it = id_data.erase(id_it);
-			}
-			else
-			{
-				++id_it;
-			}
-		}
+		  while (id_it != id_data.end())
+		  {
+			  const vector<PeptideHit>& peptide_hits = id_it->getHits();
+			  if (peptide_hits.empty() || (peptide_hits.size() == 1 && peptide_hits[0].getSequence() == ""))
+			  {
+          //std::cerr << "removing ID: " << std::distance(id_data.begin(), id_it) << "\n";
+			  }
+			  else
+			  {
+          filtered_hits.push_back(*id_it);
+			  }
+        ++id_it;
+		  }
+      id_data.swap(filtered_hits);
+    }
 
 		// argh!
-		// since Mascot xml 2.2 tends to repeat the first hit (yes it apears twice, we delete one of them)
+		// since Mascot xml 2.2 tends to repeat the first hit (yes it appears twice, we delete one of them)
 		for (vector<PeptideIdentification>::iterator it = id_data.begin(); it != id_data.end(); ++it)
 		{
-			peptide_hits = it->getHits();
+			vector<PeptideHit> peptide_hits = it->getHits();
 			// check if equal, except for rank
 			if (peptide_hits.size() > 1 &&
 					peptide_hits[0].getScore() == peptide_hits[1].getScore() &&
 					peptide_hits[0].getSequence() == peptide_hits[1].getSequence() &&
 					peptide_hits[0].getCharge() == peptide_hits[1].getCharge() /* &&
-				peptide_hits[0].getProteinAccessions() == peptide_hits[1].getProteinAccessions() &&
+				  peptide_hits[0].getProteinAccessions() == peptide_hits[1].getProteinAccessions() &&
 					peptide_hits[0].getAABefore() == peptide_hits[1].getAABefore() &&
 					peptide_hits[0].getAAAfter() == peptide_hits[1].getAAAfter()*/)
 			{

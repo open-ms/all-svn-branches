@@ -8,6 +8,8 @@ ItraqConstants.C
 ItraqQuantifier.C
 PeptideAndProteinQuant.C
 ProteinInference.C
+ProteinResolver.C
+QuantitativeExperimentalDesign.C
 )
 
 ### add path to the filenames

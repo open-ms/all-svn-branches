@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
+// $Authors: Andreas Bertsch, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MzMLFile.h>
@@ -30,7 +30,6 @@
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/XTandemXMLFile.h>
 #include <OpenMS/FORMAT/XTandemInfile.h>
-#include <OpenMS/FORMAT/MascotInfile.h>
 #include <OpenMS/CHEMISTRY/ModificationsDB.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -74,7 +73,7 @@ using namespace std;
   The last known version to work is 2009-04-01. We encountered problems with
   later versions (namely 2010-01-01).
 
-	To speed up computations, fasta databases can be compressed using the fasta_pro.exe
+	To speed up computations, FASTA databases can be compressed using the fasta_pro.exe
 	tool of @em X!Tandem. It is contained in the "bin" folder of the @em X!Tandem installation.
 	Refer to the docu of @em X!Tandem for further information about settings.
 
@@ -88,6 +87,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_XTandemAdapter.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_XTandemAdapter.html
 */
 
 // We do not want this class to show up in the docu:
@@ -115,41 +116,41 @@ class TOPPXTandemAdapter
 			addEmptyLine_();
 			addText_("Common Identification engine options");
 
-			registerInputFile_("in", "<file>", "", "input file ");
+			registerInputFile_("in", "<file>", "", "Input file");
       setValidFormats_("in",StringList::create("mzML"));
-      registerOutputFile_("out", "<file>", "", "output file ");
+      registerOutputFile_("out", "<file>", "", "Output file");
       setValidFormats_("out",StringList::create("idXML"));
-			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "precursor mass tolerance", false);
-			registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error", false);
+			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "Precursor mass tolerance", false);
+			registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "Fragment mass error", false);
 
-			registerStringOption_("precursor_error_units", "<unit>", "ppm", "parent monoisotopic mass error units", false);
-      registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
+			registerStringOption_("precursor_error_units", "<unit>", "ppm", "Parent monoisotopic mass error units", false);
+      registerStringOption_("fragment_error_units", "<unit>", "Da", "Fragment monoisotopic mass error units", false);
 			registerInputFile_("database", "<file>", "", "FASTA file or pro file. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
       vector<String> valid_strings;
       valid_strings.push_back("ppm");
       valid_strings.push_back("Da");
       setValidStrings_("precursor_error_units", valid_strings);
       setValidStrings_("fragment_error_units", valid_strings);
-			registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor charge", false);
-			registerIntOption_("max_precursor_charge", "<charge>", 4, "maximum precursor charge", false);
+			registerIntOption_("min_precursor_charge", "<charge>", 1, "Minimum precursor charge", false);
+			registerIntOption_("max_precursor_charge", "<charge>", 4, "Maximum precursor charge", false);
 
-			registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "fixed modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
+			registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "Fixed modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
 			vector<String> all_mods;
 			ModificationsDB::getInstance()->getAllSearchModifications(all_mods);
 			setValidStrings_("fixed_modifications", all_mods);
-      registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
+      registerStringList_("variable_modifications", "<mods>", StringList::create(""), "Variable modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
 			setValidStrings_("variable_modifications", all_mods);
 			registerIntOption_("missed_cleavages", "<num>", 1, "Number of possible cleavage sites missed by the enzyme", false);
 
 			addEmptyLine_();
 			addText_("X!Tandem specific options");
 			registerInputFile_("xtandem_executable", "<executable>", "tandem.exe", "X!Tandem executable of the installation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
-			registerInputFile_("default_input_file", "<file>", "", "default parameters input file, if not given default parameters are used", false);
-			registerDoubleOption_("minimum_fragment_mz", "<num>", 150.0, "minimum fragment mz", false);
-			registerStringOption_("cleavage_site", "<cleavage site>", "[RK]|{P}", "cleavage site", false);
-			registerDoubleOption_("max_valid_expect", "<E-Value>", 0.1, "maximal E-Value of a hit to be reported", false);
-			registerFlag_("no_refinement", "Disable the refinement, especially useful for matching only peptides without proteins. For most applications it is recommended to set this flag.");
-			registerFlag_("no_semi_cleavage", "If set, all both termini must follow the cutting rule. For most applications it is recommended to set this flag.");
+			registerInputFile_("default_input_file", "<file>", "", "Default parameters input file, if not given default parameters are used", false);
+			registerDoubleOption_("minimum_fragment_mz", "<num>", 150.0, "Minimum fragment mz", false);
+			registerStringOption_("cleavage_site", "<cleavage site>", "[RK]|{P}", "Cleavage site", false);
+			registerDoubleOption_("max_valid_expect", "<E-Value>", 0.1, "Maximal E-Value of a hit to be reported", false);
+			registerFlag_("refinement", "Enable the refinement. For most applications (especially when using FDR, PEP approaches) it is NOT recommended to set this flag.");
+			registerFlag_("semi_cleavage", "If set, both termini must NOT follow the cutting rule. For most applications it is NOT recommended to set this flag.");
 		}
 
 		ExitCodes main_(int , const char**)
@@ -159,7 +160,7 @@ class TOPPXTandemAdapter
 			// path to the log file
 			String logfile(getStringOption_("log"));
 			String xtandem_executable(getStringOption_("xtandem_executable"));
-			// log filestream (as long as the real logfile is not determined yet)
+			// log file stream (as long as the real logfile is not determined yet)
 			ofstream log;
 			String inputfile_name;
 			String outputfile_name;
@@ -208,18 +209,34 @@ class TOPPXTandemAdapter
 			// reading input
 			//-------------------------------------------------------------
 
+      String db_name(getStringOption_("database"));
+      if (!File::readable(db_name))
+      {
+        String full_db_name;
+        try
+        {
+          full_db_name = File::findDatabase(db_name);
+        }
+        catch (...)
+        {
+          printUsage_();
+          return ILLEGAL_PARAMETERS;
+        }
+        db_name = full_db_name;
+      }
+
 			// only load msLevel 2
-			MzMLFile mzdata_infile;
-			mzdata_infile.getOptions().addMSLevel(2);
-			mzdata_infile.setLogType(log_type_);
-			mzdata_infile.load(inputfile_name, exp);
+			MzMLFile mzml_file;
+			mzml_file.getOptions().addMSLevel(2);
+			mzml_file.setLogType(log_type_);
+			mzml_file.load(inputfile_name, exp);
 
 			// we need to replace the native id with a simple numbering schema, to be able to
-			// map the IDs back to the spectra (RT, and MZ infomration)
-			Size native_id(1);
+			// map the IDs back to the spectra (RT, and MZ information)
+			Size native_id(0);
 			for (PeakMap::Iterator it = exp.begin(); it != exp.end(); ++it)
 			{
-				it->setNativeID(native_id++);
+				it->setNativeID(++native_id);
 			}
 
 			// We store the file in mzData file format, because mgf file somehow produce in most
@@ -231,23 +248,6 @@ class TOPPXTandemAdapter
 
 			infile.setInputFilename(tandem_input_filename);
 			infile.setOutputFilename(tandem_output_filename);
-
-
-			String db_name(getStringOption_("database"));
-      if (!File::readable(db_name))
-      {
-        String full_db_name;
-        try
-        {
-          full_db_name = File::findDatabase(db_name);
-        }
-        catch (...)
-        {
-			    printUsage_();
-			    return ILLEGAL_PARAMETERS;
-        }
-        db_name = full_db_name;
-      }
 
 			ofstream tax_out(tandem_taxonomy_filename.c_str());
 			tax_out << "<?xml version=\"1.0\"?>" << endl;
@@ -299,8 +299,8 @@ class TOPPXTandemAdapter
 			infile.setTaxon("OpenMS_dummy_taxonomy");
 			infile.setMaxValidEValue(getDoubleOption_("max_valid_expect"));
 			infile.setNumberOfMissedCleavages(getIntOption_("missed_cleavages"));
-			infile.setRefine(!getFlag_("no_refinement"));
-			infile.setSemiCleavage(!getFlag_("no_semi_cleavage"));
+			infile.setRefine(getFlag_("refinement"));
+			infile.setSemiCleavage(getFlag_("semi_cleavage"));
 
 			infile.write(input_filename);
 
@@ -312,7 +312,7 @@ class TOPPXTandemAdapter
 			int status = QProcess::execute(xtandem_executable.toQString(), QStringList(input_filename.toQString())); // does automatic escaping etc...
 			if (status != 0)
 			{
-        writeLog_("XTandem problem. Aborting! Calling command was: '" + xtandem_executable + " \"" + input_filename +"\"'.\nDoes the xtandem executable exist?");
+        writeLog_("XTandem problem. Aborting! Calling command was: '" + xtandem_executable + " \"" + input_filename +"\"'.\nDoes the !XTandem executable exist?");
 				// clean temporary files
 				QFile(input_filename.toQString()).remove();
       	QFile(tandem_input_filename.toQString()).remove();

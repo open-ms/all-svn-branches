@@ -67,6 +67,13 @@ namespace OpenMS
 		virtual void alignPeakMaps(std::vector< MSExperiment<> >&, std::vector<TransformationDescription>&);
 
 		/**
+		@brief Aligns vectors of 2D peaks (memory efficient version of FeatureMap)
+
+		@exception Exception::NotImplemented is thrown if an algorithm cannot align feature maps
+		*/
+		virtual void alignCompactFeatureMaps(std::vector< std::vector<Peak2D> >&, std::vector<TransformationDescription>&);
+
+		/**
 		@brief Aligns feature maps
 
 		@exception Exception::NotImplemented is thrown if an algorithm cannot align feature maps
@@ -97,32 +104,6 @@ namespace OpenMS
 			*/
 		virtual void setReference(Size reference_index=0, const String& reference_file="");
 
-    /// Applies the <i>given</i> transformations to peak maps
-    static void transformPeakMaps( std::vector< MSExperiment<> >& maps, const std::vector<TransformationDescription>& given_trafos );
-
-    /// Applies the <i>given</i> transformations to feature maps
-    static void transformFeatureMaps( std::vector< FeatureMap<> >& maps, const std::vector<TransformationDescription>& given_trafos );
-
-    /// Applies the <i>given</i> transformations to consensus maps
-    static void transformConsensusMaps( std::vector<ConsensusMap>& maps, const std::vector<TransformationDescription>& given_trafos );
-
-    /// Applies the <i>given</i> transformations to peptide identifications
-    static void transformPeptideIdentifications( std::vector< std::vector< PeptideIdentification > >& maps, const std::vector<TransformationDescription>& given_trafos );
-
-
-    /// Applies the <i>given</i> transformations to a single peak map
-    static void transformSinglePeakMap( MSExperiment<>& msexp, const TransformationDescription& trafo );
-
-    /// Applies the <i>given</i> transformations to a single feature map
-    static void transformSingleFeatureMap( FeatureMap<>& fmap, const TransformationDescription& trafo );
-
-    /// Applies the <i>given</i> transformations to a single consensus map
-    static void transformSingleConsensusMap( ConsensusMap& cmap, const TransformationDescription& trafo );
-
-    /// Applies the <i>given</i> transformations to a single peptide identification
-    static void transformSinglePeptideIdentification( std::vector< PeptideIdentification >& pepids, const TransformationDescription& trafo );
-
-
 		/**
 			 @brief Fits a model with given parameters to the transformations
 
@@ -132,21 +113,6 @@ namespace OpenMS
 
 		/// Register all derived classes in this method
 		static void registerChildren();
-
-
-   protected:
-
-		/// apply a transformation to a feature
-    static void applyToFeature_(Feature& feature,
-																const TransformationDescription& trafo);
-
-		/// apply a transformation to a basic feature
-    static void applyToBaseFeature_(BaseFeature& feature,
-																		const TransformationDescription& trafo);
-
-		/// apply a transformation to a consensus feature
-    static void applyToConsensusFeature_(ConsensusFeature& feature, const 
-																				 TransformationDescription& trafo);
 
 	 private:
 		/// Copy constructor is not implemented -> private

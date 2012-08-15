@@ -343,15 +343,18 @@ END_SECTION
 
 START_SECTION((Int solve(SolverParam &solver_param, const Size verbose_level=0)))
 {
-#if COINOR_SOLVER==1
-  if(lp.getSolver() ==LPWrapper::SOLVER_COINOR)   lp.readProblem(OPENMS_GET_TEST_DATA_PATH("LPWrapper_test.mps"),"MPS");
-  lp.setObjectiveSense(LPWrapper::MAX);
-#endif
+  LPWrapper lp2;
+  lp2.readProblem(OPENMS_GET_TEST_DATA_PATH("LPWrapper_test.mps"),"MPS");
+  lp2.setObjectiveSense(LPWrapper::MAX);
   LPWrapper::SolverParam param;
-  lp.solve(param);
+  lp2.solve(param);
+  TEST_EQUAL(lp2.getColumnValue(0),1)
+  TEST_EQUAL(lp2.getColumnValue(1),1)
 }
 END_SECTION
 
+LPWrapper::SolverParam param;
+lp.solve(param);
 START_SECTION((SolverStatus getStatus()))
 {
   if(lp.getSolver() == LPWrapper::SOLVER_GLPK)
@@ -378,6 +381,26 @@ START_SECTION((DoubleReal getColumnValue(Int index)))
 {
   TEST_REAL_SIMILAR(lp.getColumnValue(0),2)
   TEST_REAL_SIMILAR(lp.getColumnValue(1),2)
+}
+END_SECTION
+
+START_SECTION((Int getNumberOfNonZeroEntriesInRow(Int idx)))
+{
+  TEST_EQUAL(lp.getNumberOfNonZeroEntriesInRow(0),2)
+}
+END_SECTION
+
+START_SECTION((void getMatrixRow(Int idx,std::vector<Int>& indexes)))
+{
+  std::vector<Int> idxs,idxs2;
+  idxs.push_back(0);
+  idxs.push_back(1);
+  lp.getMatrixRow(0,idxs2);
+  TEST_EQUAL(idxs2.size(),idxs.size())
+  for(Size i = 0; i < idxs2.size();++i)
+    {
+      TEST_EQUAL(idxs2[i],idxs[i])
+    }
 }
 END_SECTION
 

@@ -7,7 +7,9 @@ AScore.h
 ConsensusID.h
 FalseDiscoveryRate.h
 HiddenMarkovModel.h
+IDDecoyProbability.h
 IDMapper.h
+IDRipper.h
 PILISIdentification.h
 PILISModel.h
 PILISModelGenerator.h

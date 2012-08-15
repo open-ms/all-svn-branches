@@ -40,6 +40,8 @@
 #include <OpenMS/MATH/STATISTICS/LinearRegression.h>
 #include <OpenMS/KERNEL/RangeUtils.h>
 #include <OpenMS/KERNEL/ChromatogramTools.h>
+#include <OpenMS/FORMAT/MzQuantMLFile.h>
+#include <OpenMS/METADATA/MSQuantifications.h>
 
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
@@ -105,6 +107,8 @@ using namespace std;
 
   <B>The command line parameters of this tool are:</B>
   @verbinclude TOPP_SILACAnalyzer.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_SILACAnalyzer.html
 
   <b>Parameter Tuning</b>
 
@@ -156,6 +160,7 @@ class TOPPSILACAnalyzer
     String out;
     String out_clusters;    
     String out_features;    
+    String out_mzq;    
 
     String out_filters;
     String in_filters;
@@ -187,6 +192,7 @@ class TOPPSILACAnalyzer
     vector<vector<SILACPattern> > data;
     vector<Clustering *> cluster_data;
 
+	MSQuantifications msq;
 
   public:
     TOPPSILACAnalyzer()
@@ -212,12 +218,14 @@ class TOPPSILACAnalyzer
     setValidFormats_("out_clusters", StringList::create("consensusXML"));
     registerOutputFile_("out_features", "<file>", "", "Optional output file containing the individual peptide features in \'out\'.", false, true);
     setValidFormats_("out_features", StringList::create("featureXML"));
+    registerOutputFile_("out_mzq", "<file>", "", "Optional output file of MzQuantML.", false, true);
+    setValidFormats_("out_mzq", StringList::create("mzq"));
 
     // create optional flag for additional output file (.consensusXML) to store filter results
     registerOutputFile_("out_filters", "<file>", "", "Optional output file containing all points that passed the filters as txt. Suitable as input for \'in_filters\' to perform clustering without preceding filtering process.", false, true);
     setValidFormats_("out_filters", StringList::create("consensusXML"));
     // create optional flag for additional input file (.consensusXML) to load filter results
-    registerOutputFile_("in_filters", "<file>", "", "Optional input file containing all points that passed the filters as txt. Use output from \'out_filters\' to perform clustering only.", false, true);
+    registerInputFile_("in_filters", "<file>", "", "Optional input file containing all points that passed the filters as txt. Use output from \'out_filters\' to perform clustering only.", false, true);
     setValidFormats_("in_filters", StringList::create("consensusXML"));
     registerStringOption_("out_debug", "<filebase>", "", "Filename base for debug output.", false, true);
 
@@ -284,7 +292,7 @@ class TOPPSILACAnalyzer
     if (section == "sample")
     {
       defaults.setValue("labels", "[Lys8,Arg10]", "Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see \'advanced parameters\', section \'labels\'. If left empty the tool identifies singlets, i.e. acts as peptide feature finder.");
-      defaults.setValue("charge", "2:3", "Range of charge states in the sample, i.e. min charge : max charge.");
+      defaults.setValue("charge", "2:4", "Range of charge states in the sample, i.e. min charge : max charge.");
       defaults.setValue("missed_cleavages", 0 , "Maximum number of missed cleavages.");
       defaults.setMinInt("missed_cleavages", 0);
       defaults.setValue("peaks_per_peptide", "3:5", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide. For example 3:6, if isotopic peptide patterns in the sample consist of either three, four, five or six isotopic peaks. ", StringList::create("advanced"));
@@ -297,16 +305,16 @@ class TOPPSILACAnalyzer
 
     if (section == "algorithm")
     {
-      defaults.setValue("rt_threshold", 50.0, "Typical retention time [s] over which a characteristic peptide elutes. (This is not an upper bound. Peptides that elute for longer will be reported.)");
+      defaults.setValue("rt_threshold", 30.0, "Typical retention time [s] over which a characteristic peptide elutes. (This is not an upper bound. Peptides that elute for longer will be reported.)");
       defaults.setMinFloat("rt_threshold", 0.0);
       defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].");
       defaults.setMinFloat("rt_min", 0.0);
-      defaults.setValue("intensity_cutoff", 10000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
+      defaults.setValue("intensity_cutoff", 1000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
       defaults.setMinFloat("intensity_cutoff", 0.0);
-      defaults.setValue("intensity_correlation", 0.9, "Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.");
+      defaults.setValue("intensity_correlation", 0.7, "Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.");
       defaults.setMinFloat("intensity_correlation", 0.0);
       defaults.setMaxFloat("intensity_correlation", 1.0);
-      defaults.setValue("model_deviation", 6.0, "Upper bound on the factor by which the ratios of observed isotopic peaks are allowed to differ from the ratios of the theoretic averagine model, i.e. ( theoretic_ratio / model_deviation ) < observed_ratio < ( theoretic_ratio * model_deviation ).");
+      defaults.setValue("model_deviation", 3.0, "Upper bound on the factor by which the ratios of observed isotopic peaks are allowed to differ from the ratios of the theoretic averagine model, i.e. ( theoretic_ratio / model_deviation ) < observed_ratio < ( theoretic_ratio * model_deviation ).");
       defaults.setMinFloat("model_deviation", 1.0);
     }
 
@@ -327,6 +335,7 @@ class TOPPSILACAnalyzer
     // get name of additional clusters output file (.consensusXML)
     out_clusters = getStringOption_("out_clusters");
     out_features = getStringOption_("out_features");
+    out_mzq = getStringOption_("out_mzq");
 
     // get name of additional filters output file (.consensusXML)
     out_filters = getStringOption_("out_filters");
@@ -763,6 +772,25 @@ class TOPPSILACAnalyzer
     // sort according to RT and MZ
     exp.sortSpectra();
 
+    if (out_mzq != "")
+    {
+			std::vector< std::vector< std::pair<String, DoubleReal> > > labels;
+			//add none label
+			labels.push_back(std::vector< std::pair<String, DoubleReal> > (1,std::make_pair<String,DoubleReal>(String("none"),DoubleReal(0)))); 
+			for (Size i = 0; i < SILAClabels.size(); ++i) //SILACLabels MUST be in weight order!!!
+			{
+				std::vector< std::pair<String, DoubleReal> > one_label;
+				for (UInt j = 0; j < SILAClabels[i].size(); ++j)
+				{
+					one_label.push_back(*(label_identifiers.find( SILAClabels[i][j] ) )); // this dereferencing would break if all SILAClabels would not have been checked before!
+				}
+				labels.push_back(one_label);
+			}
+			msq.registerExperiment(exp, labels); //add assays
+			msq.assignUIDs();
+		}
+		MSQuantifications::QUANT_TYPES quant_type = MSQuantifications::MS1LABEL;
+		msq.setAnalysisSummaryQuantType(quant_type);//add analysis_summary_
 
     //--------------------------------------------------
     // estimate peak width
@@ -797,7 +825,9 @@ class TOPPSILACAnalyzer
       {
         ConsensusMap map;
         for (std::vector<std::vector<SILACPattern> >::const_iterator it = data.begin(); it != data.end(); ++it)
-          generateFilterConsensusByPattern(map, *it);
+				{        
+					generateFilterConsensusByPattern(map, *it);
+				}
         writeConsensus(out_filters, map);
       }
     }
@@ -871,6 +901,7 @@ class TOPPSILACAnalyzer
     if (out != "")
     {
       ConsensusMap map;
+			
       for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
       {
         generateClusterConsensusByCluster(map, **it);
@@ -885,8 +916,56 @@ class TOPPSILACAnalyzer
         // XXX: Write correct label
         // it->second.label = id;
       }
+			
+
+      std::set<DataProcessing::ProcessingAction> actions;
+      actions.insert(DataProcessing::DATA_PROCESSING);
+      actions.insert(DataProcessing::PEAK_PICKING);
+      actions.insert(DataProcessing::FILTERING);
+      actions.insert(DataProcessing::QUANTITATION);
+
+      addDataProcessing_(map, getProcessingInfo_(actions));
+
 
       writeConsensus(out, map);
+			if (out_mzq != "")
+			{
+				ConsensusMap numap(map);
+				//calc. ratios
+				for (ConsensusMap::iterator cit = numap.begin(); cit != numap.end(); ++cit)
+				{
+					//~ make ratio templates
+					std::vector<ConsensusFeature::Ratio> rts;
+					for (std::vector<MSQuantifications::Assay>::const_iterator ait = msq.getAssays().begin()+1; ait != msq.getAssays().end(); ++ait)
+					{
+						ConsensusFeature::Ratio r;
+						r.numerator_ref_ = String(msq.getAssays().begin()->uid_);
+						r.denominator_ref_ = String(ait->uid_);				
+						r.description_.push_back("Simple ratio calc");
+						r.description_.push_back("light to medium/.../heavy");
+						//~ "<cvParam cvRef=\"PSI-MS\" accession=\"MS:1001132\" name=\"peptide ratio\"/>"
+						rts.push_back(r);
+					}
+					const std::set< FeatureHandle,FeatureHandle::IndexLess>& feature_handles = cit->getFeatures();
+					if (feature_handles.size() > 1)
+					{
+						std::set< FeatureHandle,FeatureHandle::IndexLess>::const_iterator fit = feature_handles.begin(); // this is unlabeled
+						fit++;
+						for (fit; fit != feature_handles.end(); ++fit)
+						{
+							Size ri = std::distance(feature_handles.begin(), fit);
+							rts[ri-1].ratio_value_ =  feature_handles.begin()->getIntensity() / fit->getIntensity(); // a proper silacalanyzer algo should never have 0-intensities so no 0devison ...
+						}
+					}
+					
+					cit->setRatios(rts);
+				}
+				msq.addConsensusMap(numap);//add SILACAnalyzer result
+
+				//~ msq.addFeatureMap();//add SILACAnalyzer evidencetrail as soon as clear what is realy contained in the featuremap
+				//~ add AuditCollection - no such concept in TOPPTools yet
+				writeMzQuantML(out_mzq,msq);
+			}
     }
 
     if (out_clusters != "")
@@ -983,6 +1062,21 @@ private:
     c_file.store(filename, out);
   }
 
+	
+	  /**
+   * @brief Write MzQuantML from ConsensusMap to file
+   */
+  void writeMzQuantML(const String &filename, MSQuantifications &msq) const
+  {
+		//~ TODO apply above to ConsensusMap befor putting into Msq
+    //~ out.sortByPosition();
+    //~ out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+    //~ out.setExperimentType("SILAC");
+
+    MzQuantMLFile file;
+    file.store(filename, msq);
+  }
+	
   /**
    * @brief Write featureXML from FeatureMap to file
    */
@@ -1332,7 +1426,7 @@ ConsensusFeature TOPPSILACAnalyzer::generateSingleConsensusByPattern(const SILAC
     // Remove the last delimiter
     std::string outs = out.str(); outs.erase(outs.end() - 1);
     consensus.setQuality(std::floor(pattern.mass_shifts.at(1) * charge));
-    consensus.setMetaValue("Mass shifts [Da]", outs);
+    consensus.setMetaValue("SILAC", outs);
   }
 
   // Output all intensities per peptide as list

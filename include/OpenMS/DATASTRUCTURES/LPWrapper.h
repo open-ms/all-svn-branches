@@ -44,6 +44,9 @@ namespace OpenMS
   class OPENMS_DLLAPI LPWrapper
   {
   public:
+    /**
+       @brief Struct that holds the parameters of the LP solver
+    */
     struct SolverParam
     {
       SolverParam(): message_level(3),branching_tech(4),backtrack_tech(3),
@@ -273,6 +276,9 @@ namespace OpenMS
     // solution access
     DoubleReal getObjectiveValue();
     DoubleReal getColumnValue(Int index);
+
+    Int getNumberOfNonZeroEntriesInRow(Int idx);
+    void getMatrixRow(Int idx,std::vector<Int>& indexes);
 
     /// choose solver; by default, only GLPK is available
     /// set this only at the very beginning of building your model, as otherwise your model is incomplete

@@ -68,6 +68,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FalseDiscoveryRate.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_FalseDiscoveryRate.html
 */
 
 
@@ -209,10 +211,6 @@ class TOPPFalseDiscoveryRate
 				//-------------------------------------------------------------
       	// writing output
       	//-------------------------------------------------------------
-				if(alg_param.getValue("add_decoy_peptides").toBool())
-				{
-					fwd_pep.insert(fwd_pep.end(),rev_pep.begin(),rev_pep.begin());
-      	}
      		IdXMLFile().store(out, fwd_prot, fwd_pep);
 			}
 

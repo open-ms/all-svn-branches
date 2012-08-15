@@ -32,6 +32,9 @@
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/FORMAT/MzQuantMLFile.h>
+#include <OpenMS/METADATA/MSQuantifications.h>
+
 #include <OpenMS/ANALYSIS/ID/IDMapper.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/CONCEPT/LogStream.h>
@@ -81,6 +84,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_IDMapper.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_IDMapper.html
 
 	On the peptide side, two sources for m/z values are possible (see parameter @p mz_reference): 1. m/z of the precursor of the MS2 spectrum that gave rise to the peptide identification; 2. theoretical masses computed from the amino acid sequences of peptide hits.
 	(When using theoretical masses, make sure that peptide modifications were identified correctly. OpenMS currently "forgets" mass shifts that it can't assign to modifications - if that happens, masses computed from peptide sequences will be off.)
@@ -111,9 +116,9 @@ class TOPPIDMapper
 			registerInputFile_("id", "<file>", "", "Protein/peptide identifications file");
 			setValidFormats_("id",StringList::create("idXML"));
 			registerInputFile_("in", "<file>", "", "Feature map/consensus map file");
-			setValidFormats_("in",StringList::create("featureXML,consensusXML"));
+			setValidFormats_("in",StringList::create("featureXML,consensusXML,mzq"));
 			registerOutputFile_("out", "<file>", "", "Output file (the format depends on the input file format).");
-			setValidFormats_("out",StringList::create("featureXML,consensusXML"));
+			setValidFormats_("out",StringList::create("featureXML,consensusXML,mzq"));
 
 			addEmptyLine_();
 			IDMapper mapper;
@@ -204,6 +209,32 @@ class TOPPIDMapper
 				addDataProcessing_(map, getProcessingInfo_(DataProcessing::IDENTIFICATION_MAPPING));
 
 				file.store(out,map);
+			}
+			
+			//----------------------------------------------------------------
+			// MzQuantML
+			//----------------------------------------------------------------
+			if (in_type == FileTypes::MZQUANTML)
+			{
+				// LOG_DEBUG << "Processing mzq ..." << endl;
+				MSQuantifications msq;
+				MzQuantMLFile file;
+				file.load(in, msq);
+
+				for (std::vector<ConsensusMap>::iterator it = msq.getConsensusMaps().begin(); it != msq.getConsensusMaps().end(); ++it)
+				{
+					bool measure_from_subelements=getFlag_("use_subelements");
+
+					mapper.annotate(*it,peptide_ids,protein_ids,measure_from_subelements);
+					
+					//annotate output with data processing info
+					addDataProcessing_(*it, getProcessingInfo_(DataProcessing::IDENTIFICATION_MAPPING));
+				}
+
+				//~ writeDebug_(msq.getConsensusMaps().size(),3);
+				//~ writeDebug_(msq.getConsensusMaps().back().size(),3);
+				//~ writeDebug_(msq.getAnalysisSummary().quant_type_,3);
+				file.store(out,msq);
 			}
 
 			// LOG_DEBUG << "Done." << endl;

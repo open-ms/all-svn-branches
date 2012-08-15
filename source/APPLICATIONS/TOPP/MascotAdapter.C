@@ -160,6 +160,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_MascotAdapter.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_MascotAdapter.html
 
 	You can specify the Mascot parameters <b>precursor_mass_tolerance</b>
 	(the peptide mass tolerance), <b>peak_mass_tolerance</b> (the MS/MS tolerance),
@@ -200,6 +202,8 @@ using namespace std;
 		</ul>
 	</ul>
 
+
+  @todo This adapter is using antiquated internal methods and needs to be updated! E.g. use MascotGenericFile.h instead of MascotInfile.h....
 */
 
 // We do not want this class to show up in the docu:

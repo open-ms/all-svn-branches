@@ -187,11 +187,21 @@ namespace OpenMS
 		  /// only peptides having a length equal to or greater than 'length' will be kept
 		  void filterIdentificationsByLength(const PeptideIdentification& identification, Size length, PeptideIdentification& filtered_identification);
 
+		  /// only peptides that have a charge equal to or greater than 'charge' will be kept
+		  void filterIdentificationsByCharge(const PeptideIdentification& identification, Size charge, PeptideIdentification& filtered_identification);
+
+      /// only peptides having a variable modification will be kept
+      void filterIdentificationsByVariableModifications(const PeptideIdentification& identification, const std::vector<String>& fixed_modifications, PeptideIdentification& filtered_identification);
+
 			/// only protein hits in 'identification' which are referenced by a peptide in 'peptide_identifications' are kept
 			void removeUnreferencedProteinHits(const ProteinIdentification& 	identification, const std::vector<PeptideIdentification> peptide_identifications, ProteinIdentification& 	filtered_identification);
 
 			/// if a peptide hit occurs more than once, only one instance is kept
 		  void filterIdentificationsUnique(const PeptideIdentification& identification, PeptideIdentification& filtered_identification);
+
+      /// filter identifications by deviation to the theoretical mass
+      void filterIdentificationsByMzError(const PeptideIdentification& identification, DoubleReal mass_error, bool unit_ppm, PeptideIdentification& filtered_identification);
+
 		  /**
 				@brief Filters the peptide hits according to their predicted rt p-values
 				
@@ -350,6 +360,7 @@ namespace OpenMS
 					}
 				}				
 			}
+
   };
  
 } // namespace OpenMS

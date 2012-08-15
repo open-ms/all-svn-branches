@@ -36,19 +36,60 @@ namespace OpenMS
 {
 	FeatureXMLFile::FeatureXMLFile()
 		: Internal::XMLHandler("","1.6"),
-			Internal::XMLFile("/SCHEMAS/FeatureXML_1_6.xsd","1.6"),
-		 	map_(0),
-		 	in_description_(false),
-			subordinate_feature_level_(0),
-			last_meta_(0)
+			Internal::XMLFile("/SCHEMAS/FeatureXML_1_6.xsd","1.6")
 	{
+    resetMembers_();
 	}
 
 	FeatureXMLFile::~FeatureXMLFile()
 	{
 	}
 
-	void FeatureXMLFile::load(String filename, FeatureMap<>& feature_map)
+  void FeatureXMLFile::resetMembers_()
+  {
+    disable_parsing_ = 0;
+    current_feature_ = 0;
+    map_ = 0;
+    //options_ = FeatureFileOptions(); do NOT reset this, since we need to preserve options!
+    size_only_ = false;
+    expected_size_ = 0;
+    model_desc_ = ModelDescription<2>();
+    param_ = Param();
+    current_chull_ = ConvexHull2D::PointArrayType();
+    hull_position_ = DPosition<2>();
+    dim_ = 0;
+    in_description_ = false;
+    subordinate_feature_level_ = 0;
+    last_meta_ = 0;
+    prot_id_ = ProteinIdentification();
+    pep_id_ = PeptideIdentification();
+    prot_hit_ = ProteinHit();
+    pep_hit_ = PeptideHit();
+    proteinid_to_accession_.clear();
+    accession_to_id_.clear();
+    identifier_id_.clear();
+    id_identifier_.clear();
+    search_param_ = ProteinIdentification::SearchParameters();
+    
+  }
+
+  Size FeatureXMLFile::loadSize(const String& filename)
+  {
+    size_only_ = true;
+    file_ = filename;
+
+    FeatureMap<> map_dummy;
+    map_ = &map_dummy;
+
+    parse_(filename, this);
+
+    Size size_backup = expected_size_; // will be deleted in resetMembers()
+    resetMembers_();
+
+    return size_backup;    
+  }
+
+	void FeatureXMLFile::load(const String& filename, FeatureMap<>& feature_map)
 	{
   	//Filename for error messages in XMLHandler
   	file_ = filename;
@@ -74,23 +115,12 @@ namespace OpenMS
 		}
 
     // reset members
-		current_feature_ = 0;
-    map_ = 0;
-    last_meta_ = 0;
-		prot_id_ = ProteinIdentification();
-    pep_id_ = PeptideIdentification();
-		prot_hit_ = ProteinHit();
-		pep_hit_ = PeptideHit();
-		proteinid_to_accession_.clear();
-		accession_to_id_.clear();
-		identifier_id_.clear();
-		id_identifier_.clear();
-    search_param_ = ProteinIdentification::SearchParameters();
+    resetMembers_();
 		
 		return;
 	}
 
-	void FeatureXMLFile::store(String filename, const FeatureMap<>& feature_map)
+	void FeatureXMLFile::store(const String& filename, const FeatureMap<>& feature_map)
 	{
   	//open stream
 		ofstream os(filename.c_str());
@@ -275,12 +305,12 @@ namespace OpenMS
 		identifier_id_.clear();
 	}
 
-	PeakFileOptions& FeatureXMLFile::getOptions()
-	{
-		return options_;
-	}
+  FeatureFileOptions& FeatureXMLFile::getOptions()
+  {
+    return options_;
+  }
 
-  const PeakFileOptions& FeatureXMLFile::getOptions() const
+  const FeatureFileOptions& FeatureXMLFile::getOptions() const
   {
   	return options_;
   }
@@ -300,6 +330,17 @@ namespace OpenMS
 		static const XMLCh* s_unique_id = xercesc::XMLString::transcode("unique_id");
 
 		String tag = sm_.convert(qname);
+
+    // handle skipping of whole sections
+    // IMPORTANT: check parent tags first (i.e. tags higher in the tree), since otherwise sections might be enabled/disabled too early/late
+    //            disable_parsing_ is an Int, since subordinates might be chained, thus at SO-level 2, the endelement() would switch on parsing again
+    //                                      , even though the end of the parent SO was not reached
+    if ((!options_.getLoadSubordinates()) && tag=="subordinate") ++disable_parsing_;
+    else if ((!options_.getLoadConvexHull()) && tag=="convexhull") ++disable_parsing_;
+
+    if (disable_parsing_) return;
+
+    // do the actual parsing:
 		String parent_tag;
 		if (open_tags_.size()!=0) parent_tag = open_tags_.back();
 		open_tags_.push_back(tag);
@@ -323,7 +364,15 @@ namespace OpenMS
 		}
 		else if (tag=="featureList")
 		{
-			if (options_.getMetadataOnly()) throw EndParsingSoftly(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+      if (options_.getMetadataOnly()) throw EndParsingSoftly(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+      Size count = attributeAsInt_(attributes, "count");
+      if (size_only_) // true if loadSize() was used instead of load()
+      {
+        expected_size_ = count;
+        throw EndParsingSoftly(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+      }
+      map_->reserve(std::min(Size(1e5), count)); // reserve vector for faster push_back, but with upper boundary of 1e5 (as >1e5 is most likely an invalid feature count)
+      startProgress(0, count, "Loading featureXML file");
 		}
 		else if (tag=="quality" || tag=="hposition" || tag=="position")
 		{
@@ -344,9 +393,9 @@ namespace OpenMS
 		}
 		else if (tag=="model")
 		{
-			model_desc_ = new ModelDescription<2>();
+			model_desc_ = ModelDescription<2>();
 			param_.clear();
-			model_desc_->setName(attributeAsString_(attributes,s_name));
+			model_desc_.setName(attributeAsString_(attributes,s_name));
 		}
 		else if (tag=="param")
 		{
@@ -404,7 +453,7 @@ namespace OpenMS
 			}
 			if (file_version.toDouble() > version_.toDouble())
 			{
-				warning(LOAD, String("The XML file (") + file_version +") is newer than the parser (" + version_ + "). This might lead to undefinded program behaviour.");
+				warning(LOAD, String("The XML file (") + file_version +") is newer than the parser (" + version_ + "). This might lead to undefined program behavior.");
 			}
 			//handle document id
 			String document_id;
@@ -652,7 +701,20 @@ namespace OpenMS
 	void FeatureXMLFile::endElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname)
 	{
 		String tag = sm_.convert(qname);
-		open_tags_.pop_back();
+
+    // handle skipping of whole sections
+    // IMPORTANT: check parent tags first (i.e. tags higher in the tree), since otherwise sections might be enabled/disabled too early/late
+    if (   ( (!options_.getLoadSubordinates()) && tag=="subordinate")
+         ||( (!options_.getLoadConvexHull()) && tag=="convexhull") )
+    {
+      --disable_parsing_;
+      return; // even if disable_parsing is false now, we still exit (since this endelement() should be ignored)
+    }
+
+    if (disable_parsing_) return;
+
+    // do the actual parsing:
+    open_tags_.pop_back();
 
 		//for downward compatibility, all tags in the old description must be ignored
 		if (tag=="description")
@@ -699,9 +761,8 @@ namespace OpenMS
 		}
 		else if (tag=="model")
 		{
-			model_desc_->setParam(param_);
-			current_feature_->setModelDescription(*model_desc_);
-			delete model_desc_;
+			model_desc_.setParam(param_);
+			current_feature_->setModelDescription(model_desc_);
 		}
 		else if (tag=="hullpoint" || tag=="pt")
 		{
@@ -709,13 +770,13 @@ namespace OpenMS
 		}
 		else if (tag=="convexhull")
 		{
-			ConvexHull2D hull;
-			hull.setHullPoints(current_chull_);
-			current_feature_->getConvexHulls().push_back(hull);
+      ConvexHull2D hull;
+      hull.setHullPoints(current_chull_);
+      current_feature_->getConvexHulls().push_back(hull);
 		}
 		else if (tag=="subordinate")
 		{
-			--subordinate_feature_level_;
+      --subordinate_feature_level_;
 			// reset current_feature
 			updateCurrentFeature_(false);
 		}
@@ -752,12 +813,24 @@ namespace OpenMS
 			pep_id_.insertHit(pep_hit_);
 			last_meta_ = &pep_id_;
 		}
+		else if (tag == "featureList")
+		{
+			endProgress();
+		}
 	}
 
 	void FeatureXMLFile::characters(const XMLCh* const chars, const XMLSize_t /*length*/)
 	{
+    // handle skipping of whole sections
+    if (disable_parsing_) return;
+
+    // do the actual parsing:
+
 		//for downward compatibility, all tags in the old description must be ignored
 		if (in_description_) return;
+
+    // we are before first tag or beyond last tag
+    if (open_tags_.size()==0) return;
 
 		String& current_tag = open_tags_.back();
 		if (current_tag == "intensity")
@@ -951,6 +1024,7 @@ namespace OpenMS
 		{
 			if (create)
 			{
+				setProgress(map_->size());
 				map_->push_back(Feature());
 				current_feature_ = &map_->back();
 				last_meta_ =  &map_->back();

@@ -1,8 +1,8 @@
 
 ## contrib
 
-set(CONTRIB_CUSTOM_DIR CACHE DOC "DEPRECATED: User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib! Please use CMAKE_FIND_ROOT_PATH instead!")
-set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/ CACHE INTERNAL "Final contrib path after looking at custom_contrib_path. defaults to OpenMS/contrib")
+set(CONTRIB_CUSTOM_DIR CACHE DOC "DEPRECATED: Please use CMAKE_FIND_ROOT_PATH instead! User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
+set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/ CACHE INTERNAL "Final contrib path after looking at CMAKE_FIND_ROOT_PATH. Defaults to OpenMS/contrib")
 
 IF ("${CMAKE_FIND_ROOT_PATH}" STREQUAL "")
 	IF (NOT "${CONTRIB_CUSTOM_DIR}" STREQUAL "")
@@ -21,14 +21,14 @@ ENDIF()
 # and by the OpenMS macros (via CONTRIB_DIR).
 LIST(APPEND CMAKE_FIND_ROOT_PATH "${CONTRIB_DIR}")
 SET(TMP "")
-FOREACH(CUSTOM_PATH IN ITEMS ${CMAKE_FIND_ROOT_PATH})
+FOREACH(CUSTOM_PATH ${CMAKE_FIND_ROOT_PATH})
 	GET_FILENAME_COMPONENT(ABS_PATH ${CUSTOM_PATH} ABSOLUTE)
 	LIST(APPEND TMP ${ABS_PATH})
 ENDFOREACH()
 SET(CMAKE_FIND_ROOT_PATH "${TMP}")
 SET(CONTRIB_DIR "${CMAKE_FIND_ROOT_PATH}")
 
-MESSAGE(STATUS "CMake find root path: " ${CMAKE_FIND_ROOT_PATH})
+MESSAGE(STATUS "CMake find root path: ${CMAKE_FIND_ROOT_PATH}")
 
 set(CONTRIB_INCLUDE_DIR "" CACHE INTERNAL "contrib include dir")
 set(CONTRIB_LIB_DIR "" CACHE INTERNAL "contrib lib dir")
@@ -69,8 +69,22 @@ OPENMS_CHECKLIB(CONTRIB_GSLCBLAS "cblas;gslcblas" "cblas_d;gslcblas" "GSL-CBLAS"
 #endif()
 set(Boost_USE_MULTITHREADED  ON)
 set(Boost_USE_STATIC_RUNTIME OFF)
+#set(Boost_DEBUG TRUE)
+add_definitions(/DBOOST_ALL_NO_LIB) ## disable auto-linking of boost libs (boost tends to guess wrong lib names)
+set(Boost_COMPILER "")
 
-FIND_PACKAGE(Boost 1.42.0 REQUIRED iostreams date_time math_c99)
+# help boost finding it's packages
+set(Boost_ADDITIONAL_VERSIONS "1.47.0" "1.48.0" "1.49.0")
+
+# 1st attempt does not explicitly requires boost to enable second check (see below)
+FIND_PACKAGE(Boost 1.42.0 COMPONENTS iostreams date_time math_c99)
+if(NOT Boost_FOUND AND WIN32)
+  # second attempt to find boost using plain "VC" as toolset, instead of vs110 or so.
+  # this is required for cases where Boost was build without specifying a toolset explicitly
+  set(Boost_COMPILER "-vc")
+  FIND_PACKAGE(Boost 1.42.0 REQUIRED iostreams date_time math_c99)
+endif()
+
 if(Boost_FOUND)
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
   message(STATUS "Found Boost version ${Boost_MAJOR_VERSION}.${Boost_MINOR_VERSION}.${Boost_SUBMINOR_VERSION}" )
@@ -174,8 +188,3 @@ endforeach()
 set(QT_LIBRARIES ${QT_LIBRARIES_TMP})
 ## ENDFIX
 
-MESSAGE(STATUS "QT qmake at ${QT_QMAKE_EXECUTABLE}")
-MESSAGE(STATUS "QT moc at ${QT_MOC_EXECUTABLE}")
-MESSAGE(STATUS "QT uic at ${QT_UIC_EXECUTABLE}")
-MESSAGE(STATUS "QT includes at ${QT_INCLUDES}")
-MESSAGE(STATUS "QT libraries at ${QT_LIBRARIES}")

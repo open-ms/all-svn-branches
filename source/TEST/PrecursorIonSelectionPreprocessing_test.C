@@ -69,7 +69,7 @@ param.setValue("precursor_mass_tolerance_unit","Da");
 param.setValue("missed_cleavages",0);
 std::string tmp_filename;
 NEW_TMP_FILE(tmp_filename);
-param.setValue("preprocessing:preprocessed_db_path",tmp_filename);
+param.setValue("preprocessed_db_path",tmp_filename);
 ptr->setParameters(param);
 ptr->dbPreprocessing(OPENMS_GET_TEST_DATA_PATH("PrecursorIonSelectionPreprocessing_db.fasta"),true);
 	
@@ -134,10 +134,6 @@ START_SECTION(DoubleReal getPT(String prot_id,Size peptide_index))
   TEST_REAL_SIMILAR(rt_pt_pp.getPT("P01008",1),0.0402)
 END_SECTION
 
-START_SECTION(DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt))
-	TEST_REAL_SIMILAR(rt_pt_pp.getRTWeight("P01008",1,831.),99.999)
-END_SECTION
-
 START_SECTION((const std::map<String, std::vector<DoubleReal> >& getProteinRTMap() const))
   const std::map<String, std::vector<DoubleReal> >& rt_map = rt_pt_pp.getProteinRTMap();
   TEST_REAL_SIMILAR(rt_map.find("P01008")->second[1],831.46429)
@@ -155,7 +151,80 @@ const std::map<String, std::vector<String> >& map = rt_pt_pp.getProteinPeptideSe
    TEST_EQUAL(map.size(),0);
 END_SECTION
 
-	
+
+START_SECTION((void setFixedModifications(StringList & modifications)))
+{
+  StringList list = StringList::create("Carbamidomethylation (C)");
+  ptr->setFixedModifications(list);
+  const std::map<char, std::vector<String> > & map = ptr->getFixedModifications();
+  TEST_EQUAL(map.size(),1)
+  TEST_EQUAL(map.begin()->first,'C')
+  TEST_EQUAL(map.begin()->second[0],"Carbamidomethylation")
+}
+END_SECTION
+
+START_SECTION((const std::map<char, std::vector<String> > & getFixedModifications()))
+{
+  StringList list = StringList::create("Oxidation (M)");
+  ptr->setFixedModifications(list);
+  const std::map<char, std::vector<String> > & map = ptr->getFixedModifications();
+  TEST_EQUAL(map.size(),1)
+  TEST_EQUAL(map.begin()->first,'M')
+  TEST_EQUAL(map.begin()->second[0],"Oxidation")
+}
+END_SECTION
+  
+START_SECTION((void setGaussianParameters(DoubleReal mu, DoubleReal sigma)))
+{
+  ptr->setGaussianParameters(-3.,10.);
+  TEST_REAL_SIMILAR(ptr->getGaussMu(),-3.)
+  TEST_REAL_SIMILAR(ptr->getGaussSigma(),10.)  
+}
+END_SECTION
+
+START_SECTION((DoubleReal getGaussMu()))
+{
+  ptr->setGaussianParameters(-10.,10.);
+  TEST_REAL_SIMILAR(ptr->getGaussMu(),-10.)
+}
+END_SECTION
+
+START_SECTION((DoubleReal getGaussSigma()))
+{
+  ptr->setGaussianParameters(-10.,15.);
+  TEST_REAL_SIMILAR(ptr->getGaussSigma(),15.)  
+}
+END_SECTION
+std::vector< ConvexHull2D > hulls(2);
+hulls[0].addPoint(DPosition<2>(810.0,1.0));
+hulls[0].addPoint(DPosition<2>(810.0,2.0));
+hulls[1].addPoint(DPosition<2>(854.5,1.0));
+hulls[1].addPoint(DPosition<2>(854.5,4.0));
+
+
+START_SECTION((DoubleReal getRTProbability(String prot_id, Size peptide_index, Feature &feature)))
+{
+  Feature f;
+  f.setRT(831.46);
+  f.setConvexHulls(hulls);
+  param.setValue("rt_settings:min_rt",800.);
+  param.setValue("rt_settings:max_rt",900.);
+  param.setValue("rt_settings:rt_step_size",10.);
+  rt_pt_pp.setParameters(param);
+  rt_pt_pp.setGaussianParameters(0.,1.);
+  TEST_REAL_SIMILAR(rt_pt_pp.getRTProbability("P01008",1,f),0.9973)
+}
+END_SECTION
+
+START_SECTION((DoubleReal getRTProbability(DoubleReal pred_rt, Feature &feature)))
+{
+  Feature f;
+  f.setRT(831.46);
+  f.setConvexHulls(hulls);
+  TEST_REAL_SIMILAR(rt_pt_pp.getRTProbability(831.46429,f),0.9973)
+}
+END_SECTION
+
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

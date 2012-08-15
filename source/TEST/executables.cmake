@@ -157,7 +157,6 @@ set(format_executables_list
   MSPFile_test
   MascotGenericFile_test
   MascotInfile_test
-  MascotOutfile_test
   MascotRemoteQuery_test
   MascotXMLFile_test
   MsInspectFile_test
@@ -357,6 +356,7 @@ set(analysis_executables_list
 	FeatureHandle_test
 	HiddenMarkovModel_test
 	IDMapper_test
+  IDRipper_test
   ILPDCWrapper_test
 	InclusionExclusionList_test
 	ItraqChannelExtractor_test
@@ -373,6 +373,7 @@ set(analysis_executables_list
 	MapAlignmentEvaluationAlgorithmPrecision_test
 	MapAlignmentEvaluationAlgorithmRecall_test
 	MapAlignmentEvaluationAlgorithm_test
+	MapAlignmentTransformer_test
 	MassDecompositionAlgorithm_test
 	MassDecomposition_test
 	OfflinePrecursorIonSelection_test
@@ -389,8 +390,10 @@ set(analysis_executables_list
 	PrecursorIonSelection_test
 	ProteinInference_test
 	ProtonDistributionModel_test
+  ProteinResolver_test
 	PSLPFormulation_test
 	QTClusterFinder_test
+  #QuantitativeExperimentalDesign_test
 	ReactionMonitoringTransition_test
 	SVMWrapper_test
 	SimplePairFinder_test

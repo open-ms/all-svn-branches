@@ -140,6 +140,8 @@ using namespace std;
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_GenericWrapper.cli
+	<B>INI file documentation of this tool:</B>
+	@htmlinclude TOPP_GenericWrapper.html
 */
 
 
@@ -406,7 +408,7 @@ class TOPPGenericWrapper
       builder.setWorkingDirectory(tde_.working_directory.toQString());
       builder.start(call.toQString());
 
-      if (!builder.waitForFinished(-1) || builder.exitStatus() != 0 || builder.exitCode()!=0)
+      if (!builder.waitForFinished(-1) || builder.exitStatus() != 0 || builder.exitCode() != 0)
       {
         LOG_ERROR << ("External tool returned with non-zero exit code ("+String(builder.exitCode())+"), exit status (" + String(builder.exitStatus()) + ") or timed out. Aborting ...\n");
         LOG_ERROR << ("External tool output:\n"+ String(QString(builder.readAll())));

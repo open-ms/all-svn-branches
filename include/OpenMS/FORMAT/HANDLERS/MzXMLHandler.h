@@ -30,7 +30,7 @@
 
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/FORMAT/Base64.h>
-#include <OpenMS/FORMAT/PeakFileOptions.h>
+#include <OpenMS/FORMAT/OPTIONS/PeakFileOptions.h>
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
@@ -525,7 +525,8 @@ namespace OpenMS
 				}
 				else if (type=="Full")
 				{
-					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
+          if (ms_level>1) exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MSNSPECTRUM);
+          else exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
 				}
 				else if (type=="SIM")
 				{
@@ -556,7 +557,7 @@ namespace OpenMS
 					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
 					exp_->back().setMSLevel(2);
 				}
-				else if (type=="ER") // Non-stanard type: Enhanced Resolution (ABI - Sashimi converter)
+				else if (type=="ER") // Non-standard type: Enhanced Resolution (ABI - Sashimi converter)
 				{
 					exp_->back().getInstrumentSettings().setZoomScan(true);
 					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);

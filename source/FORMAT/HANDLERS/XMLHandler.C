@@ -54,6 +54,12 @@ namespace OpenMS
 		{
 		}
 	
+		void XMLHandler::reset()
+		{ // reset Xerces XML strings (memleak otherwise)
+			sm_.clear();
+		}
+
+
 		void XMLHandler::fatalError(const SAXParseException& exception)
 		{
 			fatalError(LOAD, sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
@@ -85,7 +91,7 @@ namespace OpenMS
                           + "Rename the file to fix this.";
       }
 
-			LOG_FATAL_ERROR << error_message_ << "\n";
+			LOG_FATAL_ERROR << error_message_ << std::endl;
 			throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, file_, error_message_);
 		}
 	
@@ -94,7 +100,7 @@ namespace OpenMS
 			if (mode==LOAD)  error_message_ =  String("Non-fatal error while loading '") + file_ + "': " + msg;
 			if (mode==STORE) error_message_ =  String("Non-fatal error while storing '") + file_ + "': " + msg;
 			if (line!=0 || column!=0) error_message_ += String("( in line ") + line + " column " + column + ")";
-			LOG_ERROR << error_message_ << "\n";
+			LOG_ERROR << error_message_ << std::endl;
 		}
 		
 		void XMLHandler::warning(ActionMode mode, const String& msg, UInt line, UInt column) const
@@ -102,7 +108,7 @@ namespace OpenMS
 			if (mode==LOAD)  error_message_ =  String("While loading '") + file_ + "': " + msg;
 			if (mode==STORE) error_message_ =  String("While storing '") + file_ + "': " + msg;
 			if (line!=0 || column!=0) error_message_ += String("( in line ") + line + " column " + column + ")";
-			LOG_WARN << error_message_ << "\n";
+			LOG_WARN << error_message_ << std::endl;
 		}
 		
 		void XMLHandler::characters(const XMLCh* const /*chars*/, const XMLSize_t /*length*/)
@@ -218,7 +224,7 @@ namespace OpenMS
 		XMLCh* StringManager::convert(const String& str) const
 		{
 			XMLCh* result = XMLString::transcode(str.c_str());
-			xml_strings_.push_back(result) ;
+			xml_strings_.push_back(result);
 			return result;
 		}
 

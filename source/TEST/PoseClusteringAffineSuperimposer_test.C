@@ -67,7 +67,7 @@ START_SECTION((static const String getProductName()))
   TEST_EQUAL(pcat.getName() == "poseclustering_affine",true)
 END_SECTION
 
-START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::vector< TransformationDescription > &transformations)))
+START_SECTION((virtual void run(const ConsensusMap& map_model, const ConsensusMap& map_scene, TransformationDescription& transformation)))
   std::vector<ConsensusMap> input(2);
   Feature feat1;
   Feature feat2;
@@ -77,8 +77,8 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   feat1.setIntensity(100.0f);
   feat2.setPosition(pos2);
   feat2.setIntensity(100.0f);
-  input[0].push_back(feat1);
-  input[0].push_back(feat2);
+  input[0].push_back(ConsensusFeature(feat1));
+  input[0].push_back(ConsensusFeature(feat2));
   
   Feature feat3;
   Feature feat4;
@@ -88,8 +88,8 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   feat3.setIntensity(100.0f);
   feat4.setPosition(pos4);
   feat4.setIntensity(100.0f);
-  input[1].push_back(feat3);
-  input[1].push_back(feat4);
+  input[1].push_back(ConsensusFeature(feat3));
+  input[1].push_back(ConsensusFeature(feat4));
 
   Param parameters;
   parameters.setValue(String("scaling_bucket_size"), 0.01);
@@ -99,7 +99,7 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   //  parameters.setValue(String("dump_buckets"),"pcast_buckets");
   //  parameters.setValue(String("dump_pairs"),"pcast_pairs");
 
-  std::vector<TransformationDescription> transformations;  
+  TransformationDescription transformation;
   PoseClusteringAffineSuperimposer pcat;
   pcat.setParameters(parameters);
 
@@ -107,11 +107,10 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   input[0].updateRanges();
   input[1].updateRanges();
 
-  pcat.run(input, transformations);
+  pcat.run(input[0], input[1], transformation);
 
-	TEST_EQUAL(transformations.size(), 1)
-  TEST_STRING_EQUAL(transformations[0].getModelType(), "linear")
-	transformations[0].getModelParameters(parameters);
+  TEST_STRING_EQUAL(transformation.getModelType(), "linear")
+	transformation.getModelParameters(parameters);
 	TEST_EQUAL(parameters.size(), 2)    
   TEST_REAL_SIMILAR(parameters.getValue("slope"), 1.0)
   TEST_REAL_SIMILAR(parameters.getValue("intercept"), -0.4)

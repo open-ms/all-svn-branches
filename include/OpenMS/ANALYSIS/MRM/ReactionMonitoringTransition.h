@@ -28,6 +28,7 @@
 #ifndef OPENMS_ANALYSIS_MRM_REACTIONMONITORINGTRANSITION_H
 #define OPENMS_ANALYSIS_MRM_REACTIONMONITORINGTRANSITION_H
 
+#include <OpenMS/ANALYSIS/TARGETED/TargetedExperimentHelper.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/METADATA/CVTermList.h>
 
@@ -35,145 +36,187 @@
 
 namespace OpenMS
 {
-	/**
-		@brief This class stores a SRM/MRM transition
+  /**
+    @brief This class stores a SRM/MRM transition
 
-		The default values for precursor and product m/z values are
-		set to numeric_limits<DoubleReal>::max(). Default values for 
-		precursor an product charge is set to numeric_limits<Int>::max().
-	*/
-	class OPENMS_DLLAPI ReactionMonitoringTransition 
-		: public CVTermList
-	{
+    The default values for precursor and product m/z values are
+    set to numeric_limits<DoubleReal>::max(). Default values for
+    precursor an product charge is set to numeric_limits<Int>::max().
+  */
+  class OPENMS_DLLAPI ReactionMonitoringTransition :
+    public CVTermList
+  {
 
-		public:
+public:
 
-		struct Configuration
-			: public CVTermList
-		{
-			String contact_ref;
-			String instrument_ref;
-			std::vector<CVTermList> validations;
+    typedef TargetedExperimentHelper::Configuration Configuration;
+    typedef TargetedExperimentHelper::RetentionTime RetentionTime;
+    typedef TargetedExperimentHelper::TraMLProduct Product;
+    typedef TargetedExperimentHelper::Prediction Prediction;
 
-			Configuration& operator = (const Configuration& rhs)
-			{
-				if (this != &rhs)
-				{
-					CVTermList::operator = (rhs);
-					contact_ref = rhs.contact_ref;
-					instrument_ref = rhs.instrument_ref;
-					validations = rhs.validations;
-				}
-				return *this;
-			}
-		};
+    enum DecoyTransitionType
+    {
+      UNKNOWN,
+      TARGET,
+      DECOY
+    };
 
-		/** @name Constructors and destructors
-		*/
-		//@{
-		/// default constructor
-		ReactionMonitoringTransition();
+    /** @name Constructors and destructors
+    */
+    //@{
+    /// default constructor
+    ReactionMonitoringTransition();
 
-		/// copy constructor
-		ReactionMonitoringTransition(const ReactionMonitoringTransition& rhs);
+    /// copy constructor
+    ReactionMonitoringTransition(const ReactionMonitoringTransition & rhs);
 
-		/// destructor
-		virtual ~ReactionMonitoringTransition();
-		//@}
+    /// destructor
+    virtual ~ReactionMonitoringTransition();
+    //@}
 
-		/// assignment operator 
-		ReactionMonitoringTransition& operator = (const ReactionMonitoringTransition& rhs);
+    /// assignment operator
+    ReactionMonitoringTransition & operator=(const ReactionMonitoringTransition & rhs);
 
-		/** @name Accessors
-		*/
-		//@{
-		void setName(const String& name);
+    /** @name Accessors
+    */
+    //@{
+    void setName(const String & name);
 
-		const String& getName() const;
+    const String & getName() const;
 
-		void setPeptideRef(const String& peptide_ref);
+    void setNativeID(const String & name);
 
-		const String& getPeptideRef() const;
+    const String & getNativeID() const;
 
-		void setCompoundRef(const String& compound_ref);
+    void setPeptideRef(const String & peptide_ref);
 
-		const String& getCompoundRef() const;
+    const String & getPeptideRef() const;
 
-		/// sets the precursor mz (Q1 value)
-		void setPrecursorMZ(DoubleReal mz);
+    void setCompoundRef(const String & compound_ref);
 
-		DoubleReal getPrecursorMZ() const;
+    const String & getCompoundRef() const;
 
-		void setPrecursorCVTermList(const CVTermList& list);
+    /// sets the precursor mz (Q1 value)
+    void setPrecursorMZ(DoubleReal mz);
 
-		void addPrecursorCVTerm(const CVTerm& cv_term);
+    DoubleReal getPrecursorMZ() const;
 
-		const CVTermList& getPrecursorCVTermList() const;
-		
-		void setProductMZ(DoubleReal mz);
+    void setPrecursorCVTermList(const CVTermList & list);
 
-		DoubleReal getProductMZ() const;
+    void addPrecursorCVTerm(const CVTerm & cv_term);
 
-		void setProductCVTermList(const CVTermList& list);
+    const CVTermList & getPrecursorCVTermList() const;
 
-		void addProductCVTerm(const CVTerm& cv_term);
+    void setProductMZ(DoubleReal mz);
 
-		const CVTermList& getProductCVTermList() const;
+    DoubleReal getProductMZ() const;
 
-		void setInterpretations(const std::vector<CVTermList>& interpretations);
+    //void setProductCVTermList(const CVTermList& list);
 
-		const std::vector<CVTermList>& getInterpretations() const;
+    void addProductCVTerm(const CVTerm & cv_term);
 
-		void addInterpretation(const CVTermList& interpretation);
+    //const CVTermList& getProductCVTermList() const;
 
-		void setConfigurations(const std::vector<Configuration>& configuration);
-		
-		const std::vector<Configuration>& getConfigurations() const;
+    const std::vector<Product> & getIntermediateProducts() const;
 
-		void addConfiguration(const Configuration& configuration);
+    void addIntermediateProduct(Product product);
 
-		void setPrediction(const CVTermList& prediction);
+    void setIntermediateProducts(const std::vector<Product> & products);
 
-		void addPredictionTerm(const CVTerm& prediction);
+    void setProduct(Product product);
 
-		const CVTermList& getPrediction() const;
-		//@}
+    const Product & getProduct() const;
 
-		/** @name Predicates
-		*/
-		//@{
-		/// equality operator
-		bool operator == (const ReactionMonitoringTransition& rhs) const;
-		
-		/// inequality operator
-		bool operator != (const ReactionMonitoringTransition& rhs) const;
-		//@}
+    void setRetentionTime(RetentionTime rt);
 
-		protected:
+    const RetentionTime & getRetentionTime() const;
 
-		void updateMembers_();
+    void setPrediction(const Prediction & prediction);
 
-		String name_;
+    void addPredictionTerm(const CVTerm & prediction);
 
-		DoubleReal precursor_mz_;
+    const Prediction & getPrediction() const;
 
-		CVTermList precursor_cv_terms_;
+    DecoyTransitionType getDecoyTransitionType() const;
 
-		DoubleReal product_mz_;
+    void setDecoyTransitionType(const DecoyTransitionType & d);
 
-		CVTermList product_cv_terms_;
+    DoubleReal getLibraryIntensity() const;
 
-		std::vector<CVTermList> interpretation_list_;
-	
-		String peptide_ref_;
+    void setLibraryIntensity(DoubleReal intensity);
 
-		String compound_ref_;
+    //@}
 
-		std::vector<Configuration> configurations_;
+    /** @name Predicates
+    */
+    //@{
+    /// equality operator
+    bool operator==(const ReactionMonitoringTransition & rhs) const;
 
-		CVTermList prediction_;
-	};
+    /// inequality operator
+    bool operator!=(const ReactionMonitoringTransition & rhs) const;
+    //@}
+
+    /**  @name  Comparator classes.
+       These classes implement binary predicates that can be used
+       to compare two transitions with respect to their product ions.
+   */
+    //@{
+    /// Comparator by Product ion MZ
+    struct ProductMZLess :
+      std::binary_function<ReactionMonitoringTransition, ReactionMonitoringTransition, bool>
+    {
+      inline bool operator()(ReactionMonitoringTransition const & left, ReactionMonitoringTransition const & right) const
+      {
+        return left.getProductMZ() < right.getProductMZ();
+      }
+
+    };
+    //@}
+
+protected:
+
+    void updateMembers_();
+
+    //@{ 
+    /// Attributes:
+
+    String name_; // id, required attribute
+
+    // attributes to a peptide / compound (optional)
+    String peptide_ref_;
+    String compound_ref_;
+    //@}
+
+    //@{ 
+    /// Subelements:
+
+    // Precursor
+    // Product
+    // IntermediateProduct
+    // RetentionTime
+    // Prediction
+    // cvparam / userParam
+
+    // A transition has exactly one precursor and it must supply the CV Term 1000827 (isolation window target m/z
+    DoubleReal precursor_mz_;
+    CVTermList precursor_cv_terms_;
+
+    Product product_;
+
+    std::vector<Product> intermediate_products_;
+
+    RetentionTime rts;
+
+    Prediction prediction_;
+    //@}
+
+    /// specific properties of a transition (e.g. specific CV terms)
+    DecoyTransitionType decoy_type_;
+
+    DoubleReal library_intensity_;
+
+  };
 }
 
 #endif // OPENMS_ANALYSIS_MRM_REACTIONMONITORINGTRANSITION_H
-

@@ -36,8 +36,10 @@ IDFileConverter
 IDFilter
 IDMapper
 IDMerger
+IDRipper
 IDRTCalibration
 ITRAQAnalyzer
+InclusionExclusionListCreator
 InspectAdapter
 InternalCalibration
 MapAlignerIdentification
@@ -49,6 +51,7 @@ MapStatistics
 MascotAdapter
 MascotAdapterOnline
 MassTraceExtractor
+MyriMatchAdapter
 NoiseFilterGaussian
 NoiseFilterSGolay
 OMSSAAdapter
@@ -67,6 +70,7 @@ PrecursorIonSelector
 PrecursorMassCorrector
 ProteinInference
 ProteinQuantifier
+ProteinResolver
 RTModel
 RTPredict
 Resampler
@@ -83,12 +87,12 @@ SpectraFilterScaler
 SpectraFilterBernNorm
 SpectraFilterNLargest
 SpectraFilterNormalizer
+SpectraMerger
+TMTAnalyzer
 TOFCalibration
 TextExporter
 MzTabExporter
 XTandemAdapter
-InclusionExclusionListCreator
-SpectraMerger
 SpectraSTAdapter
 SpectraSTIDFileConverter
 PepitomeAdapter

@@ -143,6 +143,9 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           //enable drag-and-drop
           setAcceptDrops(true);
 
+          //by default, linked zooming is turned off
+          zoom_together_ = false;
+
           // get geometry of first screen
           QRect screen_geometry = QApplication::desktop()->screenGeometry();
           // center main window
@@ -270,6 +273,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           windows->addAction("&Tile automatic",this->ws_,SLOT(tile()));
           windows->addAction(QIcon(":/tile_horizontal.png"),"Tile &vertical",this,SLOT(tileHorizontal()));
           windows->addAction(QIcon(":/tile_vertical.png"),"Tile &horizontal",this,SLOT(tileVertical()));
+          linkZoom_action_ = windows->addAction("Link &Zoom",this,SLOT(linkZoom()));
           windows->addSeparator();
 
           //Help menu
@@ -507,15 +511,21 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           spectra_view_widget_ = new SpectraViewWidget();
           connect(spectra_view_widget_, SIGNAL(showSpectrumMetaData(int)), this, SLOT(showSpectrumMetaData(int)));
           connect(spectra_view_widget_, SIGNAL(showSpectrumAs1D(int)), this, SLOT(showSpectrumAs1D(int)));
+          connect(spectra_view_widget_, SIGNAL(showSpectrumAs1D(std::vector<int, std::allocator<int> >)), this, SLOT(showSpectrumAs1D(std::vector<int, std::allocator<int> >)));
           connect(spectra_view_widget_, SIGNAL(spectrumSelected(int)), this, SLOT(activate1DSpectrum(int)));
+          connect(spectra_view_widget_, SIGNAL(spectrumSelected(std::vector<int, std::allocator<int> >)), this, SLOT(activate1DSpectrum(std::vector<int, std::allocator<int> >)));
           connect(spectra_view_widget_, SIGNAL(spectrumDoubleClicked(int)), this, SLOT(showSpectrumAs1D(int)));
+          //connect(spectra_view_widget_, SIGNAL(spectrumDoubleClicked(int)), this, SLOT(showSpectrumAs1D(std::vector<int, std::allocator<int> >)));
+
           spectraview_behavior_ = new TOPPViewSpectraViewBehavior(this);
           view_behavior_ = spectraview_behavior_;
 
           spectra_identification_view_widget_ = new SpectraIdentificationViewWidget(Param());
           connect(spectra_identification_view_widget_, SIGNAL(spectrumDeselected(int)), this, SLOT(deactivate1DSpectrum(int)));
           connect(spectra_identification_view_widget_, SIGNAL(showSpectrumAs1D(int)), this, SLOT(showSpectrumAs1D(int)));
+          // connect(spectra_identification_view_widget_, SIGNAL(showSpectrumAs1D(std::vector<int, std::allocator<int> >)), this, SLOT(showSpectrumAs1D(std::vector<int, std::allocator<int> >)));
           connect(spectra_identification_view_widget_, SIGNAL(spectrumSelected(int)), this, SLOT(activate1DSpectrum(int)));
+          //connect(spectra_identification_view_widget_, SIGNAL(spectrumSelected(std::vector<int, std::allocator<int> >)), this, SLOT(activate1DSpectrum(std::vector<int, std::allocator<int> >)));
           identificationview_behavior_ = new TOPPViewIdentificationViewBehavior(this);
           connect(spectra_identification_view_widget_, SIGNAL(requestVisibleArea1D(DoubleReal, DoubleReal)), identificationview_behavior_, SLOT(setVisibleArea1D(DoubleReal, DoubleReal)));
 
@@ -2297,11 +2307,144 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     }
   }
 
+  void TOPPViewBase::linkZoom()
+  {
+    zoom_together_ = !zoom_together_;
+    if(!zoom_together_)
+    {
+        linkZoom_action_->setText("Link &Zoom");
+    }
+    else
+    {
+      linkZoom_action_->setText("Unlink &Zoom");
+    }
+  }
+
   void TOPPViewBase::layerActivated()
   {
     updateToolBar();
     updateViewBar();
     updateCurrentPath();
+  }
+
+  void TOPPViewBase::layerZoomChanged()
+  {
+    QWidgetList windows = ws_->windowList();
+    if ( !windows.count() ) return;
+    if ( !zoom_together_ ) return;
+
+    SpectrumWidget* w = getActiveSpectrumWidget();
+
+    // figure out which dimension the active widget has: 2D (MSExperiment) or 1D (Iontrace)
+    // and get the corresponding RT values.
+    Spectrum1DWidget* sw1 = qobject_cast<Spectrum1DWidget*>(w);
+    Spectrum2DWidget* sw2 = qobject_cast<Spectrum2DWidget*>(w);
+    Spectrum3DWidget* sw3 = qobject_cast<Spectrum3DWidget*>(w);
+    int widget_dimension = -1;
+    if (sw1 != 0)
+    {
+      widget_dimension = 1;
+    }
+    else if (sw2 != 0)
+    {
+      widget_dimension = 2;
+    }
+    else if (sw3 != 0)
+    {
+      // dont link 3D
+      widget_dimension = 3;
+      return;
+    }
+    else 
+    {
+      // Could not cast into any widget. 
+      return;
+    }
+
+    // check if the calling layer is a chromatogram: 
+    // - either its type is DT_CHROMATOGRAM
+    // - or its peak data has a metavalue called "is_chromatogram" that is set to true
+    if(getActiveCanvas()->getCurrentLayer().type == LayerData::DT_CHROMATOGRAM || 
+        (getActiveCanvas()->getCurrentLayer().getPeakData()->size() > 0 && 
+         getActiveCanvas()->getCurrentLayer().getPeakData()->metaValueExists("is_chromatogram") && 
+         getActiveCanvas()->getCurrentLayer().getPeakData()->getMetaValue("is_chromatogram").toBool() 
+         ) ) {
+      double minRT = -1, maxRT = -1;
+
+      // Get the corresponding RT values depending on whether it is 2D (MSExperiment) or 1D (Iontrace).
+      if (widget_dimension == 1)
+      {
+        minRT = sw1->canvas()->getVisibleArea().minX();
+        maxRT = sw1->canvas()->getVisibleArea().maxX();
+      }
+      else if (widget_dimension == 2)
+      {
+        minRT = sw2->canvas()->getVisibleArea().minY();
+        maxRT = sw2->canvas()->getVisibleArea().maxY();
+      }
+
+      // go through all windows, adjust the visible area where necessary
+      for ( int i = 0; i < int(windows.count()); ++i )
+      {
+        QWidget *window = windows.at(i);
+        DRange<2> visible_area;
+        SpectrumWidget* specwidg = qobject_cast<SpectrumWidget*>(window);
+
+        // Skip if its not a SpectrumWidget, if it is not a chromatogram or if the dimensions don't match.
+        if(!specwidg) continue;
+        if(!(specwidg->canvas()->getCurrentLayer().type == LayerData::DT_CHROMATOGRAM) && 
+           !(specwidg->canvas()->getCurrentLayer().getPeakData()->size() > 0 && 
+             specwidg->canvas()->getCurrentLayer().getPeakData()->metaValueExists("is_chromatogram") && 
+             specwidg->canvas()->getCurrentLayer().getPeakData()->getMetaValue("is_chromatogram").toBool() 
+             ) ) 
+        {
+          continue;
+        }
+        if( !(widget_dimension == 1 && qobject_cast<Spectrum1DWidget*>(specwidg)) && 
+            !(widget_dimension == 2 && qobject_cast<Spectrum2DWidget*>(specwidg))  )
+        {
+          continue;
+        }
+
+        visible_area = specwidg->canvas()->getVisibleArea();
+
+        // if we found a min/max RT, change all windows of 1 dimension
+        if(minRT != -1 && maxRT != -1 && qobject_cast<Spectrum1DWidget*>(window))
+        {
+          visible_area.setMinX(minRT);
+          visible_area.setMaxX(maxRT);
+        }
+        specwidg->canvas()->setVisibleArea(visible_area);
+      }
+    }
+    else {
+      DRange<2> new_visible_area = w->canvas()->getVisibleArea();
+      // go through all windows, adjust the visible area where necessary
+      for(int i = 0; i < int(windows.count()); ++i)
+      {
+        QWidget *window = windows.at(i);
+        SpectrumWidget* specwidg = qobject_cast<SpectrumWidget*>(window);
+
+        // Skip if its not a SpectrumWidget, if it is a chromatogram or if the dimensions don't match.
+        if(!specwidg) continue;
+        if((specwidg->canvas()->getCurrentLayer().type == LayerData::DT_CHROMATOGRAM) || 
+           (specwidg->canvas()->getCurrentLayer().getPeakData()->size() > 0 && 
+             specwidg->canvas()->getCurrentLayer().getPeakData()->metaValueExists("is_chromatogram") && 
+             specwidg->canvas()->getCurrentLayer().getPeakData()->getMetaValue("is_chromatogram").toBool() 
+             ) )
+        {
+          continue;
+        }
+        if( !(widget_dimension == 1 && qobject_cast<Spectrum1DWidget*>(specwidg)) && 
+            !(widget_dimension == 2 && qobject_cast<Spectrum2DWidget*>(specwidg))  )
+        {
+          continue;
+        }
+        specwidg->canvas()->setVisibleArea(new_visible_area);
+      }
+      return;
+    }
+
   }
 
   void TOPPViewBase::layerDeactivated()
@@ -2315,6 +2458,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     connect(sw->canvas(),SIGNAL(preferencesChange()),this,SLOT(updateLayerBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(layerActivated()));
     connect(sw->canvas(),SIGNAL(layerModficationChange(Size,bool)),this,SLOT(updateLayerBar()));
+    connect(sw->canvas(),SIGNAL(layerZoomChanged(QWidget*)),this,SLOT(layerZoomChanged()));
     connect(sw,SIGNAL(sendStatusMessage(std::string,OpenMS::UInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UInt)));
     connect(sw,SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
     connect(sw,SIGNAL(dropReceived(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
@@ -2334,6 +2478,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
   		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatusInvert(double,double)));
       connect(sw2, SIGNAL(showSpectrumAs1D(int)), this, SLOT(showSpectrumAs1D(int)));
+      connect(sw2, SIGNAL(showSpectrumAs1D(std::vector<int, std::allocator<int> >)), this, SLOT(showSpectrumAs1D(std::vector<int, std::allocator<int> >)));
       connect(sw2, SIGNAL(showCurrentPeaksAs3D()), this, SLOT(showCurrentPeaksAs3D()));
   	}
 
@@ -2388,6 +2533,14 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     if (w)
     {
       view_behavior_->activate1DSpectrum(index);
+    }
+  }
+  void TOPPViewBase::activate1DSpectrum(std::vector<int, std::allocator<int> > indices)
+  {
+    Spectrum1DWidget* w = getActive1DWidget();
+    if (w)
+    {
+      view_behavior_->activate1DSpectrum(indices);
     }
   }
 
@@ -2949,7 +3102,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		topp_.layer_name = layer.name;
     topp_.window_id = getActiveSpectrumWidget()->getWindowId();
     topp_.spectrum_id = layer.getCurrentSpectrumIndex();
-		if (layer.type==LayerData::DT_PEAK)
+    if (layer.type == LayerData::DT_PEAK  && !(layer.chromatogram_flag_set()))
 		{
 			MzMLFile f;
 			f.setLogType(ProgressLogger::GUI);
@@ -2964,7 +3117,30 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         f.store(topp_.file_name+"_in",*layer.getPeakData());
 			}
 		}
-		else if (layer.type==LayerData::DT_FEATURE)
+    else if (layer.type == LayerData::DT_CHROMATOGRAM || layer.chromatogram_flag_set())
+    {
+      MzMLFile f;
+      // This means we have chromatogram data, either as DT_CHROMATOGRAM or as
+      // DT_PEAK with the chromatogram flag set. To run the TOPPTool we need to
+      // remove the flag and add the newly generated layer as spectrum data
+      // (otherwise we run into problems with SpectraViewWidget::updateEntries
+      // which assumes that all chromatogram data has chromatograms).
+      getActiveCanvas()->getCurrentLayer().remove_chromatogram_flag(); // removing the flag is not constant
+      //getActiveCanvas()->getCurrentLayer().getPeakData()->setMetaValue("chromatogram_passed_through_TOPP", "true"); 
+
+      f.setLogType(ProgressLogger::GUI);
+      if (topp_.visible)
+      {
+        ExperimentType exp;
+        getActiveCanvas()->getVisiblePeakData(exp);
+        f.store(topp_.file_name+"_in",exp);
+      }
+      else
+      {
+        f.store(topp_.file_name+"_in",*layer.getPeakData());
+      }
+    }
+    else if (layer.type==LayerData::DT_FEATURE)
 		{
 			if (topp_.visible)
 			{
@@ -3331,6 +3507,31 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
 	}
 
+  void TOPPViewBase::showSpectrumAs1D(std::vector<int, std::allocator<int> > indices)
+  {
+    Spectrum1DWidget* widget_1d = getActive1DWidget();
+    Spectrum2DWidget* widget_2d = getActive2DWidget();
+
+    if (widget_1d)
+    {
+      if (spectra_view_widget_->isVisible())
+      {
+        spectraview_behavior_->showSpectrumAs1D(indices);
+      }
+
+
+    } else if (widget_2d)
+    {
+      if (spectra_view_widget_->isVisible())
+      {
+        spectraview_behavior_->showSpectrumAs1D(indices);
+      }
+
+
+    }
+
+  }
+
   void TOPPViewBase::showCurrentPeaksAs2D()
   {
     const LayerData& layer = getActiveCanvas()->getCurrentLayer();
@@ -3448,7 +3649,9 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		qobject_cast<QWidget *>(log_->parent())->show();
 
 		//update log_
-		log_->append(topp_.process->readAllStandardOutput());
+    log_->moveCursor(QTextCursor::End,QTextCursor::MoveAnchor); // move cursor to end, since text is inserted at cursor
+    log_->insertPlainText(topp_.process->readAllStandardOutput());
+		
 	}
 
   Param TOPPViewBase::getSpectrumParameters(UInt dim)
@@ -4320,7 +4523,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     qobject_cast<QWidget*>(log_->parent())->show();
 
     //update log_
-    log_->append(text);
+    log_->moveCursor(QTextCursor::End,QTextCursor::MoveAnchor); // move cursor to end, since text is inserted at cursor
+		log_->insertPlainText(text);
   }
 
   void TOPPViewBase::openFilesInTOPPView(QStringList files)

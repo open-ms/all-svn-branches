@@ -86,18 +86,18 @@ const char* tool_name = "TOPPAS";
 // description of the usage of this TOPP tool
 //-------------------------------------------------------------
 
-void print_usage()
+void print_usage(Logger::LogStream& stream = Log_info)
 {
-	cerr << endl
-       << tool_name << " -- An assistant for GUI-driven TOPP workflow design." << endl
-       << endl
-       << "Usage:" << endl
-			 << " " << tool_name << " [options] [files]" << endl
-			 << endl
-			 << "Options are:" << endl
-			 << "  --help           Shows this help" << endl
-			 << "  -ini <File>      Sets the INI file (default: ~/.TOPPAS.ini)" << endl
-			 << endl ;
+	stream << "\n"
+         << tool_name << " -- An assistant for GUI-driven TOPP workflow design." << "\n"
+         << "\n"
+         << "Usage:" << "\n"
+			   << " " << tool_name << " [options] [files]" << "\n"
+			   << "\n"
+			   << "Options are:" << "\n"
+			   << "  --help           Shows this help" << "\n"
+			   << "  -ini <File>      Sets the INI file (default: ~/.TOPPAS.ini)" << "\n"
+			   << endl ;
 }
 
 int main( int argc, const char** argv )
@@ -129,7 +129,7 @@ int main( int argc, const char** argv )
     if(!(param.getValue("unknown").toString().hasSubstring("-psn") && !param.getValue("unknown").toString().hasSubstring(", ")))
     {
       LOG_ERROR << "Unknown option(s) '" << param.getValue("unknown").toString() << "' given. Aborting!" << endl;
-      print_usage();
+      print_usage(Log_error);
       return 1;
     }
 	}
@@ -180,12 +180,13 @@ int main( int argc, const char** argv )
  	  	mw->loadFiles((StringList)(param.getValue("misc")), splash_screen);
  	  }
 		else
-		{
-			mw->newPipeline();
+		{ // remember this new window as obsolete once a real workflow is loaded without this window being touched
+      // if this is not desired, simply call newPipeline() without arguments
+			mw->newPipeline(mw->IDINITIALUNTITLED);
 		}
 
 		// We are about to show the application. 
-		// Proper time to  remove the splashscreen, if at least 1.5 seconds have passed...
+		// Proper time to  remove the splash screen, if at least 1.5 seconds have passed...
 		while(stop_watch.getClockTime()<1.5) {/*wait*/};
 		stop_watch.stop();
 		splash_screen->close();

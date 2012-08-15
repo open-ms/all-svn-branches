@@ -244,10 +244,10 @@ private:
       registerInputFileList_("create:in","<files>",StringList(), "two or more input files separated by blanks", false);
       setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp,pepXML"));
       registerOutputFile_("create:out_splib","<file>", "", "splib Output files", false);
-      setValidFormats_("create:out_splib", StringList::create("splib"));
+      //setValidFormats_("create:out_splib", StringList::create("splib"));
       registerOutputFile_("create:out_pepidx","<file>", "", "pepidx Output files", false);
       registerOutputFile_("create:out_sptxt","<file>", "", "sptxt Output files", false);
-      setValidFormats_("create:out_sptxt", StringList::create("sptxt"));
+      //setValidFormats_("create:out_sptxt", StringList::create("sptxt"));
 
       registerOutputFile_("create:out_spidx","<file>", "", "spidx Output files", false);
 

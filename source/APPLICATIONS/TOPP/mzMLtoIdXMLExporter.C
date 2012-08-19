@@ -162,7 +162,7 @@ protected:
         // aus Experiment exp wird extrahiert und in out_exp gespeichert
         for ( Size i = 0; i != exp.size(); ++i )
         {
-          if ( exp[i].getMSLevel() == 2 )
+          if ( exp[i].getMSLevel() == 2 ) // is tandem spectrum
           {
             if (!exp[i].getPrecursors().empty())
             {

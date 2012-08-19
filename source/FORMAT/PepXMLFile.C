@@ -588,6 +588,14 @@ namespace OpenMS
 				current_peptide_.setScoreType(name);
 				current_peptide_.setHigherScoreBetter(true);
 			}
+      else if (name == "kendallPVal")
+      {
+        value = attributeAsDouble_(attributes, "value");
+        peptide_hit_.setScore(value);
+        current_peptide_.setScoreType(name);
+        current_peptide_.setHigherScoreBetter(true);
+      }
+
 
 		}
 
@@ -973,7 +981,6 @@ namespace OpenMS
 		{
 			// do nothing here (skip all elements that belong to the wrong experiment)
 		}
-
 		else if (element == "search_hit")
 		{
 			AASequence temp_aa_sequence = AASequence(current_sequence_);

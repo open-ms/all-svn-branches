@@ -549,7 +549,7 @@ private:
         qparam << pepXMLbase;
       }
 
-      cout << (String)qparam.join("\t") << endl;
+      //cout << (String)qparam.join("\t") << endl;
 
 
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
@@ -609,6 +609,7 @@ private:
         }
 
       }
+      //copy spectrast search-mode output files
       else if (getStringOption_("mode") == "search")
       {
         StringList tmp_files = tempdir.entryList(QDir::Files | QDir::Hidden);

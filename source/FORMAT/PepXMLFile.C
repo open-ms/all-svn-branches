@@ -589,7 +589,7 @@ namespace OpenMS
 				current_peptide_.setHigherScoreBetter(true);
 			}
       else if (name == "kendallPVal")
-      {
+      { // Pepitome score
         value = attributeAsDouble_(attributes, "value");
         peptide_hit_.setScore(value);
         current_peptide_.setScoreType(name);

@@ -107,7 +107,7 @@ protected:
             if ( ms2_rt > rt_low && ms2_rt < rt_high) // identification rt/mz matches spectrum (precursor) rt/mz
             {  
               string tmp = exp[i].getNativeID();
-              String tmp2 = tmp.substr( 41, 41 );
+              String tmp2 = tmp.substr( 41, 10 ); //TODO: proper endset
               int erg = tmp2.toInt() - 1;
               cit->setMetaValue("RT_index", erg);
               //cit->setMetaValue("RT_index", i); old

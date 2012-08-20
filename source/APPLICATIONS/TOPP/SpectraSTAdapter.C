@@ -102,7 +102,7 @@ public:
   }
 
   virtual ~TempDir() {
-    deleteDirectory(*this);
+    //deleteDirectory(*this);
   }
 
 
@@ -295,7 +295,7 @@ private:
       registerIntOption_("create:maximumNumReplicates", "<num>", 100, "Maximum number of replicates used to build consensus spectrum.", false, true);
       registerIntOption_("create:maximumNumPeaksKept", "<num>", 150, "De-noise single spectra by keeping only the most intense <num> peaks.", false, true);
       registerStringOption_("create:replicateWeight", "<score>", "c_WGTS", "Select the type of score to weigh and rank the replicates.", false, true);
-      setValidStrings_("create:buildAction", StringList::create("c_WGTS,c_WGTX,c_WGTP"));
+      setValidStrings_("create:replicateWeight", StringList::create("c_WGTS,c_WGTX,c_WGTP"));
 
       addEmptyLine_();
       addText_("BEST REPLICATE SELECTION OPTIONS (Applicable with -cAB option) ");
@@ -424,6 +424,7 @@ private:
 
       if (getStringOption_("mode") == "search")
       {
+
         //-------------------------------------------------------------
         //copy files to separate tmp directory
         //-------------------------------------------------------------
@@ -462,7 +463,6 @@ private:
         //-------------------------------------------------------------
         // parsing parameters
         //-------------------------------------------------------------
-
         qparam << "-sL" + tempdir.filePath(fi_splib.fileName());
         qparam << "-sD" + tempdir.filePath(fi_database.fileName());
         if (DataValue(getStringOption_("search:indexCacheAll")).toBool())
@@ -518,6 +518,8 @@ private:
         //-------------------------------------------------------------
         // parsing parameters
         //-------------------------------------------------------------
+
+
         qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
         qparam << "-" + getStringOption_("create:combineAction").toQString();
         qparam << "-" + getStringOption_("create:buildAction").toQString();
@@ -549,7 +551,7 @@ private:
         qparam << pepXMLbase;
       }
 
-      //cout << (String)qparam.join("\t") << endl;
+      cout << (String)qparam.join("\t") << endl;
 
 
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);

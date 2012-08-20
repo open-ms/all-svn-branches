@@ -34,6 +34,8 @@
 #include <QFileInfo>
 #include <QtCore/QFile>
 #include <QStringList>
+#include <OpenMS/KERNEL/StandardTypes.h>
+
 
 
 using namespace OpenMS;
@@ -132,8 +134,8 @@ protected:
 
       IDInfo id;
       String seq_string = data.at(0).toAscii().data();
-      id.seq = seq_string.substitute("q", "P(Pro->pyro-Glu)").substitute("s", "S(Phospho)").substitute("t", "T(Phospho)")
-          .substitute("y", "Y(Phospho)").substitute("e", "E").substitute("d", "D").substitute("k", "K").substitute("i", "I").substitute("l", "I").substitute("m", "M(Oxidation)"); //substitute("k","K(Carbamyl)").
+      id.seq = seq_string.substitute("s", "S(Phospho)").substitute("t", "T(Phospho)").substitute("y", "Y(Phospho)").substitute("e", "E").substitute("d", "D")
+          .substitute("k", "K").substitute("i", "I").substitute("l", "I").substitute("m", "M(Oxidation)").substitute("q", "P(Pro->pyro-Glu)"); //substitute("k","K(Carbamyl)").
       QString filename = data.at(1);
       id.rt = data.at(2).toDouble() * 60.0;   //to get rt in seconds
       id.mz = data.at(3).toDouble();
@@ -183,7 +185,15 @@ protected:
                   //                    cout << pc_mz << " " << ms2_rt_s << endl;
                   //                    cout << mz_low << " " << mz_high << " " << rt_low << " " << rt_high << endl;
 
-                  out_exp.push_back(exp[i]);  // add spectrum
+                  PeakSpectrum ps = exp[i];
+                  // hat scan= wert aus alter datei, neu hochzählen, entweder von 0 oder 1
+                  String tmp = ps.getNativeID();
+                  tmp.substr( 0, 40); //evtl anders abschneiden
+                  int j = 1;
+
+                  ps.setNativeID( tmp + j);
+                  j++;
+                  out_exp.push_back(ps);  // add spectrum
                   id.scan_index = out_exp.size() - 1;
                   DoubleReal score = 0;
                   uInt rank = 0;
@@ -194,7 +204,7 @@ protected:
                   pep_id.setMetaValue("RT", ms2_rt_s);
                   pep_id.setScoreType("Mascot"); // evtl anderen score eintragen
                   pep_id.setHigherScoreBetter(true);
-                  PeptideHit pep_hit(score, rank, id.charge, id.seq); // ?? score 0 und doublereal score unint rank
+                  PeptideHit pep_hit(score, rank, id.charge, id.seq);
                   //if at least one peptide hit is found
                   pep_id.insertHit(pep_hit);
                   peptide_ids.push_back(pep_id);

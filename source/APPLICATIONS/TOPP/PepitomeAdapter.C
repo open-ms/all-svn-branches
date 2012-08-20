@@ -269,7 +269,6 @@ protected:
    if (fi_pepxml.exists())
    {
 
-
      PepXMLFile pep_xml;     
      pep_xml.load(file_pepxml.toStdString(), protein_ids, peptide_ids);
 

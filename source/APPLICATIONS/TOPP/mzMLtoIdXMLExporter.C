@@ -186,17 +186,20 @@ protected:
                   //                    cout << mz_low << " " << mz_high << " " << rt_low << " " << rt_high << endl;
 
                   PeakSpectrum ps = exp[i];
-                  // hat scan= wert aus alter datei, neu hochzählen, entweder von 0 oder 1
                   String tmp = ps.getNativeID();
-                  tmp.substr( 0, 40); //evtl anders abschneiden
-                  int j = 1;
+                  String tmp2;
+                  tmp2 = tmp.substr( 0, 41);
 
-                  ps.setNativeID( tmp + j);
-                  j++;
+                  //id.scan_index -1 gelöscht
+                  id.scan_index = out_exp.size();
+                  String tmp3 = tmp2 + String( id.scan_index + 1 );
+                  ps.setNativeID( tmp3 );
+
+
                   out_exp.push_back(ps);  // add spectrum
-                  id.scan_index = out_exp.size() - 1;
                   DoubleReal score = 0;
                   uInt rank = 0;
+
 
                   // TODO: eintrag zu peptide identifications hinzufügen
                   PeptideIdentification pep_id;

@@ -69,6 +69,7 @@ struct IDInfo
   DoubleReal rt; // seconds
   Int charge;
   AASequence seq;
+  PeptideIdentification pep_id;
   Size scan_index; // scan index in out_exp
 
 };
@@ -91,7 +92,10 @@ protected:
     registerOutputFile_("out_idxml", "<file>", "", "idXML output file", true, false);
     registerOutputFile_("out_mzml", "<file>", "", "mzML output file", true, false);
     registerOutputFile_("out_mzml_test", "<file>", "", "mzML test file", true, false);
+    registerOutputFile_("out_idxml_test", "<file>", "", "idXML output file", true, false);
     registerOutputFile_("out_mzml_train", "<file>", "", "mzML train file", true, false);
+    registerOutputFile_("out_idxml_train", "<file>", "", "idXML output file", true, false);
+
     registerIntOption_("threshold", "<num>", 50, "Percentage of peptide hits used for Test Data", false, false);
 
   }
@@ -114,6 +118,8 @@ protected:
     TextFile input;
 
     vector<PeptideIdentification> peptide_ids;
+    vector<PeptideIdentification> out_test_pep_ids;
+    vector<PeptideIdentification> out_train_pep_ids;
     MSExperiment<> exp;
     MSExperiment<> out_exp = exp;
     out_exp.clear(false);
@@ -190,18 +196,14 @@ protected:
                   String tmp2;
                   tmp2 = tmp.substr( 0, 41);
 
-                  //id.scan_index -1 gelöscht
                   id.scan_index = out_exp.size();
                   String tmp3 = tmp2 + String( id.scan_index + 1 );
                   ps.setNativeID( tmp3 );
-
 
                   out_exp.push_back(ps);  // add spectrum
                   DoubleReal score = 0;
                   uInt rank = 0;
 
-
-                  // TODO: eintrag zu peptide identifications hinzufügen
                   PeptideIdentification pep_id;
                   pep_id.setMetaValue("MZ", pc_mz);
                   pep_id.setMetaValue("RT", ms2_rt_s);
@@ -211,6 +213,7 @@ protected:
                   //if at least one peptide hit is found
                   pep_id.insertHit(pep_hit);
                   peptide_ids.push_back(pep_id);
+                  id.pep_id = pep_id;
                   map_seq2id[id.seq.toString()].push_back(id);
                   break;
                 }
@@ -236,21 +239,67 @@ protected:
       {
 //        cout << "train set: " << it->second[j].scan_index << " " << out_exp.size() << endl;
         out_train.push_back(out_exp[it->second[j].scan_index]);
+        out_train_pep_ids.push_back(it->second[j].pep_id);
       }
       for (Size j = n_test; j < it->second.size(); ++j)
       {
 //        cout << "test set: " << it->second[j].scan_index << " " << out_exp.size() << endl;
         out_test.push_back(out_exp[it->second[j].scan_index]);
+        // TIMO out_test_pep_ids.push_back(it->second[j].pep_id);
+        out_test_pep_ids.push_back(it->second[j].pep_id);
+
       }
     }
+
+
+
+
+
+
+    MSExperiment<> new_out_train;
+    Size index = 1;
+    for ( Size i = 0; i != out_train.size(); ++i )
+    {
+      PeakSpectrum ps = out_train[i];
+      String tmp = ps.getNativeID();
+      String tmp2;
+      tmp2 = tmp.substr( 0, 41);
+      String tmp3 = tmp2 + String( index );
+      ps.setNativeID( tmp3 );
+      new_out_train.push_back(ps);
+      index++;
+
+    }
+
+
+    MSExperiment<> new_out_test;
+    index = 1;
+    for ( Size i = 0; i != out_test.size(); ++i )
+    {
+      PeakSpectrum ps = out_test[i];
+      String tmp = ps.getNativeID();
+      String tmp2;
+      tmp2 = tmp.substr( 0, 41);
+      String tmp3 = tmp2 + String( index );
+      ps.setNativeID( tmp3 );
+      new_out_test.push_back(ps);
+      index++;
+
+    }
+
+
+
+
+
+
 
     cout << "size (total/train/test) sets: " << out_exp.size() << " " << out_train.size() << " " << out_test.size() << endl;
 
     MzMLFile mzmlfile_test;
-    mzmlfile_test.store(getStringOption_("out_mzml_test"), out_test);
+    mzmlfile_test.store(getStringOption_("out_mzml_test"), new_out_test);
 
     MzMLFile mzmlfile_train;
-    mzmlfile_train.store(getStringOption_("out_mzml_train"), out_train);
+    mzmlfile_train.store(getStringOption_("out_mzml_train"), new_out_train);
 
     MzMLFile mzmlfile;
     mzmlfile.store(getStringOption_("out_mzml"), out_exp);
@@ -262,6 +311,12 @@ protected:
 
     IdXMLFile idxml_file;
     idxml_file.store(getStringOption_("out_idxml"), protein_ids, peptide_ids);
+
+    IdXMLFile idxml_file_test;
+    idxml_file_test.store(getStringOption_("out_idxml_test"), protein_ids, out_test_pep_ids);
+
+    IdXMLFile idxml_file_train;
+    idxml_file_train.store(getStringOption_("out_idxml_train"), protein_ids, out_train_pep_ids);
 
     return EXECUTION_OK;
   }

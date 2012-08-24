@@ -271,6 +271,34 @@ protected:
 
      PepXMLFile pep_xml;     
      pep_xml.load(file_pepxml.toStdString(), protein_ids, peptide_ids);
+     MSExperiment<> exp;
+     MzMLFile mzml;
+     mzml.load(getStringOption_("mzML"), exp);
+     for ( Size i = 0; i != exp.size(); ++i )
+     {
+       string tmp = exp[i].getNativeID();
+       String tmp2 = tmp.substr( 41, 10 );
+       Int scan_num_mzml = tmp2.toInt();
+//       cout << scan_num_mzml << endl;
+
+       for ( vector<PeptideIdentification>::iterator cit = peptide_ids.begin(); cit != peptide_ids.end(); ++cit )
+       {
+         //cout << "HUHUHUHUHUHUHUHHUHUHUHUHUHUHUHUHUHUHU" << endl;
+         String scan_num_pepxml = cit->getScoreType();
+         //DoubleReal id_rt = cit->getHits
+         //cout << id_rt << endl;
+         cout << scan_num_pepxml << endl;
+
+
+
+//         if ( scan_num_pepxml == scan_num_mzml )
+//         {
+//           DoubleReal test = exp[i].getRT();
+//           cit->setMetaValue("RT", test);
+//         }
+       }
+     }
+
 
      //pep_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
      id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);

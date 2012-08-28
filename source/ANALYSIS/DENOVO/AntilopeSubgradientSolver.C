@@ -467,4 +467,4 @@ namespace OpenMS {
     defaultsToParam_();
   }
 
-};
+}

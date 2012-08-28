@@ -441,15 +441,15 @@ namespace OpenMS
 
       if(add)
       {
-        DoubleReal tmp_score_old = seqan::property(vertices_, i).score;
+        DoubleReal tmp_score_old = vertices_[i].score;
 
-        seqan::property(vertices_, i).score += weight * scoring_func.getLogScore(disc_spectrum, seqan::getProperty(vertices_, i).real_mass, interprets);
+        vertices_[i].score += weight * scoring_func.getLogScore(disc_spectrum, vertices_[i].real_mass, interprets);
 
         std::cout<<"Node: "<<i<<" prev score: "<<tmp_score_old<<" New score: "<< vertices_[i].score << std::endl;
       }
       else
       {
-        seqan::property(vertices_, i).score = scoring_func.getLogScore(disc_spectrum, seqan::getProperty(vertices_, i).real_mass, interprets);
+        vertices_[i].score = scoring_func.getLogScore(disc_spectrum, vertices_[i].real_mass, interprets);
       }
 
       //recompute the peak indices of the original spectrum
@@ -458,8 +458,7 @@ namespace OpenMS
         peak_iter->peak_nr = spectrum.findNearest(disc_spectrum[peak_iter->peak_nr].getMZ());
       }
 
-      seqan::property(vertices_, i).peak_interprets = interprets;
-
+      vertices_[i].peak_interprets = interprets;
     }
 
     //filter nodes below threshold
@@ -475,6 +474,7 @@ namespace OpenMS
         vertices_.push_back(tmp_vertices[i]);        
       }
     }
+
     ordering_.resize(vertices_.size()-1);
 
     return 0;
@@ -624,6 +624,9 @@ namespace OpenMS
         target_candidates.clear();
       }
     }
+
+    seqan::resize(vertex_active_, vertices_.size(), true);
+    seqan::resize(edge_active_, edges_.size(), true);
     return 0;
   }
 

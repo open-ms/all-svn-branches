@@ -90,14 +90,12 @@ namespace OpenMS
         DoubleReal last_hit_mz=0.0;
         DoubleReal loc_match_intens=0.0;
 
-        PeakSpectrum::ConstIterator forw_it=orig_spec.begin();
+        PeakSpectrum::ConstIterator forw_it = orig_spec.begin();
+        PeakSpectrum::ReverseIterator rev_it = orig_spec.rbegin(); //TODO: WHY DOES CONSTREVERSEITERATOR NOT WORK? GCC BUG?
 
-        PeakSpectrum::ConstReverseIterator rev_it=orig_spec.rbegin();
-
-        while(forw_it!=orig_spec.end() && rev_it !=orig_spec.rend())
-        {
-          //std::cout<<"in while "<<i<<std::endl;
-          DoubleReal mirror_mz=(1+orig_parent_mass + i*step_size_) - rev_it->getMZ();
+        while((forw_it != orig_spec.end()) && rev_it != orig_spec.rend())
+        {          
+          DoubleReal mirror_mz=(1 + orig_parent_mass + i*step_size_) - rev_it->getMZ();
 
           if(forw_it->getMZ() - mirror_mz < -delta_)
           {

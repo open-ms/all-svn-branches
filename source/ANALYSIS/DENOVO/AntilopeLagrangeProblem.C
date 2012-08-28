@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeLagrangeProblem.h>
+#include <seqan/graph_algorithms/graph_algorithm.h>
 
 #include <iostream>
 #include <vector>

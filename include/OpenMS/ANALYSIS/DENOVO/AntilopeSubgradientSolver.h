@@ -235,6 +235,6 @@ namespace OpenMS
         return "unknown solver progress code";
       }
   };
-}; // namespace lisa
+}
 
 #endif

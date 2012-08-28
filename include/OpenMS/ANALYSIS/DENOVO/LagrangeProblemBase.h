@@ -76,6 +76,6 @@ namespace OpenMS {
 					) = 0;
 
   };
-}; // namespace lisa
+} // namespace lisa
 
 #endif

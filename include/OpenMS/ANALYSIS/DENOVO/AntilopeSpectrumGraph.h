@@ -286,6 +286,26 @@ public:
     return ordering_;
   }
 
+  void activateVertex(VertexDescriptor v)
+  {
+    seqan::assignProperty(vertex_active_, v, true);
+  }
+
+  void deactivateVertex(VertexDescriptor v)
+  {
+    seqan::assignProperty(vertex_active_, v, false);
+  }
+
+  void activateEdge(EdgeDescriptor e)
+  {
+    seqan::assignProperty(edge_active_, e, true);
+  }
+
+  void deactivateEdge(EdgeDescriptor e)
+  {
+    seqan::assignProperty(edge_active_, e, false);
+  }
+
 
   //TODO can also be removed as function and be done automatically in create node set
   /// score nodes using the learned parameters stored in file passed as parameter
@@ -316,7 +336,14 @@ protected:
   /// edges of the graph
   std::vector<Edge> edges_;
 
+  /// the ordering of vertices (is trivial but required for efficient call of seqan dag shortest path)
   std::vector<VertexDescriptor> ordering_;
+
+  /// vector of bools for each vertex (true --> vertex is active (default), false --> vertex is inactive)
+  seqan::String<bool> vertex_active_;
+
+  /// vector of bools for each edge (true --> edge is active (default), false --> edge is inactive)
+  seqan::String<bool> edge_active_;
 
 
 };//SpectrumGraphSeqan

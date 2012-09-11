@@ -58,8 +58,11 @@ namespace OpenMS
           intensity.push_back(0.0);
         }
       }
-      mz.push_back(mz_interpol_it->getMZ());
-      intensity.push_back(mz_interpol_it->getIntensity());
+      if (mz_interpol_it->getMZ() > last_mz)
+      {
+        mz.push_back(mz_interpol_it->getMZ());
+        intensity.push_back(mz_interpol_it->getIntensity());
+      }
       last_mz = mz_interpol_it->getMZ();
     }
 
@@ -182,8 +185,8 @@ namespace OpenMS
   {
     pickSeeds_();
     filterSeeds_();
-
-    startProgress(0, exp_.size(), "filtering raw data");    
+      
+    startProgress(0, exp_.size(), "filtering raw data");
 
     UInt filter_id = 0;
     // Iterate over all filters
@@ -198,7 +201,7 @@ namespace OpenMS
            ++picked_seed_rt_it, ++rt_id)
       {
         DoubleReal rt = picked_seed_rt_it->getRT();    // retention time of this spectrum
-
+          
         MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.RTBegin(rt);
         MSExperiment<Peak1D>::Iterator rt_it = exp_.RTBegin(rt);
 
@@ -213,7 +216,7 @@ namespace OpenMS
 
         // spectra with less than 10 data points and less then two picked peaks are being ignored
         if (rt_it->size() >= 10 && picked_rt_it->size() > 1)
-        {
+        {            
           SpectrumInterpolation spec_inter(*rt_it, *this);
 
           // XXX: Workaround to catch duplicated peaks
@@ -224,7 +227,7 @@ namespace OpenMS
           {
             DoubleReal picked_mz = picked_mz_it->getMZ();
             DoubleReal intensity = picked_mz_it->getIntensity();
-
+            
             // XXX: Ignore duplicated peaks
             if (!seen_mz.insert(picked_mz).second) continue;
 
@@ -242,7 +245,7 @@ namespace OpenMS
               continue;
 
             DoubleReal peak_width_cur = peak_width(picked_mz);
-
+              
             for (DoubleReal mz = picked_mz - peak_width_cur; mz < picked_mz + peak_width_cur; mz += 0.1 * peak_width_cur) // iteration correct
             {
               //--------------------------------------------------
@@ -263,7 +266,7 @@ namespace OpenMS
                 blacklistStartCheck = blacklist.begin();
                 blacklistEndCheck = blacklist.end();
               }
-
+ 
               bool isBlacklisted = false;
 
               for (multimap<DoubleReal, BlacklistEntry>::iterator blacklist_check_it = blacklistStartCheck; blacklist_check_it != blacklistEndCheck; ++blacklist_check_it)

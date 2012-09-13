@@ -979,6 +979,24 @@ private:
     out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
     out.setExperimentType("silac");
     
+    // set the 'label' for each map
+    UInt map = 0;
+    for (ConsensusMap::FileDescriptions::iterator
+         it = out.getFileDescriptions().begin();
+         it!= out.getFileDescriptions().end();
+         ++it)
+    {
+      if (out.getFileDescriptions().size() == 2)  // standard SILAC with one light and one heavy peptide
+      {
+        if (map==0) it->second.label = "light"; else it->second.label = "heavy";
+      }
+      else  // for triplets, quatruplets ... just number the maps.
+      {
+        it->second.label = (String)map;
+      }
+      map++;
+    }
+    
     ConsensusXMLFile c_file;
     c_file.store(filename, out);
   }

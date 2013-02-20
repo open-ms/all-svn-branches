@@ -72,6 +72,17 @@ namespace OpenMS
 			{
 				/// Default constructor
 				ParamEntry();
+				/// Copy constructor
+				ParamEntry(const ParamEntry &other): name(other.name),
+                                             description(other.description),
+                                             value(other.value),
+                                             tags(other.tags),
+                                             min_float(other.min_float),
+                                             max_float(other.max_float),
+                                             min_int(other.min_int),
+                                             max_int(other.max_int),
+                                             valid_strings(other.valid_strings)
+                                            { } ;
 				/// Constructor with name, description, value and advanced flag
 				ParamEntry(const String& n, const DataValue& v, const String& d, const StringList& t=StringList());
 				/// Destructor

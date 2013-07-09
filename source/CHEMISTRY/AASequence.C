@@ -1011,6 +1011,20 @@ namespace OpenMS
     }
   }
 
+  const Residue& AASequence::setResidue(Size index, const Residue* res)
+  {
+	if (index >= peptide_.size())
+	{
+	  throw Exception::IndexOverflow(__FILE__, __LINE__, __PRETTY_FUNCTION__, index, peptide_.size());
+	}
+	else
+	{
+		const Residue* ret = peptide_[index];
+		peptide_[index] = res;
+		return (*ret);
+	}
+  }
+
   ResidueDB * AASequence::getResidueDB_() const
   {
     return ResidueDB::getInstance();

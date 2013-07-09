@@ -717,6 +717,20 @@ START_SECTION(void getAAFrequencies(Map<String, Size>& frequency_table) const)
 
 END_SECTION
 
+START_SECTION(void setResidue(Size index, Residue& res))
+	AASequence test("WLQSEVIHAR");
+	Size pos = 3;
+	TEST_EQUAL(test.getResidue(pos).getOneLetterCode(), "S");
+	const Residue * rep = ResidueDB::getInstance()->getResidue("A");
+	const Residue& bef = test.setResidue(pos,rep);
+	TEST_EQUAL(rep->getOneLetterCode(), "A");
+	TEST_EQUAL(bef.getOneLetterCode(), "S");
+	test.setResidue(0,rep);
+	test.setResidue(test.size()-1,rep);
+	TEST_EQUAL(test.toUnmodifiedString(), "ALQAEVIHAA");
+
+	TEST_EXCEPTION(Exception::IndexOverflow, test.setResidue((Size)1000, rep))
+END_SECTION
 
 START_SECTION([EXTRA] Tag in peptides)
 	String I_weight = String(ResidueDB::getInstance()->getResidue("I")->getMonoWeight(Residue::Internal));

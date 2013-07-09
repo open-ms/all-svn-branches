@@ -413,6 +413,9 @@ protected:
     /// returns a pointer to the residue, which is at position index
     const Residue & getResidue(Size index) const;
 
+    /// Inserts the res at the given position if the position is defined.
+    const Residue & setResidue(Size index, const Residue* res);
+
     /// returns the formula of the peptide
     EmpiricalFormula getFormula(Residue::ResidueType type = Residue::Full, Int charge = 0) const;
 

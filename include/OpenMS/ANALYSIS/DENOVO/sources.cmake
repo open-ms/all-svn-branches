@@ -13,6 +13,7 @@ CompNovoIonScoringCID.h
 CompNovoIdentificationCID.h
 CompNovoIonScoringBase.h
 CompNovoIonScoring.h
+MSNOVOGEN.h
 )
 
 ### add path to the filenames

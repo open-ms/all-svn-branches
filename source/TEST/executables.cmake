@@ -421,6 +421,13 @@ set(analysis_executables_list
 	StablePairFinder_test
 	TransformationDescription_test
 	TransformationModel_test
+  #MSNOVOGEN
+	Mutater_test
+	SwappingMutater_test
+	InvertingMutater_test
+	SubstitutingMutater_test
+	DefaultMutater_test
+	RandomMutater_test
 )
 
 set(applications_executables_list

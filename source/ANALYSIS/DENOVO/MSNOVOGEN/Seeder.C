@@ -33,17 +33,75 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
+#include <time.h>
+#include <stdlib.h>
 
 namespace OpenMS
 {
 
-  Seeder::Seeder()
-  {}
+  Seeder::Seeder(double pm, double pmt, std::vector<const Residue*> al) :
+    precursorMass(pm), precursorMassTolerance(pmt), aaList(al)
+  {
+	seed(time(0));
+  }
 
-  Seeder::Seeder(const Seeder& other)
-  {}
+  Seeder::~Seeder()
+  {
+  }
 
-  Seeder & Seeder::operator=(const Seeder& rhs)
-  {}
+  void Seeder::seed(const unsigned int seed)
+  {
+	randomSeed = seed;
+	srand(randomSeed);
+  }
+
+  const AASequence Seeder::getRandomSequence(const int len, const double weight, const double tolerance)
+  {
+    String str;
+    for(int i=0; i<len; i++)
+      str += getRandomAA();
+    AASequence seq(str);
+    adjustToFitMass(seq, weight, tolerance);
+    return(seq);
+  }
+
+  bool Seeder::adjustToFitMass(AASequence& sequence, const double weight, const double tolerance) const
+  {
+	double curWeight = sequence.getMonoWeight();
+	double diff = std::abs(curWeight-weight);
+	double nDiff;
+	double minDiff;
+	Size pos;
+	if(diff <= tolerance)
+	  return true;
+	int mi = 10;	//max iterations for while loop
+	while(diff > tolerance)
+    {
+	  pos = rand() % sequence.size();
+	  minDiff = diff;
+	  const Residue * replace;
+	  for(Size lp=0; lp<aaList.size(); lp++)
+	  {
+	    nDiff = std::abs((curWeight - sequence[pos].getMonoWeight(Residue::Full) + aaList[lp]->getMonoWeight(Residue::Full)) - weight);
+	    if(nDiff < minDiff)
+	    {
+		  minDiff = nDiff;
+		  replace = aaList[lp];
+	    }
+	  }
+	  sequence.setResidue(pos,replace);
+	  curWeight = sequence.getMonoWeight(Residue::Full);
+	  diff = std::abs(curWeight - weight);
+	  if(--mi == 0)
+		  return(false);
+    }
+	return(true);
+  }
+
+  const String Seeder::getRandomAA() const
+  {
+    Size i = rand() % aaList.size();
+    return(aaList[i]->getModifiedOneLetterCode());
+  }
 
 } // namespace

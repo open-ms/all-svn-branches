@@ -36,23 +36,38 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_KILLER_H
 
 #include <OpenMS/config.h>
-class GenPool;
 
 namespace OpenMS
 {
+  class GenPool;
+
   class OPENMS_DLLAPI Killer
   {
 public:
-    /// Default c'tor
-    Killer();
+	/// The maximum population of the gen pool that is allowed (may be exceeded during mating).
+	int maxPopulation_;
+	/// The population size after the last killing round.
+    int previousPopulation_;
 
-    /// Copy c'tor
-    Killer(const Killer& other);
+private:
+	/// To prevent copy construction; Copy c'tor
+	Killer(const Killer& other);
+	/// To prevent assignment; Assignment operator
+	Killer & operator=(const Killer& rhs);
 
-    /// Assignment operator
-    Killer & operator=(const Killer& rhs);
+public:
+    /// c'tor
+    Killer(const int maxPopulation, const int initialPopulation);
 
-    virtual void kill(GenPool& genPool, int maxPopulation) = 0;
+    virtual ~Killer() = 0;
+
+    virtual void kill(GenPool& genPool) = 0;
+
+    int getMaxPopulation() const;
+
+    int getPreviousPopulation() const;
+
+    void setPreviousPopulation(const int previous_population);
 
   };
 } // namespace

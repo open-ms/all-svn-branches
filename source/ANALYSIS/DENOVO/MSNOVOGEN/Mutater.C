@@ -40,31 +40,39 @@
 namespace  OpenMS
 {
 
-  Mutater::Mutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
+  Mutater::Mutater(double pm, double pmt, std::vector<const Residue*> al)
+    : mutationRate(0.2), precursorMass(pm), precursorMassTolerance(pmt), aaList(al)
   {
-	mutationRate = 0.2;
-    this->precursorMass = precursorMass;
-    this->precursorMassTolerance = precursorMassTolerance;
-    this->aaList = aaList;
+	//mutationRate = 0.2;
+    //this->precursorMass = precursorMass;
+    //this->precursorMassTolerance = precursorMassTolerance;
+    //this->aaList = aaList;
 
     // make sure random is initialized
-    srand (time(NULL));
+	  seed(time(0));
   }
+
 
 
   void Mutater::mutate(GenPool& genPool)
   {
-	for(std::vector<Chromosome>::iterator iter = genPool.begin(); iter!= genPool.end(); ++iter)
+	for(std::vector<Chromosome*>::iterator iter = genPool.begin(); iter!= genPool.end(); ++iter)
 	{
 	  double rv = (rand() % 101)/100;
 	  if(rv > mutationRate)
 		continue;
-	  mutate(*iter);
+	  mutate(**iter);
 	}
   }
 
   Mutater::~Mutater()
   {
-  };
+  }
+
+  void Mutater::seed(const unsigned int seed)
+  {
+	randomSeed = seed;
+	srand(randomSeed);
+  }
 
 } // namespace

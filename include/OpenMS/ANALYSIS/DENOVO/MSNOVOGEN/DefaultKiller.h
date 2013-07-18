@@ -39,23 +39,18 @@
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
 
-class GenPool;
-
 namespace OpenMS
 {
   class OPENMS_DLLAPI DefaultKiller : public Killer
   {
 public:
     /// Default c'tor
-    DefaultKiller();
+    DefaultKiller(const int maxPopulation, const int initialPopulation);
 
-    /// Copy c'tor
-    DefaultKiller(const DefaultKiller& other);
+    /// Implementation of virtual ~Killer()
+    ~DefaultKiller();
 
-    /// Assignment operator
-    DefaultKiller & operator=(const DefaultKiller& rhs);
-
-    virtual void kill(GenPool& genPool, int maxPopulation);
+    virtual void kill(GenPool& genPool);
 
   };
 } // namespace

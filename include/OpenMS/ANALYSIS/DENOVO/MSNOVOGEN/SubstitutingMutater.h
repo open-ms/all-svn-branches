@@ -40,7 +40,7 @@
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI SubstitutingMutater : Mutater
+  class OPENMS_DLLAPI SubstitutingMutater : public Mutater
   {
 
 public:

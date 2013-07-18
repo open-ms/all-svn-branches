@@ -32,56 +32,22 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
-#include <stdexcept>
+#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEQUENCESEEDER_H
+#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEQUENCESEEDER_H
+
+#include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
 
 namespace OpenMS
 {
-
-  GenPool::GenPool() :
-    maxPoolSize(200), precursorMassTolerance(0.3)
+  class OPENMS_DLLAPI RandomSequenceSeeder : public Seeder
   {
-	  // mutater = new DefaultMutater(precursorMass,precursorMassTolerance,aaList);
-  }
+public:
+    /// Default c'tor
+    RandomSequenceSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-  void GenPool::setMutater(const Mutater& mutater)
-  {
-  }
-
-  void GenPool::sort(const int sortMethod) {
-  }
-
-  Size GenPool::getPopulationSize() {
-    return(genPool.size());
-  }
-
-  void GenPool::setPool(std::vector<Chromosome *> newPool)
-  {
-    genPool = newPool;
-  }
-
-  void GenPool::initGenPool(const int maxPoolSize)
-  {
-	Size maxTries = 10 * maxPoolSize;
-    while((maxTries > 0) && (genPool.size() < maxPoolSize))
-    {
-      Chromosome ni = seeder->createIndividual();
-      addIndividual(ni);
-      maxTries--;
-    }
-  }
-
-  bool GenPool::addIndividual(Chromosome individual) {
-	  try
-	  {
-		Chromosome *known = knownIndividuals.at(individual.getSequence().toString());
-	  }
-	  catch(const std::out_of_range& oor)
-	  {
-		genPool.push_back(&individual);
-		knownIndividuals.insert(std::pair<String,Chromosome *>(individual.getSequence().toString(),&individual));
-		return true;
-	  }
-	  return false;
-  }
+    virtual const Chromosome & createIndividual();
+  };
 } // namespace
+
+#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEQUENCESEEDER_H

@@ -428,6 +428,9 @@ set(analysis_executables_list
 	SubstitutingMutater_test
 	DefaultMutater_test
 	RandomMutater_test
+	DefaultKiller_test
+	SimpleDecreasingKiller_test
+	RandomSequenceSeeder_test
 )
 
 set(applications_executables_list

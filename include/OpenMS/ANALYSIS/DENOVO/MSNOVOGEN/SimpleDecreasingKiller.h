@@ -32,56 +32,43 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
-#include <stdexcept>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SIMPLEDECREASINGKILLER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SIMPLEDECREASINGKILLER_H
+
+#include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
 
 namespace OpenMS
 {
-
-  GenPool::GenPool() :
-    maxPoolSize(200), precursorMassTolerance(0.3)
+  /**
+  * @brief The SimpleDecreasingKiller aims to decrease the population size by
+  * a set number of individuals in each generation (if possible).
+  * If less individuals exist than should be killed, less are being killed to account for that.
+  */
+  class OPENMS_DLLAPI SimpleDecreasingKiller : public Killer
   {
-	  // mutater = new DefaultMutater(precursorMass,precursorMassTolerance,aaList);
-  }
+private:
+	  /// By how many members a population should shrink per generation.
+	  int decreasePerGeneration;
 
-  void GenPool::setMutater(const Mutater& mutater)
-  {
-  }
+public:
+    /// Default c'tor
+    SimpleDecreasingKiller(int maxPopulation, int initialPopulation);
 
-  void GenPool::sort(const int sortMethod) {
-  }
+    ~SimpleDecreasingKiller();
 
-  Size GenPool::getPopulationSize() {
-    return(genPool.size());
-  }
+    virtual void kill(GenPool& genPool);
 
-  void GenPool::setPool(std::vector<Chromosome *> newPool)
-  {
-    genPool = newPool;
-  }
+	int getDecreasePerGeneration() const
+	{
+		return decreasePerGeneration;
+	}
 
-  void GenPool::initGenPool(const int maxPoolSize)
-  {
-	Size maxTries = 10 * maxPoolSize;
-    while((maxTries > 0) && (genPool.size() < maxPoolSize))
-    {
-      Chromosome ni = seeder->createIndividual();
-      addIndividual(ni);
-      maxTries--;
-    }
-  }
-
-  bool GenPool::addIndividual(Chromosome individual) {
-	  try
-	  {
-		Chromosome *known = knownIndividuals.at(individual.getSequence().toString());
-	  }
-	  catch(const std::out_of_range& oor)
-	  {
-		genPool.push_back(&individual);
-		knownIndividuals.insert(std::pair<String,Chromosome *>(individual.getSequence().toString(),&individual));
-		return true;
-	  }
-	  return false;
-  }
+	void setDecreasePerGeneration(int decreasePerGeneration)
+	{
+		this->decreasePerGeneration = decreasePerGeneration;
+	}
+};
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SIMPLEDECREASINGKILLER_H

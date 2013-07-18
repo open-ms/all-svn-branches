@@ -40,7 +40,9 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
 #include <vector>
+#include <map>
 
 namespace OpenMS
 {
@@ -51,35 +53,59 @@ namespace OpenMS
   */
   class OPENMS_DLLAPI GenPool
   {
+public:
+	  enum {BYSCOREDEC = 0};
+
 private:
-	  std::vector<Chromosome> genPool;
+	  std::map<String,Chromosome *> knownIndividuals;
+	  std::vector<Chromosome *> genPool;
 	  Mutater* mutater;
 	  Mater* mater;
 	  Killer* killer;
+	  Seeder* seeder;
+	  int maxPoolSize;
 	  double precursorMass;
 	  double precursorMassTolerance;
 	  std::vector<const Residue *> aaList;
 
+	  ///not implemented, should not be copied
+	  GenPool( const GenPool& );
+	  ///not implemented, should not be assigned.
+	  GenPool & operator=(const GenPool &);
 public:
     /// Default c'tor
     GenPool();
-    GenPool( const GenPool& ); //not implemented, should not be copied
+
     ~GenPool()
     {
       delete mutater;
     };
+
+    /// Tries to initialize the gen pool with maxPoolSize individials.
+    /// If not successful within 10*maxPoolSize tries, gives up.
+    void initGenPool(const int maxPoolSize);
+
     void mutate();
     void setMutater(const Mutater& mutater);
     void crossover();
     void setMater(const Mater& mater);
     void kill();
     void setKiller(const Killer& killer);
-    int getPopulationSize();
-    std::vector<Chromosome>::iterator begin()
+    void setSeeder(const Seeder& seeder);
+    Size getPopulationSize();
+    void sort(const int sortMethod);
+    void setPool(std::vector<Chromosome *> newPool);
+
+    /// Add a Chromosome which must not have been seen before.
+    /// Returns true if added and false if not.
+    bool addIndividual(Chromosome individual);
+
+    std::vector<Chromosome *>::iterator begin()
     {
       return(genPool.begin());
     };
-    std::vector<Chromosome>::iterator end() {
+
+    std::vector<Chromosome *>::iterator end() {
     	return(genPool.end());
     };
 

@@ -14,6 +14,7 @@ DefaultScorer.h
 DefaultMutater.h
 DefaultMater.h
 DefaultKiller.h
+IntervtingMutater.h
 SwappingMutater.h
 SubstitutingMutater.h
 RandomMutater.h
@@ -21,8 +22,6 @@ Seeder.h
 RandomSeeder.h
 SequenceTagSeeder.h
 InvertingMutater.h
-SimpleDecreasingKiller.h
-RandomSequenceSeeder.h
 )
 
 ### add path to the filenames

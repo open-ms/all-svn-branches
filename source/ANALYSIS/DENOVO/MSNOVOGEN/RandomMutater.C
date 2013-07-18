@@ -51,23 +51,14 @@ namespace OpenMS
     weights.push_back(1.0);
   }
 
-  /*
-  RandomMutater::RandomMutater()
-  {
-    weights.push_back(0.4);
-    weights.push_back(0.7);
-    weights.push_back(1.0);
-  }
-  */
-
   void RandomMutater::mutate(Chromosome& chromosome)
   {
-        	   SubstitutingMutater subm(precursorMass, precursorMassTolerance, aaList);
-        	  SwappingMutater swam(precursorMass, precursorMassTolerance, aaList);
-        	  InvertingMutater invm(precursorMass, precursorMassTolerance, aaList);
-        	  DefaultMutater defm(precursorMass, precursorMassTolerance, aaList);
+    SubstitutingMutater subm(precursorMass, precursorMassTolerance, aaList);
+    SwappingMutater swam(precursorMass, precursorMassTolerance, aaList);
+    InvertingMutater invm(precursorMass, precursorMassTolerance, aaList);
+    DefaultMutater defm(precursorMass, precursorMassTolerance, aaList);
 	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
-    for(int i=0; i<weights.size(); i++)
+    for(unsigned int i=0; i<weights.size(); i++)
     {
       if(weights[i] <= rv)
       {
@@ -83,6 +74,7 @@ namespace OpenMS
         	  	   break;
           default:
  	  	   	   	   defm.mutate(chromosome);
+ 	  	   	   	   break;
         }
       }
     }

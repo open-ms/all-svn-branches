@@ -33,17 +33,20 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSeeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
 
 namespace OpenMS
 {
 
-  RandomSeeder::RandomSeeder()
-  {}
+  RandomSeeder::RandomSeeder(double pm, double pmt, std::vector<const Residue*> al) :
+	Seeder(pm,pmt,al)
+  {
+  }
 
-  RandomSeeder::RandomSeeder(const RandomSeeder& other)
-  {}
-
-  RandomSeeder & RandomSeeder::operator=(const RandomSeeder& rhs)
-  {}
+  const Chromosome & RandomSeeder::createIndividual()
+  {
+    RandomSequenceSeeder rss(precursorMass, precursorMassTolerance, aaList);
+    return rss.createIndividual();
+  }
 
 } // namespace

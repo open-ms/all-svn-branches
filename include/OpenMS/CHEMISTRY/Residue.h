@@ -448,6 +448,9 @@ public:
     /// returns the name as one letter code
     const String & getOneLetterCode() const;
 
+    /// returns the one letter code plus the modification
+    String getModifiedOneLetterCode() const;
+
     /// adds a neutral loss formula
     void addLossFormula(const EmpiricalFormula &);
 

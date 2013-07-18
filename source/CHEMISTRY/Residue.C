@@ -266,6 +266,20 @@ namespace OpenMS
     return one_letter_code_;
   }
 
+  String Residue::getModifiedOneLetterCode() const
+  {
+	if(is_modified_)
+	{
+      String id = "M";
+      id += "(";
+      id += getModification();
+      id += ")";
+      return id;
+	}
+	else
+      return getOneLetterCode();
+  }
+
   DoubleReal Residue::getPka() const
   {
     return pka_;

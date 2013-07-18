@@ -60,18 +60,22 @@ namespace OpenMS
     	for(int p = 0; p < aaList.size(); p++)
     	{
     	  const Residue& cu = as.getResidue(i);
-		  const Residue*pr = aaList[p];
+		  const Residue* pr = aaList[p];
+		  if(pr->getOneLetterCode() == replaced.getOneLetterCode())
+			  continue;
     	  double pdiff = cu.getMonoWeight(Residue::Full) - pr->getMonoWeight(Residue::Full);
-    	  if(std::abs(precursorMass - (seqMass - mdiff + pdiff)) <= precursorMassTolerance)
+    	  if(std::abs(precursorMass - (seqMass - mdiff - pdiff)) <= precursorMassTolerance)
     	  {
-    		std::pair<int, const Residue*> p(i,pr);
+    		std::pair<Size, const Residue*> p(i,pr);
     	    possRep.push_back(p);
     	  }
     	}
     }
-    int w = rand() % possRep.size();
-    as.setResidue(possRep[w].first, possRep[w].second);
-    chromosome.setSequence(as);
+    if(possRep.size() > 0) {
+      int w = rand() % possRep.size();
+      as.setResidue(possRep[w].first, possRep[w].second);
+      chromosome.setSequence(as);
+    }
   }
 
 } // namespace

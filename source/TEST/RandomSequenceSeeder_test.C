@@ -1,3 +1,4 @@
+Error: No XML file found for class 'RandomSequenceSeeder'. Aborting!
 // --------------------------------------------------------------------------
 //                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
@@ -28,28 +29,36 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: $
+// $Maintainer: Jens Allmer$
+// $Authors: Jens Allmer$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(DefaultMutater, "$Id$")
+START_TEST(RandomSequenceSeeder, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-
-START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
+RandomSequenceSeeder* ptr = 0;
+RandomSequenceSeeder* null_ptr = 0;
+START_SECTION(RandomSequenceSeeder())
 {
-  // TODO
+	ptr = new RandomSequenceSeeder();
+	TEST_NOT_EQUAL(ptr, null_ptr)
+}
+END_SECTION
+
+START_SECTION(~RandomSequenceSeeder())
+{
+	delete ptr;
 }
 END_SECTION
 

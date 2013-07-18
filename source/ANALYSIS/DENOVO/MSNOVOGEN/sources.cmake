@@ -21,6 +21,8 @@ Seeder.C
 RandomSeeder.C
 SequenceTagSeeder.C
 InvertingMutater.C
+SimpleDecreasingKiller.C
+RandomSequenceSeeder.C
 )
 
 ### add path to the filenames

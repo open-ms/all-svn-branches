@@ -36,6 +36,9 @@
 
 ///////////////////////////
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/CHEMISTRY/ResidueDB.h>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -46,24 +49,45 @@ START_TEST(SubstitutingMutater, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-SubstitutingMutater* ptr = 0;
-SubstitutingMutater* null_ptr = 0;
-START_SECTION(SubstitutingMutater())
-{
-	ptr = new SubstitutingMutater();
-	TEST_NOT_EQUAL(ptr, null_ptr)
-}
-END_SECTION
-
-START_SECTION(~SubstitutingMutater())
-{
-	delete ptr;
-}
-END_SECTION
-
 START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
 {
-  // TODO
+	double fimt = 0.3;
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
+	int test[]{0,3000,6000,6500,7000,8000,9000};
+	String res[]{"WLQQEVIHAD","WLQSEVIHQV","ELQSEVIHKR","WLQQEVIHAD","WLESKVIHAR","WLQQEVIHAD","WLQSNNIHAR"};
+	for(int i=0; i<7; i ++)
+	{
+		AASequence aas("WLQSEVIHAR");
+		Chromosome chr;
+		chr.setSequence(aas);
+		SubstitutingMutater swm(aas.getMonoWeight(),fimt,aaList);
+		swm.seed(test[i]);
+		swm.mutate(chr);
+		double diff = std::abs((double)chr.getSequence().getMonoWeight()-aas.getMonoWeight());
+		TEST_EQUAL(diff <= fimt, true);
+		TEST_EQUAL(chr.getSequence().toString(), res[i]);
+	}
 }
 END_SECTION
 

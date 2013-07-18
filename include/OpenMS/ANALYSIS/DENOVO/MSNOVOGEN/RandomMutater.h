@@ -42,7 +42,7 @@
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI RandomMutater : Mutater
+  class OPENMS_DLLAPI RandomMutater : public Mutater
   {
 private:
 	/// The vector holds the weights for the random decision of which Mutater to use.
@@ -64,14 +64,17 @@ public:
     virtual void mutate(Chromosome& chromosome);
 
     /// Returns the weights currently set for the Mutaters.
-	const std::vector<double>& getWeights() const
+	const std::vector<double> getWeights() const
 	{
+		if(weights.size() < 1)
+			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		std::vector<double> ret;
-		for(int i = weights.size()-2; i >= 0; i--)
+		double val = weights[0];
+		ret.push_back(val);
+		for(Size i = 1; i < weights.size(); i++)
 		{
-	      double val = weights[i+1] - weights[i];
-	      std::vector<double>::iterator it = ret.begin();
-		  ret.insert(it, val);
+	      val = weights[i] - weights[i-1];
+		  ret.push_back(val);
 		}
 		return ret;
 	}
@@ -81,7 +84,7 @@ public:
 	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
 	void setWeights(const std::vector<double>& weights) {
 		this->weights[0] = weights[0];
-		for(int i=1; i<this->weights.size(); i++)
+		for(unsigned int i=1; i<this->weights.size(); i++)
 		{
 		  this->weights[i] = weights[i]+this->weights[i-1];
 		}

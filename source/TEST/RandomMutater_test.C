@@ -36,6 +36,9 @@
 
 ///////////////////////////
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/CHEMISTRY/ResidueDB.h>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -46,36 +49,119 @@ START_TEST(RandomMutater, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-RandomMutater* ptr = 0;
-RandomMutater* null_ptr = 0;
-START_SECTION(RandomMutater())
-{
-	ptr = new RandomMutater();
-	TEST_NOT_EQUAL(ptr, null_ptr)
-}
-END_SECTION
-
-START_SECTION(~RandomMutater())
-{
-	delete ptr;
-}
-END_SECTION
-
 START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
 {
-  // TODO
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+	int seed[]{0,10,100,1000,5000};
+	for(int i=0; i<5; i++) {
+		AASequence aas("WLQSEVIHAR");
+		Chromosome chr;
+		chr.setSequence(aas);
+		RandomMutater rm(aas.getMonoWeight(),0.3,aaList);
+		rm.seed(i);
+		rm.mutate(chr);
+		TEST_EQUAL((double)chr.getSequence().getMonoWeight(), aas.getMonoWeight());
+		TEST_NOT_EQUAL(chr.getSequence().toString(), aas.toString());
+	}
 }
 END_SECTION
 
 START_SECTION((const std::vector<double>& getWeights() const ))
 {
-  // TODO
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+    AASequence aas("WLQSEVIHAR");
+    RandomMutater rm(aas.getMonoWeight(),0.3,aaList);
+    vector<double> res = rm.getWeights();
+    TEST_EQUAL(res[0],0.4);
+    TEST_EQUAL(res[1],0.3);
+    TEST_EQUAL(res[2],0.3);
 }
 END_SECTION
 
 START_SECTION((void setWeights(const std::vector< double > &weights)))
 {
-  // TODO
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+    AASequence aas("WLQSEVIHAR");
+    RandomMutater rm(aas.getMonoWeight(),0.3,aaList);
+    vector<double> res = rm.getWeights();
+    TEST_EQUAL(res[0],0.4);
+    TEST_EQUAL(res[1],0.3);
+    TEST_EQUAL(res[2],0.3);
+    res[0] = 0.1;
+    res[1] = 0.5;
+    res[2] = 0.4;
+    RandomMutater rm1(aas.getMonoWeight(),0.3,aaList);
+    rm1.setWeights(res);
+    res = rm.getWeights();
+    TEST_EQUAL(res[0],0.4);
+    TEST_EQUAL(res[1],0.3);
+    TEST_EQUAL(res[2],0.3);
 }
 END_SECTION
 

@@ -32,56 +32,42 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
-#include <stdexcept>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/SimpleDecreasingKiller.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 
 namespace OpenMS
 {
 
-  GenPool::GenPool() :
-    maxPoolSize(200), precursorMassTolerance(0.3)
-  {
-	  // mutater = new DefaultMutater(precursorMass,precursorMassTolerance,aaList);
-  }
-
-  void GenPool::setMutater(const Mutater& mutater)
+  SimpleDecreasingKiller::SimpleDecreasingKiller(int maxPopulation, int initialPopulation) :
+    Killer(maxPopulation, initialPopulation), decreasePerGeneration(5)
   {
   }
 
-  void GenPool::sort(const int sortMethod) {
-  }
-
-  Size GenPool::getPopulationSize() {
-    return(genPool.size());
-  }
-
-  void GenPool::setPool(std::vector<Chromosome *> newPool)
+  SimpleDecreasingKiller::~SimpleDecreasingKiller()
   {
-    genPool = newPool;
   }
 
-  void GenPool::initGenPool(const int maxPoolSize)
+  void SimpleDecreasingKiller::kill(GenPool& genPool)
   {
-	Size maxTries = 10 * maxPoolSize;
-    while((maxTries > 0) && (genPool.size() < maxPoolSize))
+    int currentPopulation = genPool.getPopulationSize();
+    int targetPopulation = getPreviousPopulation() - decreasePerGeneration;
+    if(currentPopulation > targetPopulation)
     {
-      Chromosome ni = seeder->createIndividual();
-      addIndividual(ni);
-      maxTries--;
+	  genPool.sort(GenPool::BYSCOREDEC);
+	  std::vector<Chromosome *> ngp;
+	  int c = 0;
+	  for(std::vector<Chromosome *>::iterator i = genPool.begin(); i != genPool.end(); i++) {
+		if(c++ >= targetPopulation)
+			break;
+		ngp.insert(ngp.begin(), *i);
+	  }
+	  genPool.setPool(ngp);
+	  setPreviousPopulation(targetPopulation);
     }
-  }
-
-  bool GenPool::addIndividual(Chromosome individual) {
-	  try
-	  {
-		Chromosome *known = knownIndividuals.at(individual.getSequence().toString());
-	  }
-	  catch(const std::out_of_range& oor)
-	  {
-		genPool.push_back(&individual);
-		knownIndividuals.insert(std::pair<String,Chromosome *>(individual.getSequence().toString(),&individual));
-		return true;
-	  }
-	  return false;
-  }
-} // namespace
+    else
+    {
+      setPreviousPopulation(currentPopulation);
+    }
+  } // namespace
+}

@@ -36,20 +36,55 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_SEEDER_H
 
 #include <OpenMS/config.h>
+#include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <vector>
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI Seeder
   {
+private:
+	/// Seed to initialize rand
+	unsigned int randomSeed;
+
+protected:
+	/// A list of amino acids that can form a sequence is needed for some mutation processes.
+	std::vector<const Residue*> aaList;
+	/// it is necessary to know the precursor mass to propose suitable sequences
+    double precursorMass;
+    /// it is necessary to know the precursor mass to propose suitable sequences
+    double precursorMassTolerance;
+
+private:
+	/// To forbid copy construction
+	Seeder(const Seeder& other);
+	/// To forbid assignment
+	Seeder & operator=(const Seeder& rhs);
+
 public:
     /// Default c'tor
-    Seeder();
+    Seeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    /// Copy c'tor
-    Seeder(const Seeder& other);
+    virtual ~Seeder();
 
-    /// Assignment operator
-    Seeder & operator=(const Seeder& rhs);
+    /// Creates a new individual.
+    virtual const Chromosome & createIndividual() = 0;
+
+	/// to change the seed or to fix it for unit tests.
+	void seed(const unsigned int seed);
+
+	/// Generates a random sequence of the desired length and then adjusts the
+	/// amino acids until the weight matches the desired criteria.
+	const AASequence getRandomSequence(const int len, const double weight, const double tolerance);
+
+protected:
+    /// from the list of available amino acids selects a random one.
+    const String getRandomAA() const;
+
+    /// The random string may not fit to the expected precursor mass and is then adjusted to fit (if possible with a maximum of 3 changes).
+    /// The passed in sequence is directly modified.
+    bool adjustToFitMass(AASequence & sequence, const double weight, const double tolerance) const;
   };
 } // namespace
 

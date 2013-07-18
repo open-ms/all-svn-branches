@@ -32,56 +32,33 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
-#include <stdexcept>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <stdlib.h>
 
 namespace OpenMS
 {
 
-  GenPool::GenPool() :
-    maxPoolSize(200), precursorMassTolerance(0.3)
-  {
-	  // mutater = new DefaultMutater(precursorMass,precursorMassTolerance,aaList);
-  }
-
-  void GenPool::setMutater(const Mutater& mutater)
+  RandomSequenceSeeder::RandomSequenceSeeder(double pm, double pmt, std::vector<const Residue*> al) :
+    Seeder(pm,pmt,al)
   {
   }
 
-  void GenPool::sort(const int sortMethod) {
-  }
-
-  Size GenPool::getPopulationSize() {
-    return(genPool.size());
-  }
-
-  void GenPool::setPool(std::vector<Chromosome *> newPool)
+  const Chromosome & RandomSequenceSeeder::createIndividual()
   {
-    genPool = newPool;
-  }
-
-  void GenPool::initGenPool(const int maxPoolSize)
-  {
-	Size maxTries = 10 * maxPoolSize;
-    while((maxTries > 0) && (genPool.size() < maxPoolSize))
-    {
-      Chromosome ni = seeder->createIndividual();
-      addIndividual(ni);
-      maxTries--;
-    }
-  }
-
-  bool GenPool::addIndividual(Chromosome individual) {
-	  try
+	  Size minLen = precursorMass/ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
+	  Size maxLen = precursorMass/ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
+	  double curMass = 0;
+	  String seq;
+	  while(curMass < precursorMass && seq.length() >= minLen && seq.length() <= maxLen)
 	  {
-		Chromosome *known = knownIndividuals.at(individual.getSequence().toString());
+		AASequence seq(seq);
+		seq += getRandomAA();
+		curMass = seq.getMonoWeight();
 	  }
-	  catch(const std::out_of_range& oor)
-	  {
-		genPool.push_back(&individual);
-		knownIndividuals.insert(std::pair<String,Chromosome *>(individual.getSequence().toString(),&individual));
-		return true;
-	  }
-	  return false;
+	  AASequence sequence(seq);
+	  adjustToFitMass(sequence);
+	  return(Chromosome(sequence,0));
   }
 } // namespace

@@ -37,13 +37,29 @@
 namespace OpenMS
 {
 
-  Killer::Killer()
-  {}
+  Killer::Killer(const int mp, const int ip) :
+    maxPopulation_(mp),
+	previousPopulation_(ip)
+  {
+  }
 
-  Killer::Killer(const Killer& other)
-  {}
+  Killer::~Killer()
+  {
+  }
 
-  Killer & Killer::operator=(const Killer& rhs)
-  {}
+  int Killer::getMaxPopulation() const
+  {
+	  return maxPopulation_;
+  }
 
-} // namespace
+  int Killer::getPreviousPopulation() const
+  {
+	  return(previousPopulation_);
+  }
+
+  void Killer::setPreviousPopulation(const int previous_population)
+  {
+	  this->previousPopulation_ = previous_population;
+  }
+
+  } // namespace

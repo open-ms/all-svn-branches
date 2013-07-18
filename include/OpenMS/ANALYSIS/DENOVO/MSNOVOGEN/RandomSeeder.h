@@ -36,20 +36,17 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
 
 #include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI RandomSeeder
+  class OPENMS_DLLAPI RandomSeeder : public Seeder
   {
 public:
     /// Default c'tor
-    RandomSeeder();
+    RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    /// Copy c'tor
-    RandomSeeder(const RandomSeeder& other);
-
-    /// Assignment operator
-    RandomSeeder & operator=(const RandomSeeder& rhs);
+    virtual const Chromosome & createIndividual();
   };
 } // namespace
 

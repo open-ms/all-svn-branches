@@ -28,28 +28,54 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: $
+// $Maintainer: Jens Allmer$
+// $Authors: Jens Allmer$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultKiller.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(DefaultMutater, "$Id$")
+START_TEST(DefaultKiller, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
 
-START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
+START_SECTION((virtual void kill(GenPool &genPool)))
 {
-  // TODO
+  GenPool gp;
+  gp.addIndividual(Chromosome(AASequence("TESTA"),0.1));
+  gp.addIndividual(Chromosome(AASequence("TESTR"),0.15));
+  gp.addIndividual(Chromosome(AASequence("TESTN"),0.17));
+  gp.addIndividual(Chromosome(AASequence("TESTD"),0.2));
+  gp.addIndividual(Chromosome(AASequence("TESTC"),0.25));
+  gp.addIndividual(Chromosome(AASequence("TESTE"),0.27));
+  gp.addIndividual(Chromosome(AASequence("TESTQ"),0.3));
+  gp.addIndividual(Chromosome(AASequence("TESTG"),0.35));
+  gp.addIndividual(Chromosome(AASequence("TESTH"),0.37));
+  gp.addIndividual(Chromosome(AASequence("TESTO"),0.4));
+  gp.addIndividual(Chromosome(AASequence("TESTI"),0.45));
+  gp.addIndividual(Chromosome(AASequence("TESTL"),0.47));
+  gp.addIndividual(Chromosome(AASequence("TESTK"),0.5));
+  gp.addIndividual(Chromosome(AASequence("TESTM"),0.55));
+  gp.addIndividual(Chromosome(AASequence("TESTF"),0.57));
+  gp.addIndividual(Chromosome(AASequence("TESTP"),0.6));
+  gp.addIndividual(Chromosome(AASequence("TESTU"),0.65));
+  gp.addIndividual(Chromosome(AASequence("TESTS"),0.67));
+  gp.addIndividual(Chromosome(AASequence("TESTT"),0.7));
+  gp.addIndividual(Chromosome(AASequence("TESTW"),0.75));
+  DefaultKiller dk(20,gp.getPopulationSize());
+  dk.kill(gp);
+  TEST_EQUAL(gp.getPopulationSize(),15);
 }
 END_SECTION
 

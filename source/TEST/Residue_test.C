@@ -325,6 +325,13 @@ START_SECTION(const String& getOneLetterCode() const)
 	TEST_EQUAL(e_ptr->getOneLetterCode(), "B")
 END_SECTION
 
+START_SECTION(const String& getModifiedOneLetterCode() const)
+	const Residue * m = ResidueDB::getInstance()->getResidue("M");
+	TEST_EQUAL(m->getModifiedOneLetterCode(), "M");
+    const Residue *mo = ResidueDB::getInstance()->getModifiedResidue(m,"Oxidation");
+	TEST_STRING_EQUAL(mo->getModifiedOneLetterCode(), "M(Oxidation)");
+END_SECTION
+
 START_SECTION(void addLossFormula(const EmpiricalFormula&))
 	Residue copy(*e_ptr);
 	TEST_EQUAL(*e_ptr, copy)

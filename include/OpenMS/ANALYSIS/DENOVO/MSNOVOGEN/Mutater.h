@@ -40,13 +40,16 @@
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 
-
 namespace OpenMS
 {
   class GenPool;
 
   class OPENMS_DLLAPI Mutater
   {
+private:
+	/// Seed to initialize rand
+	unsigned int randomSeed;
+
 protected:
 	/// Mutation rate (0-1) defines how many percent of the sequences will be mutated in each attempt (def: 0.2).
 	double mutationRate;
@@ -57,17 +60,17 @@ protected:
     /// A list of amino acids that can form a sequence is needed for some mutation processes.
     std::vector<const Residue*> aaList;
 
+private:
+    /// To forbid copy construction
+    Mutater(const Mutater & rhs);
+    /// To forbid assignment
+    Mutater & operator=(const Mutater & rhs);
+
 public:
     /// Default c'tor
     Mutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    /// Copy c'tor
-    //Mutater(const Mutater& other);
-
     virtual ~Mutater();
-
-    /// Assignment operator
-    // Mutater & operator=(const Mutater& rhs);
 
     /// Given a GenPool iterates over the members (Chromosomes) and given the mutationRate randomly selects Chromosomes to be mutated using mutate(Chromosome).
     void mutate(GenPool& genPool);
@@ -84,6 +87,9 @@ public:
 		OPENMS_PRECONDITION(mutationRate <=0 || mutationRate > 1, "Value must be between 0 (exclusive) and 1 (inclusive)")
 		this->mutationRate = mutationRate;
 	}
+
+	/// to change the seed or to fix it for unit tests.
+	void seed(const unsigned int seed);
 
   };
 } // namespace

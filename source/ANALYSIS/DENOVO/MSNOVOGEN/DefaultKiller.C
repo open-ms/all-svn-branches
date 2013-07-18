@@ -33,21 +33,26 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultKiller.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleDecreasingKiller.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 
 namespace OpenMS
 {
 
-  DefaultKiller::DefaultKiller()
-  {}
-
-  DefaultKiller::DefaultKiller(const DefaultKiller& other)
-  {}
-
-  DefaultKiller & DefaultKiller::operator=(const DefaultKiller& rhs)
-  {}
-
-  void DefaultKiller::kill(GenPool& genPool, int maxPopulation)
+  DefaultKiller::DefaultKiller(const int mp, const int ip) :
+		Killer(mp, ip)
   {
+  }
+
+  DefaultKiller::~DefaultKiller()
+  {
+
+  }
+
+  void DefaultKiller::kill(GenPool& genPool)
+  {
+	  SimpleDecreasingKiller sdk(getMaxPopulation(), getPreviousPopulation());
+	  sdk.kill(genPool);
   }
 
 } // namespace

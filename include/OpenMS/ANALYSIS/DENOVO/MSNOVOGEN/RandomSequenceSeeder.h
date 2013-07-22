@@ -46,7 +46,7 @@ public:
     /// Default c'tor
     RandomSequenceSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    virtual const Chromosome & createIndividual();
+    virtual Chromosome createIndividual() const;
   };
 } // namespace
 

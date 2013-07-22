@@ -431,6 +431,7 @@ set(analysis_executables_list
 	DefaultKiller_test
 	SimpleDecreasingKiller_test
 	RandomSequenceSeeder_test
+	Seeder_test
 )
 
 set(applications_executables_list

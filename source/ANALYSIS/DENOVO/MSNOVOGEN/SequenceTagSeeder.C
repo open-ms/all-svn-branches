@@ -33,17 +33,20 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/CHEMISTRY/ResidueDB.h>
 
 namespace OpenMS
 {
 
-  SequenceTagSeeder::SequenceTagSeeder()
-  {}
+	SequenceTagSeeder::SequenceTagSeeder(double pm, double pmt, std::vector<const Residue*> al) :
+	  Seeder(pm,pmt,al)
+	{
+	}
 
-  SequenceTagSeeder::SequenceTagSeeder(const SequenceTagSeeder& other)
-  {}
-
-  SequenceTagSeeder & SequenceTagSeeder::operator=(const SequenceTagSeeder& rhs)
-  {}
+	Chromosome SequenceTagSeeder::createIndividual() const
+	{
+		return Chromosome(AASequence(""),0);
+	}
 
 } // namespace

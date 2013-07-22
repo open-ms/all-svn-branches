@@ -33,7 +33,9 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <stdexcept>
+#include <algorithm>
 
 namespace OpenMS
 {
@@ -48,7 +50,16 @@ namespace OpenMS
   {
   }
 
-  void GenPool::sort(const int sortMethod) {
+  void GenPool::sort(const int sortMethod = Chromosome::sortScoreDescending)
+  {
+	  switch(sortMethod) {
+	    case Chromosome::sortScoreAscending :
+	      std::sort(*genPool.begin(), *genPool.end(), Chromosome::sortScoreAsc);
+	      break;
+	    case Chromosome::sortScoreDescending :
+		  std::sort(*genPool.begin(), *genPool.end(), Chromosome::sortScoreDesc);
+		  break;
+	  }
   }
 
   Size GenPool::getPopulationSize() {
@@ -70,6 +81,19 @@ namespace OpenMS
       maxTries--;
     }
   }
+
+	void GenPool::setMater(const Mater& mater)
+	{
+	}
+
+	void GenPool::setKiller(const Killer& killer)
+	{
+	}
+
+	void GenPool::setSeeder(const Seeder& seeder)
+	{
+	  this->seeder = &seeder;
+	}
 
   bool GenPool::addIndividual(Chromosome individual) {
 	  try

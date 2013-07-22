@@ -34,6 +34,8 @@
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSeeder.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h>
+#include <stdlib.h>
 
 namespace OpenMS
 {
@@ -41,12 +43,39 @@ namespace OpenMS
   RandomSeeder::RandomSeeder(double pm, double pmt, std::vector<const Residue*> al) :
 	Seeder(pm,pmt,al)
   {
+	weights.push_back(0.4);
+	weights.push_back(0.7);
+	weights.push_back(1.0);
   }
 
-  const Chromosome & RandomSeeder::createIndividual()
+  Chromosome RandomSeeder::createIndividual() const
   {
+	Chromosome chr;
+	/*
     RandomSequenceSeeder rss(precursorMass, precursorMassTolerance, aaList);
-    return rss.createIndividual();
+    SequenceTagSeeder sts(precursorMass, precursorMassTolerance, aaList);
+
+
+	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
+    for(unsigned int i=0; i<weights.size(); i++)
+    {
+      if(weights[i] <= rv)
+      {
+        switch(i) {
+          case RandomSeeder::RandomSequenceSeeder :
+			   chr = rss.createIndividual();
+			   break;
+          case RandomSeeder::SequenceTagSeeder :
+			   chr = sts.createIndividual();
+			   break;
+          default:
+			   chr = rss.createIndividual();
+			   break;
+        }
+      }
+    }
+    */
+    return(chr);
   }
 
 } // namespace

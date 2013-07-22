@@ -61,8 +61,10 @@ namespace OpenMS
     for(int i=0; i<len; i++)
       str += getRandomAA();
     AASequence seq(str);
-    adjustToFitMass(seq, weight, tolerance);
-    return(seq);
+    if(adjustToFitMass(seq, weight, tolerance))
+    	return(seq);
+    else
+    	return(AASequence(""));
   }
 
   bool Seeder::adjustToFitMass(AASequence& sequence, const double weight, const double tolerance) const

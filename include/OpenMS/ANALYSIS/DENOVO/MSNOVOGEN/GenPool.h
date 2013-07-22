@@ -62,7 +62,7 @@ private:
 	  Mutater* mutater;
 	  Mater* mater;
 	  Killer* killer;
-	  Seeder* seeder;
+	  const Seeder* seeder;
 	  int maxPoolSize;
 	  double precursorMass;
 	  double precursorMassTolerance;

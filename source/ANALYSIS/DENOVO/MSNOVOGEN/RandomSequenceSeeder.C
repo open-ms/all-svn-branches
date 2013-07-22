@@ -45,20 +45,24 @@ namespace OpenMS
   {
   }
 
-  const Chromosome & RandomSequenceSeeder::createIndividual()
+  Chromosome RandomSequenceSeeder::createIndividual() const
   {
-	  Size minLen = precursorMass/ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
-	  Size maxLen = precursorMass/ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
+	  Size minLen = precursorMass / ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
+	  Size maxLen = precursorMass / ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
+	  double maxMass = precursorMass + precursorMassTolerance;
 	  double curMass = 0;
-	  String seq;
-	  while(curMass < precursorMass && seq.length() >= minLen && seq.length() <= maxLen)
+	  String sequence;
+	  AASequence aaSeq;
+	  do
 	  {
-		AASequence seq(seq);
-		seq += getRandomAA();
-		curMass = seq.getMonoWeight();
-	  }
-	  AASequence sequence(seq);
-	  adjustToFitMass(sequence);
-	  return(Chromosome(sequence,0));
+		sequence += getRandomAA();
+		aaSeq = AASequence(sequence);
+		curMass = aaSeq.getMonoWeight();
+	  } while(curMass < maxMass && sequence.length() <= maxLen);
+	  if(sequence.length() >= minLen)
+		  adjustToFitMass(aaSeq,precursorMass,precursorMassTolerance);
+	  else
+		  return(Chromosome(AASequence(""),0));
+	  return(Chromosome(aaSeq,0));
   }
 } // namespace

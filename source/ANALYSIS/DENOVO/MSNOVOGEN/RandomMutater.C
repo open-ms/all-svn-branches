@@ -63,13 +63,13 @@ namespace OpenMS
       if(weights[i] <= rv)
       {
         switch(i) {
-          case 0 :
+          case RandomMutater::substitutingMutater :
 			   subm.mutate(chromosome);
 			   break;
-          case 1 :
+          case RandomMutater::swappingMutater :
 			  swam.mutate(chromosome);
 			  break;
-          case 2 :
+          case RandomMutater::invertingMutater :
         	  	   invm.mutate(chromosome);
         	  	   break;
           default:

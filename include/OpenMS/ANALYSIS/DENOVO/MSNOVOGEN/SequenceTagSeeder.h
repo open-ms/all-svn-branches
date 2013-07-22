@@ -36,20 +36,17 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_SEQUENCETAGSEEDER_H
 
 #include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI SequenceTagSeeder
+  class OPENMS_DLLAPI SequenceTagSeeder : public Seeder
   {
 public:
-    /// Default c'tor
-    SequenceTagSeeder();
+	/// Default c'tor
+	  SequenceTagSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    /// Copy c'tor
-    SequenceTagSeeder(const SequenceTagSeeder& other);
-
-    /// Assignment operator
-    SequenceTagSeeder & operator=(const SequenceTagSeeder& rhs);
+	virtual Chromosome createIndividual() const;
   };
 } // namespace
 

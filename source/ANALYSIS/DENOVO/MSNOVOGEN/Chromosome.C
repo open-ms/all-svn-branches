@@ -86,4 +86,14 @@ namespace OpenMS
 	this->sequence = sequence;
   }
 
+	bool Chromosome::sortScoreDesc(const Chromosome& lhs, const Chromosome& rhs)
+	{
+		return(lhs.getScore() > rhs.getScore());
+	}
+
+	bool Chromosome::sortScoreAsc(const Chromosome& lhs, const Chromosome& rhs)
+	{
+		return(lhs.getScore() < rhs.getScore());
+	}
+
 } // namespace

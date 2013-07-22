@@ -69,7 +69,7 @@ public:
     virtual ~Seeder();
 
     /// Creates a new individual.
-    virtual const Chromosome & createIndividual() = 0;
+    virtual Chromosome createIndividual() const = 0;
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
@@ -78,7 +78,6 @@ public:
 	/// amino acids until the weight matches the desired criteria.
 	const AASequence getRandomSequence(const int len, const double weight, const double tolerance);
 
-protected:
     /// from the list of available amino acids selects a random one.
     const String getRandomAA() const;
 

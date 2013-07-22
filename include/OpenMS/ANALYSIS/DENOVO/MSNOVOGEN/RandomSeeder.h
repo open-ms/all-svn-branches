@@ -37,16 +37,56 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
+#include <vector>
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI RandomSeeder : public Seeder
   {
+private:
+	/// The vector holds the weights for the random decision of which Mutater to use.
+	/// The weights are increasing with the size of the vector and the last double must be 1.0.
+	std::vector<double> weights;
+
 public:
+	/// identifier for SubstitutingMutater
+	const static int RandomSequenceSeeder = 0;
+	/// identifier for SwappingMutater
+	const static int SequenceTagSeeder = 1;
+
     /// Default c'tor
     RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    virtual const Chromosome & createIndividual();
+    virtual Chromosome createIndividual() const;
+
+    /// Returns the weights currently set for the Mutaters.
+	const std::vector<double> getWeights() const
+	{
+		if(weights.size() < 1)
+			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+		std::vector<double> ret;
+		double val = weights[0];
+		ret.push_back(val);
+		for(Size i = 1; i < weights.size(); i++)
+		{
+	      val = weights[i] - weights[i-1];
+		  ret.push_back(val);
+		}
+		return ret;
+	}
+
+	/// Sets the input weights for the decision which Mutater to use
+	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
+	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
+	void setWeights(const std::vector<double>& weights) {
+		this->weights[0] = weights[0];
+		for(unsigned int i=1; i<this->weights.size(); i++)
+		{
+		  this->weights[i] = weights[i]+this->weights[i-1];
+		}
+		if(this->weights[this->weights.size()-1] < 1 || this->weights[this->weights.size()-1] > 1)
+			this->weights[this->weights.size()-1] = 1.0;
+	}
   };
 } // namespace
 

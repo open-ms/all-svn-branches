@@ -432,6 +432,7 @@ set(analysis_executables_list
 	SimpleDecreasingKiller_test
 	RandomSequenceSeeder_test
 	Seeder_test
+	Utilities_test
 )
 
 set(applications_executables_list

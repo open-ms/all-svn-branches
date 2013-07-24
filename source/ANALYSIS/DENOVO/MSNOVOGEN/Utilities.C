@@ -32,27 +32,90 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
-#include <time.h>
+
+#include <seqan/align.h>
+#include <seqan/score.h>
+#include <seqan/basic.h>
+#include <seqan/sequence.h>
+
+
+
 #include <stdlib.h>
+#include <iostream>
 
 namespace OpenMS
 {
 
-  Seeder::Seeder(double pm, double pmt, std::vector<const Residue*> al) :
-    precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
-  {
-	seed(time(0));
-  }
+  Utilities::Utilities()
+  {}
 
-  Seeder::~Seeder()
-  {
-  }
+	const AASequence Utilities::getRandomSequence(const int seed, const int len,
+		const double weight, const double tolerance,
+		const std::vector<const Residue*> aaList)
+	{
+		srand(seed);
+	    String str;
+	    for(int i=0; i<len; i++)
+	      str += Utilities::getRandomAA(seed, aaList);
+	    AASequence seq(str);
+	    if(Utilities::adjustToFitMass(seed, seq, weight, tolerance, aaList))
+	    	return(seq);
+	    else
+	    	return(AASequence(""));
+	}
 
-  void Seeder::seed(const unsigned int seed)
-  {
-	randomSeed_ = seed;
-	srand(randomSeed_);
-  }
+	const String Utilities::getRandomAA(const int seed,
+		const std::vector<const Residue*> aaList)
+	{
+		srand(seed);
+	    Size i = rand() % aaList.size();
+	    return(aaList[i]->getModifiedOneLetterCode());
+	}
+
+	bool Utilities::adjustToFitMass(const int seed, AASequence& sequence,
+		const double weight, const double tolerance,
+		const std::vector<const Residue*> aaList)
+	{
+		srand(seed);
+		double curWeight = sequence.getMonoWeight();
+		double diff = std::abs(curWeight-weight);
+		double nDiff;
+		double minDiff;
+		Size pos;
+		if(diff <= tolerance)
+		  return true;
+		int mi = 10;	//max iterations for while loop
+		while(diff > tolerance)
+	    {
+		  pos = rand() % sequence.size();
+		  minDiff = diff;
+		  const Residue * replace;
+		  for(Size lp=0; lp<aaList.size(); lp++)
+		  {
+		    nDiff = std::abs((curWeight - sequence[pos].getMonoWeight(Residue::Full) + aaList[lp]->getMonoWeight(Residue::Full)) - weight);
+		    if(nDiff < minDiff)
+		    {
+			  minDiff = nDiff;
+			  replace = aaList[lp];
+		    }
+		  }
+		  sequence.setResidue(pos,replace);
+		  curWeight = sequence.getMonoWeight(Residue::Full);
+		  diff = std::abs(curWeight - weight);
+		  if(--mi == 0)
+			  return(false);
+	    }
+		return(true);
+	}
+
+	using namespace seqan;
+	int Utilities::editDistance(const AASequence& lhs, const AASequence& rhs)
+	{
+		Align<std::string> align;
+		resize(rows(align), 2);
+		assignSource(row(align,0),lhs.toUnmodifiedString());
+		assignSource(row(align,1),rhs.toUnmodifiedString());
+		return std::abs(globalAlignment(align, seqan::Score<int,Simple>(0,-1,-1)));
+	}
 } // namespace

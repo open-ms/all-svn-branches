@@ -39,7 +39,7 @@ namespace OpenMS
 {
   void DefaultMutater::mutate(Chromosome& chromosome)
   {
-    SubstitutingMutater subm(precursorMass, precursorMassTolerance, aaList);
+    SubstitutingMutater subm(getPrecursorMass(), getPrecursorMassTolerance(), getAaList());
     subm.mutate(chromosome);
   }
 

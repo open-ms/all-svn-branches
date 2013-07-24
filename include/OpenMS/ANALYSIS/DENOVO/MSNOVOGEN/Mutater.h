@@ -48,17 +48,15 @@ namespace OpenMS
   {
 private:
 	/// Seed to initialize rand
-	unsigned int randomSeed;
-
-protected:
+	unsigned int randomSeed_;
 	/// Mutation rate (0-1) defines how many percent of the sequences will be mutated in each attempt (def: 0.2).
-	double mutationRate;
+	double mutationRate_;
 	/// For some mutation processes it is necessary to know the precursor mass.
-    double precursorMass;
+    double precursorMass_;
     /// For some mutation processes it is necessary to know the mass tolerance.
-    double precursorMassTolerance;
+    double precursorMassTolerance_;
     /// A list of amino acids that can form a sequence is needed for some mutation processes.
-    std::vector<const Residue*> aaList;
+    std::vector<const Residue*> aaList_;
 
 private:
     /// To forbid copy construction
@@ -75,23 +73,55 @@ public:
     /// Given a GenPool iterates over the members (Chromosomes) and given the mutationRate randomly selects Chromosomes to be mutated using mutate(Chromosome).
     void mutate(GenPool& genPool);
 
+    /// The Chromosome that is submitted to this function will be mutated and changed.
     virtual void mutate(Chromosome& chromosome) = 0;
 
+    /// The Chromosome submitted to this function will be copied
+    /// and changes will be performed on the copy which will then be returned.
+    Chromosome mutate(const Chromosome & chromosome) const;
+
 	double getMutationRate() const {
-		return mutationRate;
+		return mutationRate_;
 	}
 
 	/// Adjusts the mutation rate (def: 0.2)
 	void setMutationRate(double mutationRate = 0.2)
 	{
-		OPENMS_PRECONDITION(mutationRate <=0 || mutationRate > 1, "Value must be between 0 (exclusive) and 1 (inclusive)")
-		this->mutationRate = mutationRate;
+		OPENMS_PRECONDITION(mutationRate_ <=0 || mutationRate_ > 1, "Value must be between 0 (exclusive) and 1 (inclusive)")
+		this->mutationRate_ = mutationRate;
 	}
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
 
-  };
+	const std::vector<const Residue*>& getAaList() const {
+		return aaList_;
+	}
+
+	void setAaList(const std::vector<const Residue*>& aaList) {
+		aaList_ = aaList;
+	}
+
+	double getPrecursorMass() const {
+		return precursorMass_;
+	}
+
+	void setPrecursorMass(double precursorMass) {
+		precursorMass_ = precursorMass;
+	}
+
+	double getPrecursorMassTolerance() const {
+		return precursorMassTolerance_;
+	}
+
+	void setPrecursorMassTolerance(double precursorMassTolerance) {
+		precursorMassTolerance_ = precursorMassTolerance;
+	}
+
+	unsigned int getRandomSeed() const {
+		return randomSeed_;
+	}
+};
 } // namespace
 
 #endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_MUTATER_H

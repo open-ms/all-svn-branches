@@ -32,47 +32,42 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomMutater.h>
-#include <stdlib.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_UTILITIES_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_UTILITIES_H
+
+#include <OpenMS/config.h>
+#include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <vector>
 
 namespace OpenMS
 {
-
-  RandomMutater::RandomMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
-    : Mutater(precursorMass, precursorMassTolerance, aaList),
-      subm_(precursorMass, precursorMassTolerance, aaList),
-  	  swam_(precursorMass, precursorMassTolerance, aaList),
-  	  invm_(precursorMass, precursorMassTolerance, aaList),
-  	  defm_(precursorMass, precursorMassTolerance, aaList)
+  class OPENMS_DLLAPI Utilities
   {
-    weights_.push_back(0.4);
-    weights_.push_back(0.7);
-    weights_.push_back(1.0);
-  }
+private:
+	/// Copy c'tor
+	Utilities(const Utilities& other);
 
-  void RandomMutater::mutate(Chromosome& chromosome)
-  {
-	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
-    for(unsigned int i=0; i<weights_.size(); i++)
-    {
-      if(weights_[i] <= rv)
-      {
-        switch(i) {
-          case RandomMutater::substitutingMutater :
-			   subm_.mutate(chromosome);
-			   break;
-          case RandomMutater::swappingMutater :
-			  swam_.mutate(chromosome);
-			  break;
-          case RandomMutater::invertingMutater :
-        	  	   invm_.mutate(chromosome);
-        	  	   break;
-          default:
- 	  	   	   	   defm_.mutate(chromosome);
- 	  	   	   	   break;
-        }
-      }
-    }
-  }
+	/// Assignment operator
+	Utilities & operator=(const Utilities& rhs);
 
+  public:
+    /// Default c'tor
+    Utilities();
+
+	/// Generates a random sequence of the desired length and then adjusts the
+	/// amino acids until the weight matches the desired criteria.
+	static const AASequence getRandomSequence(const int seed, const int len, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
+
+    /// from the list of available amino acids selects a random one.
+    static const String getRandomAA(const int seed, const std::vector<const Residue *> aaList);
+
+    /// The random string may not fit to the expected precursor mass and is then adjusted to fit (if possible with a maximum of 3 changes).
+    /// The passed in sequence is directly modified.
+    static bool adjustToFitMass(const int seed, AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
+
+    static int editDistance(const AASequence& lhs, const AASequence & rhs);
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_UTILITIES_H

@@ -37,6 +37,10 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SwappingMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/InvertingMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMutater.h>
 #include <map>
 #include <vector>
 
@@ -47,7 +51,16 @@ namespace OpenMS
 private:
 	/// The vector holds the weights for the random decision of which Mutater to use.
 	/// The weights are increasing with the size of the vector and the last double must be 1.0.
-    std::vector<double> weights;
+    std::vector<double> weights_;
+    /// The subsituting mutater that will be used to perform mutation on chromosomes.
+    SubstitutingMutater subm_;
+    /// The swapping mutater that will be used to perform mutation on chromosomes.
+    SwappingMutater swam_;
+    /// The inverting mutater that will be used to perform mutation on chromosomes.
+    InvertingMutater invm_;
+    /// The default mutater that will be used to perform mutation on chromosomes.
+    DefaultMutater defm_;
+
 
 public:
     /// identifier for SubstitutingMutater
@@ -66,14 +79,14 @@ public:
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const
 	{
-		if(weights.size() < 1)
+		if(weights_.size() < 1)
 			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		std::vector<double> ret;
-		double val = weights[0];
+		double val = weights_[0];
 		ret.push_back(val);
-		for(Size i = 1; i < weights.size(); i++)
+		for(Size i = 1; i < weights_.size(); i++)
 		{
-	      val = weights[i] - weights[i-1];
+	      val = weights_[i] - weights_[i-1];
 		  ret.push_back(val);
 		}
 		return ret;
@@ -83,13 +96,13 @@ public:
 	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
 	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
 	void setWeights(const std::vector<double>& weights) {
-		this->weights[0] = weights[0];
-		for(unsigned int i=1; i<this->weights.size(); i++)
+		this->weights_[0] = weights[0];
+		for(unsigned int i=1; i<this->weights_.size(); i++)
 		{
-		  this->weights[i] = weights[i]+this->weights[i-1];
+		  this->weights_[i] = weights[i]+this->weights_[i-1];
 		}
-		if(this->weights[this->weights.size()-1] < 1 || this->weights[this->weights.size()-1] > 1)
-			this->weights[this->weights.size()-1] = 1.0;
+		if(this->weights_[this->weights_.size()-1] < 1 || this->weights_[this->weights_.size()-1] > 1)
+			this->weights_[this->weights_.size()-1] = 1.0;
 	}
 };
 } // namespace

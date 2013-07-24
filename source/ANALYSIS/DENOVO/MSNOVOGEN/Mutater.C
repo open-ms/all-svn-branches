@@ -41,7 +41,7 @@ namespace  OpenMS
 {
 
   Mutater::Mutater(double pm, double pmt, std::vector<const Residue*> al)
-    : mutationRate(0.2), precursorMass(pm), precursorMassTolerance(pmt), aaList(al)
+    : mutationRate_(0.2), precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
   {
 	//mutationRate = 0.2;
     //this->precursorMass = precursorMass;
@@ -59,7 +59,7 @@ namespace  OpenMS
 	for(std::vector<Chromosome*>::iterator iter = genPool.begin(); iter!= genPool.end(); ++iter)
 	{
 	  double rv = (rand() % 101)/100;
-	  if(rv > mutationRate)
+	  if(rv > mutationRate_)
 		continue;
 	  mutate(**iter);
 	}
@@ -69,10 +69,17 @@ namespace  OpenMS
   {
   }
 
+  Chromosome Mutater::mutate(const Chromosome& chromosome) const
+  {
+    Chromosome cpy(AASequence(chromosome.getSequence().toString()),chromosome.getScore());
+    mutate(cpy);
+    return cpy;
+  }
+
   void Mutater::seed(const unsigned int seed)
   {
-	randomSeed = seed;
-	srand(randomSeed);
+	randomSeed_ = seed;
+	srand(randomSeed_);
   }
 
 } // namespace

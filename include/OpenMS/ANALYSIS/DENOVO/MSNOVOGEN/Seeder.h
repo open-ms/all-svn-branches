@@ -46,15 +46,13 @@ namespace OpenMS
   {
 private:
 	/// Seed to initialize rand
-	unsigned int randomSeed;
-
-protected:
+	unsigned int randomSeed_;
 	/// A list of amino acids that can form a sequence is needed for some mutation processes.
-	std::vector<const Residue*> aaList;
+	std::vector<const Residue*> aaList_;
 	/// it is necessary to know the precursor mass to propose suitable sequences
-    double precursorMass;
+    double precursorMass_;
     /// it is necessary to know the precursor mass to propose suitable sequences
-    double precursorMassTolerance;
+    double precursorMassTolerance_;
 
 private:
 	/// To forbid copy construction
@@ -74,17 +72,43 @@ public:
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
 
-	/// Generates a random sequence of the desired length and then adjusts the
-	/// amino acids until the weight matches the desired criteria.
-	const AASequence getRandomSequence(const int len, const double weight, const double tolerance);
+	unsigned int getSeed() const
+	{
+		return randomSeed_;
+	}
 
-    /// from the list of available amino acids selects a random one.
-    const String getRandomAA() const;
+	const std::vector<const Residue*>& getAaList() const {
+		return aaList_;
+	}
 
-    /// The random string may not fit to the expected precursor mass and is then adjusted to fit (if possible with a maximum of 3 changes).
-    /// The passed in sequence is directly modified.
-    bool adjustToFitMass(AASequence & sequence, const double weight, const double tolerance) const;
-  };
+	void setAaList(const std::vector<const Residue*>& aaList) {
+		aaList_ = aaList;
+	}
+
+	double getPrecursorMass() const {
+		return precursorMass_;
+	}
+
+	void setPrecursorMass(double precursorMass) {
+		precursorMass_ = precursorMass;
+	}
+
+	double getPrecursorMassTolerance() const {
+		return precursorMassTolerance_;
+	}
+
+	void setPrecursorMassTolerance(double precursorMassTolerance) {
+		precursorMassTolerance_ = precursorMassTolerance;
+	}
+
+	unsigned int getRandomSeed() const {
+		return randomSeed_;
+	}
+
+	void setRandomSeed(unsigned int randomSeed) {
+		randomSeed_ = randomSeed;
+	}
+};
 } // namespace
 
 #endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_SEEDER_H

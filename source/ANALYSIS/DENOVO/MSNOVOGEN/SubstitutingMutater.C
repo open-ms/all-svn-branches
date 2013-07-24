@@ -47,8 +47,8 @@ namespace OpenMS
 	AASequence as = chromosome.getSequence();
 	double seqMass = as.getMonoWeight();
     Size rp = rand() % as.size();
-    int sa = rand() % aaList.size();
-    const Residue * nr = aaList[sa];
+    int sa = rand() % getAaList().size();
+    const Residue * nr = getAaList()[sa];
     const Residue & replaced = as.setResidue(rp, nr);
 
     std::vector<std::pair<Size,const Residue*> > possRep;
@@ -57,14 +57,14 @@ namespace OpenMS
     {
     	if(i == rp)
     	  continue;
-    	for(int p = 0; p < aaList.size(); p++)
+    	for(int p = 0; p < getAaList().size(); p++)
     	{
     	  const Residue& cu = as.getResidue(i);
-		  const Residue* pr = aaList[p];
+		  const Residue* pr = getAaList()[p];
 		  if(pr->getOneLetterCode() == replaced.getOneLetterCode())
 			  continue;
     	  double pdiff = cu.getMonoWeight(Residue::Full) - pr->getMonoWeight(Residue::Full);
-    	  if(std::abs(precursorMass - (seqMass - mdiff - pdiff)) <= precursorMassTolerance)
+    	  if(std::abs(getPrecursorMass() - (seqMass - mdiff - pdiff)) <= getPrecursorMassTolerance())
     	  {
     		std::pair<Size, const Residue*> p(i,pr);
     	    possRep.push_back(p);

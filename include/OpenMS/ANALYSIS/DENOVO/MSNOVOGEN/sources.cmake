@@ -23,6 +23,7 @@ SequenceTagSeeder.h
 InvertingMutater.h
 SimpleDecreasingKiller.h
 RandomSequenceSeeder.h
+Utilities.h
 )
 
 ### add path to the filenames

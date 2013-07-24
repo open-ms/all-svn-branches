@@ -33,6 +33,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <stdlib.h>
@@ -47,20 +48,20 @@ namespace OpenMS
 
   Chromosome RandomSequenceSeeder::createIndividual() const
   {
-	  Size minLen = precursorMass / ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
-	  Size maxLen = precursorMass / ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
-	  double maxMass = precursorMass + precursorMassTolerance;
+	  Size minLen = getPrecursorMass() / ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
+	  Size maxLen = getPrecursorMass() / ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
+	  double maxMass = getPrecursorMass() + getPrecursorMassTolerance();
 	  double curMass = 0;
 	  String sequence;
 	  AASequence aaSeq;
 	  do
 	  {
-		sequence += getRandomAA();
+		sequence += Utilities::getRandomAA(getSeed(),getAaList());
 		aaSeq = AASequence(sequence);
 		curMass = aaSeq.getMonoWeight();
 	  } while(curMass < maxMass && sequence.length() <= maxLen);
 	  if(sequence.length() >= minLen)
-		  adjustToFitMass(aaSeq,precursorMass,precursorMassTolerance);
+		  Utilities::adjustToFitMass(getSeed(),aaSeq,getPrecursorMass(),getPrecursorMassTolerance(),getAaList());
 	  else
 		  return(Chromosome(AASequence(""),0));
 	  return(Chromosome(aaSeq,0));

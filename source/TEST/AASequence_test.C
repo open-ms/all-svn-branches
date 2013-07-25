@@ -434,6 +434,7 @@ START_SECTION(String toString() const)
 	AASequence seq1("DFPIANGER");
 	AASequence seq2("(MOD:00051)DFPIANGER");
 	AASequence seq3("DFPIAN(Deamidated)GER");
+	AASequence m("AAAAAAAAAA");
 
 	TEST_EQUAL(seq1.isValid(), true)
 	TEST_EQUAL(seq2.isValid(), true)
@@ -442,6 +443,10 @@ START_SECTION(String toString() const)
 	TEST_STRING_EQUAL(seq1.toString(), "DFPIANGER")
 	TEST_STRING_EQUAL(seq2.toString(), "(MOD:00051)DFPIANGER")
 	TEST_STRING_EQUAL(seq3.toString(), "DFPIAN(Deamidated)GER")
+
+	stringstream sts;
+	sts << m.toString();
+	TEST_STRING_EQUAL(sts.str(), "AAAAAAAAAA");
 END_SECTION
 
 START_SECTION(String toUnmodifiedString() const)

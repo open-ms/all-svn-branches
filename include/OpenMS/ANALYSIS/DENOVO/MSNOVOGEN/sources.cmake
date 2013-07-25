@@ -24,6 +24,11 @@ InvertingMutater.h
 SimpleDecreasingKiller.h
 RandomSequenceSeeder.h
 Utilities.h
+DefaultSeeder.h
+DefaultMater.h
+SimpleMater.h
+RandomMater.h
+ZipMater.h
 )
 
 ### add path to the filenames

@@ -32,23 +32,46 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
-#include <time.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/RandomMater.h>
 #include <stdlib.h>
-
 
 namespace OpenMS
 {
-  Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance), aaList_(aaList)
+
+  RandomMater::RandomMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+    Mater(precursorMass, precursorMassTolerance, aaList),
+    sm(precursorMass, precursorMassTolerance, aaList),
+    dm(precursorMass, precursorMassTolerance, aaList),
+    zm(precursorMass, precursorMassTolerance, aaList)
   {
-	  seed(time(0));
+	weights_.push_back(0.4);
+	weights_.push_back(0.7);
+	weights_.push_back(1.0);
   }
 
-  void Mater::seed(const unsigned int seed)
+  std::vector<Chromosome> RandomMater::mate(const Chromosome& lhs, const Chromosome & rhs)
   {
-	randomSeed_ = seed;
-	srand(randomSeed_);
+	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
+    for(unsigned int i=0; i<weights_.size(); i++)
+    {
+      if(weights_[i] <= rv)
+      {
+        switch(i) {
+          case RandomMater::simpleMater :
+        	   sm.seed(getSeed());
+			   sm.mate(lhs, rhs);
+			   break;
+          case RandomMater::zipMater :
+        	   zm.seed(getSeed());
+			   zm.mate(lhs, rhs);
+			   break;
+          default:
+        	   dm.seed(getSeed());
+			   dm.mate(lhs, rhs);
+			   break;
+        }
+      }
+    }
+    return dm.mate(lhs, rhs);
   }
-
 } // namespace

@@ -32,23 +32,56 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
-#include <time.h>
-#include <stdlib.h>
-
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/ZipMater.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
 
 namespace OpenMS
 {
-  Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance), aaList_(aaList)
-  {
-	  seed(time(0));
-  }
 
-  void Mater::seed(const unsigned int seed)
-  {
-	randomSeed_ = seed;
-	srand(randomSeed_);
-  }
+  ZipMater::ZipMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+    Mater(precursorMass,precursorMassTolerance, aaList)
+  {}
 
+  std::vector<Chromosome> ZipMater::mate(const Chromosome& lhs, const Chromosome & rhs)
+  {
+    String uc("");
+    String lc("");
+    Size i = 0;
+    bool swap = false;
+    while(i < lhs.getSequence().size() && i < rhs.getSequence().size())
+    {
+    	if(swap)
+    	{
+			uc += rhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+			lc += lhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+    	}
+    	else
+    	{
+			uc += lhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+			lc += rhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+    	}
+    	swap = !swap;
+    	++i;
+    }
+    // since either lhs or rhs ran out of aas the remainder of the longer sequence can be appended
+    // without test which on is actually longer.
+    while(i < lhs.getSequence().size())
+    {
+    	lc += lhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+    	++i;
+    }
+    while(i < lhs.getSequence().size())
+	{
+		uc += rhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+    	++i;
+	}
+    std::vector<Chromosome> ret;
+    AASequence ucaa(uc);
+    if(Utilities::adjustToFitMass(getRandomSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+    	ret.push_back(Chromosome(ucaa,0));
+    AASequence lcaa(lc);
+    if(Utilities::adjustToFitMass(getSeed(),lcaa,getPrecursorMass(), getPrecursorMassTolerance(), getAAList()))
+		ret.push_back(Chromosome(lcaa,0));
+    return ret;
+  }
 } // namespace

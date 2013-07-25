@@ -32,23 +32,30 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
-#include <time.h>
-#include <stdlib.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SIMPLEMATER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SIMPLEMATER_H
 
+#include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
+#include <vector>
 
 namespace OpenMS
 {
-  Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance), aaList_(aaList)
+  class OPENMS_DLLAPI SimpleMater : public Mater
   {
-	  seed(time(0));
-  }
+private:
+	/// Copy c'tor
+	SimpleMater(const SimpleMater& other);
 
-  void Mater::seed(const unsigned int seed)
-  {
-	randomSeed_ = seed;
-	srand(randomSeed_);
-  }
+	/// Assignment operator
+	SimpleMater & operator=(const SimpleMater& rhs);
 
+public:
+    /// Default c'tor
+    SimpleMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+    virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs);
+
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SIMPLEMATER_H

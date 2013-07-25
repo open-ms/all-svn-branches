@@ -32,19 +32,21 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h>
 
 namespace OpenMS
 {
 
-  DefaultMater::DefaultMater()
+  DefaultMater::DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+    Mater(precursorMass, precursorMassTolerance, aaList)
   {}
 
-  DefaultMater::DefaultMater(const DefaultMater& other)
-  	  : Mater(other)
-  {}
-
-  DefaultMater & DefaultMater::operator=(const DefaultMater& rhs)
-  {}
-
+	std::vector<Chromosome> DefaultMater::mate(const Chromosome& lhs,
+	  const Chromosome& rhs)
+	{
+		SimpleMater sm(getPrecursorMass(), getPrecursorMassTolerance(), getAAList());
+		sm.seed(getSeed());
+		return sm.mate(lhs, rhs);
+	}
 } // namespace

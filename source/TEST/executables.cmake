@@ -433,6 +433,11 @@ set(analysis_executables_list
 	RandomSequenceSeeder_test
 	Seeder_test
 	Utilities_test
+	Mater_test
+	SimpleMater_test
+	DefaultMater_test
+	ZipMater_test
+	RandomMater_test
 )
 
 set(applications_executables_list

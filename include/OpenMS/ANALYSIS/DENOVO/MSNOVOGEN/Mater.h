@@ -36,20 +36,76 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_MATER_H
 
 #include <OpenMS/config.h>
+#include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <vector>
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI Mater
   {
+private:
+	/// Seed to initialize rand
+	unsigned int randomSeed_;
+	/// A list of amino acids that can form a sequence is needed for some mutation processes.
+	std::vector<const Residue*> aaList_;
+	/// it is necessary to know the precursor mass to propose suitable sequences
+	double precursorMass_;
+	/// it is necessary to know the precursor mass to propose suitable sequences
+	double precursorMassTolerance_;
+
+private:
+	/// Copy c'tor
+	Mater(const Mater& other);
+
+	/// Assignment operator
+	Mater & operator=(const Mater& rhs);
+
 public:
     /// Default c'tor
-    Mater();
+    Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    /// Copy c'tor
-    Mater(const Mater& other);
+    virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs) = 0;
 
-    /// Assignment operator
-    Mater & operator=(const Mater& rhs);
+	/// to change the seed or to fix it for unit tests.
+	void seed(const unsigned int seed);
+
+	unsigned int getSeed() const
+	{
+		return randomSeed_;
+	}
+
+	const std::vector<const Residue*>& getAAList() const {
+		return aaList_;
+	}
+
+	void setAAList(const std::vector<const Residue*>& aaList) {
+		aaList_ = aaList;
+	}
+
+	double getPrecursorMass() const {
+		return precursorMass_;
+	}
+
+	void setPrecursorMass(double precursorMass) {
+		precursorMass_ = precursorMass;
+	}
+
+	double getPrecursorMassTolerance() const {
+		return precursorMassTolerance_;
+	}
+
+	void setPrecursorMassTolerance(double precursorMassTolerance) {
+		precursorMassTolerance_ = precursorMassTolerance;
+	}
+
+	unsigned int getRandomSeed() const {
+		return randomSeed_;
+	}
+
+	void setRandomSeed(unsigned int randomSeed) {
+		randomSeed_ = randomSeed;
+	}
   };
 } // namespace
 

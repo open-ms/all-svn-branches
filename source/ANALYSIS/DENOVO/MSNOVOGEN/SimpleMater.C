@@ -32,23 +32,38 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
-#include <time.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
 #include <stdlib.h>
 
 
 namespace OpenMS
 {
-  Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance), aaList_(aaList)
+
+  SimpleMater::SimpleMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+    Mater(precursorMass, precursorMassTolerance, aaList)
   {
-	  seed(time(0));
   }
 
-  void Mater::seed(const unsigned int seed)
+  std::vector<Chromosome> SimpleMater::mate(const Chromosome& lhs,
+		const Chromosome& rhs)
   {
-	randomSeed_ = seed;
-	srand(randomSeed_);
+	Size min = std::min(lhs.getSequence().size(), rhs.getSequence().size());
+	std::vector<Chromosome> ret;
+    if(Utilities::editDistance(lhs.getSequence(), rhs.getSequence()) < 3)
+	  return ret; //return empty set since there is no need to perform a crossover with too similar individuals.
+	int cop = rand() % min;
+	String uc(lhs.getSequence().getSubsequence(0,cop).toString() + rhs.getSequence().getSubsequence(cop,rhs.getSequence().size()-cop).toString());
+	AASequence ucaa(uc);
+	if(Utilities::adjustToFitMass(getRandomSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+	{
+		ret.push_back(Chromosome(ucaa,0));
+	}
+	String lc(rhs.getSequence().getSubsequence(0,cop).toString() + lhs.getSequence().getSubsequence(cop,lhs.getSequence().size()-cop).toString());
+	AASequence lcaa(lc);
+	if(Utilities::adjustToFitMass(getRandomSeed(),lcaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+		ret.push_back(Chromosome(lcaa,0));
+	return ret;
   }
 
 } // namespace

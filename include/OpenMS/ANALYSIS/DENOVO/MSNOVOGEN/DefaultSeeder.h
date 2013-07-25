@@ -32,23 +32,21 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
-#include <time.h>
-#include <stdlib.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTSEEDER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTSEEDER_H
 
+#include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
 
 namespace OpenMS
 {
-  Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance), aaList_(aaList)
+  class OPENMS_DLLAPI DefaultSeeder : Seeder
   {
-	  seed(time(0));
-  }
-
-  void Mater::seed(const unsigned int seed)
-  {
-	randomSeed_ = seed;
-	srand(randomSeed_);
-  }
-
+public:
+	/// Default c'tor
+	DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+	virtual Chromosome createIndividual() const;
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTSEEDER_H

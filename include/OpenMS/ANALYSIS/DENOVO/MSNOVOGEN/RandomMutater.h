@@ -52,7 +52,7 @@ private:
 	/// The vector holds the weights for the random decision of which Mutater to use.
 	/// The weights are increasing with the size of the vector and the last double must be 1.0.
     std::vector<double> weights_;
-    /// The subsituting mutater that will be used to perform mutation on chromosomes.
+    /// The substituting mutater that will be used to perform mutation on chromosomes.
     SubstitutingMutater subm_;
     /// The swapping mutater that will be used to perform mutation on chromosomes.
     SwappingMutater swam_;

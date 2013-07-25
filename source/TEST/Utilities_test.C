@@ -90,13 +90,15 @@ START_SECTION((static const AASequence getRandomSequence(const int seed, const i
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
 	int test[]{0,3000,10000,12000,18000,20000};
-	String res[]{"DIIGSID","VVDVVVC","VVVCVDV","HHHGMGG","IGIDIDS","EEGGEGR"};
+	String 	expSeq[]{"DGIISID","VVDVVVC","VVVCVDV","HHHGMGG","IGIDIDS",""};
+	int		expLen[]{7,7,7,7,7,0};
+	bool	expRes[]{true,true,true,true,true,false};
 	for(int i=0; i<6; i++) {
 		AASequence rand = Utilities::getRandomSequence(test[i],7,seq.getMonoWeight(Residue::Full),1.5,aaList);
-		TEST_EQUAL((std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5),true);
-		TEST_EQUAL(7,rand.size());
+		TEST_EQUAL(expRes[i],(std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5));
+		TEST_EQUAL(expLen[i],rand.size());
 		TEST_NOT_EQUAL(seq.toString(),rand.toString());
-		TEST_EQUAL(res[i],rand.toString());
+		TEST_EQUAL(expSeq[i],rand.toString());
 	}
 }
 END_SECTION
@@ -161,17 +163,23 @@ START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence,
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
 	int test[]{0,6000,10000,14000,15000};
-	String res[]  {"DPPPFGC","GEPQVFG","VGASNFH","VQQAASE","DDNIALA"};
-	String inSeq[]{"DPPAFGC","GEPIVFG","VGASNFK","VQQAASR","DDNIALR"};
-	String exSeq[]{"DAIAQIC","GEPQVFG","VGASNRK","VQQSGRG","DDNIALA"};
+	String 	res[]  {"DPPPFGC","GEPQVFG","VGASNFH","VQQAASE","DDNIALA"};
+	String 	inSeq[]{"DPPAFGC","GEPIVFG","VGASNFK","VQQAASR","DDNIALR"};
+	String 	exSeq[]{"DQPAFGC","GEPQVFG","VGASNRK","VQMAAGR","DDNIALA"};
+	bool 	expRes[] {false,true,true,true,true,true};
 	for(int i=0; i<5; i++) {
 		AASequence rand(inSeq[i]);
 		Utilities::adjustToFitMass(test[i],rand,seq.getMonoWeight(Residue::Full),1.5,aaList);
-		TEST_EQUAL((std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5),true);
+		TEST_EQUAL(expRes[i],(std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5));
 		TEST_EQUAL(7,rand.size());
 		TEST_NOT_EQUAL(inSeq[i],rand.toString());
 		TEST_EQUAL(exSeq[i],rand.toString());
 	}
+
+	AASequence m("AAAAAAAAAA");
+	AASequence c("AAGGGLLLLL");
+	Utilities::adjustToFitMass(50,c,m.getMonoWeight(Residue::Full),1.5,aaList);
+	TEST_EQUAL((std::abs(c.getMonoWeight(Residue::Full)-m.getMonoWeight(Residue::Full))<1.5),false);
 }
 END_SECTION
 
@@ -180,9 +188,11 @@ START_SECTION((static int editDistance(const AASequence &lhs, const AASequence &
   AASequence seq1("ALLMER");
   AASequence seq2("ALLMER");
   AASequence seq3("TELLER");
+  AASequence seq4("TELLLLER");
   TEST_EQUAL(0,Utilities::editDistance(seq1,seq1));
   TEST_EQUAL(0,Utilities::editDistance(seq1,seq2));
   TEST_EQUAL(3,Utilities::editDistance(seq1,seq3));
+  TEST_EQUAL(2,Utilities::editDistance(seq4,seq3));
 }
 END_SECTION
 

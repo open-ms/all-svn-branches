@@ -90,7 +90,7 @@ namespace OpenMS
 	    {
 		  pos = rand() % sequence.size();
 		  minDiff = diff;
-		  const Residue * replace;
+		  const Residue * replace = NULL;
 		  for(Size lp=0; lp<aaList.size(); lp++)
 		  {
 		    nDiff = std::abs((curWeight - sequence[pos].getMonoWeight(Residue::Full) + aaList[lp]->getMonoWeight(Residue::Full)) - weight);
@@ -100,9 +100,12 @@ namespace OpenMS
 			  replace = aaList[lp];
 		    }
 		  }
-		  sequence.setResidue(pos,replace);
-		  curWeight = sequence.getMonoWeight(Residue::Full);
-		  diff = std::abs(curWeight - weight);
+		  if(replace)
+		  {
+			  sequence.setResidue(pos,replace);
+			  curWeight = sequence.getMonoWeight(Residue::Full);
+			  diff = std::abs(curWeight - weight);
+		  }
 		  if(--mi == 0)
 			  return(false);
 	    }

@@ -32,53 +32,57 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
-#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_RANDOMMATER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_RANDOMMATER_H
 
 #include <OpenMS/config.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h>
-#include <vector>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/ZipMater.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI RandomSeeder : public Seeder
+  class OPENMS_DLLAPI RandomMater : public Mater
   {
+public:
+  /// identifier for SubstitutingMutater
+  const static int simpleMater = 0;
+  /// identifier for SwappingMutater
+  const static int defaultMater = 1;
+  /// identifier for InvertingMutater
+  const static int zipMater = 2;
+
 private:
 	/// The vector holds the weights for the random decision of which Mutater to use.
 	/// The weights are increasing with the size of the vector and the last double must be 1.0.
-	std::vector<double> weights;
+    std::vector<double> weights_;
+	SimpleMater sm;
+	DefaultMater dm;
+	ZipMater zm;
 
-	RandomSequenceSeeder rss;
+private:
+	/// Copy c'tor
+	RandomMater(const RandomMater& other);
 
-	SequenceTagSeeder sts;
-
-	DefaultSeeder ds;
-
+	/// Assignment operator
+	RandomMater & operator=(const RandomMater& rhs);
 public:
-	/// identifier for SubstitutingMutater
-	const static int randomSequenceSeeder = 0;
-	/// identifier for SwappingMutater
-	const static int sequenceTagSeeder = 1;
-
     /// Default c'tor
-    RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-
-    virtual Chromosome createIndividual() const;
+    RandomMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+    virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs);
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const
 	{
-		if(weights.size() < 1)
+		if(weights_.size() < 1)
 			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		std::vector<double> ret;
-		double val = weights[0];
+		double val = weights_[0];
 		ret.push_back(val);
-		for(Size i = 1; i < weights.size(); i++)
+		for(Size i = 1; i < weights_.size(); i++)
 		{
-	      val = weights[i] - weights[i-1];
+	      val = weights_[i] - weights_[i-1];
 		  ret.push_back(val);
 		}
 		return ret;
@@ -88,15 +92,15 @@ public:
 	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
 	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
 	void setWeights(const std::vector<double>& weights) {
-		this->weights[0] = weights[0];
-		for(unsigned int i=1; i<this->weights.size(); i++)
+		this->weights_[0] = weights[0];
+		for(unsigned int i=1; i<this->weights_.size(); i++)
 		{
-		  this->weights[i] = weights[i]+this->weights[i-1];
+		  this->weights_[i] = weights[i]+this->weights_[i-1];
 		}
-		if(this->weights[this->weights.size()-1] < 1 || this->weights[this->weights.size()-1] > 1)
-			this->weights[this->weights.size()-1] = 1.0;
+		if(this->weights_[this->weights_.size()-1] < 1 || this->weights_[this->weights_.size()-1] > 1)
+			this->weights_[this->weights_.size()-1] = 1.0;
 	}
   };
 } // namespace
 
-#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_RANDOMMATER_H

@@ -32,28 +32,29 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTMATER_H
-#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTMATER_H
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTMATER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTMATER_H
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
+#include <vector>
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI DefaultMater : public Mater
   {
+private:
+	/// Copy c'tor
+	DefaultMater(const DefaultMater& other);
+
+	/// Assignment operator
+	DefaultMater & operator=(const DefaultMater& rhs);
+
 public:
     /// Default c'tor
-    DefaultMater();
-
-    /// Copy c'tor
-    DefaultMater(const DefaultMater& other);
-
-    /// Assignment operator
-    DefaultMater & operator=(const DefaultMater& rhs);
-
-    // virtual void mate(Chromosome& chromosome);
+    DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+    virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs);
   };
 } // namespace
 
-#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTMATER_H
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTMATER_H

@@ -73,6 +73,7 @@ namespace OpenMS
         }
       }
     }
+    return defm_.mutate(chromosome);
   }
 
 } // namespace

@@ -429,6 +429,7 @@ set(analysis_executables_list
 	DefaultMutater_test
 	RandomMutater_test
 	DefaultKiller_test
+	HomologyKiller_test
 	SimpleDecreasingKiller_test
 	RandomSequenceSeeder_test
 	Seeder_test
@@ -438,6 +439,7 @@ set(analysis_executables_list
 	DefaultMater_test
 	ZipMater_test
 	RandomMater_test
+	Chromosome_test
 )
 
 set(applications_executables_list

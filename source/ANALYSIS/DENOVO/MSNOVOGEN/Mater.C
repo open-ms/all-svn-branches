@@ -45,10 +45,21 @@ namespace OpenMS
 	  seed(time(0));
   }
 
+  Mater::~Mater()
+  {
+  }
+
   void Mater::seed(const unsigned int seed)
   {
 	randomSeed_ = seed;
 	srand(randomSeed_);
   }
 
+  void Mater::tournament(const GenPool& genPool)
+  {
+
+//	if(Utilities::editDistance(lhs.getSequence(), rhs.getSequence()) < 3)
+//	  return ret; //return empty set since there is no need to perform a crossover with too similar individuals.
+
+  }
 } // namespace

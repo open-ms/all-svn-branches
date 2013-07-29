@@ -77,7 +77,7 @@ namespace OpenMS
 	}
     std::vector<Chromosome> ret;
     AASequence ucaa(uc);
-    if(Utilities::adjustToFitMass(getRandomSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+    if(Utilities::adjustToFitMass(getSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
     	ret.push_back(Chromosome(ucaa,0));
     AASequence lcaa(lc);
     if(Utilities::adjustToFitMass(getSeed(),lcaa,getPrecursorMass(), getPrecursorMassTolerance(), getAAList()))

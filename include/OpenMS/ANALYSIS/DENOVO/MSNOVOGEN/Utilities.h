@@ -66,7 +66,7 @@ private:
     /// The passed in sequence is directly modified.
     static bool adjustToFitMass(const int seed, AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
 
-    static int editDistance(const AASequence& lhs, const AASequence & rhs);
+    static int editDistance(const AASequence & lhs, const AASequence & rhs);
   };
 } // namespace
 

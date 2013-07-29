@@ -57,6 +57,7 @@ public:
 	  enum {BYSCOREDEC = 0};
 
 private:
+	  unsigned int randomSeed_;
 	  std::map<String,Chromosome *> knownIndividuals;
 	  std::vector<Chromosome *> genPool;
 	  Mutater* mutater;
@@ -77,9 +78,7 @@ public:
     GenPool();
 
     ~GenPool()
-    {
-      delete mutater;
-    };
+    {};
 
     /// Tries to initialize the gen pool with maxPoolSize individials.
     /// If not successful within 10*maxPoolSize tries, gives up.
@@ -100,6 +99,7 @@ public:
     /// Returns true if added and false if not.
     bool addIndividual(Chromosome individual);
 
+    void replenish(const int targetSize);
     std::vector<Chromosome *>::iterator begin()
     {
       return(genPool.begin());
@@ -108,7 +108,15 @@ public:
     std::vector<Chromosome *>::iterator end() {
     	return(genPool.end());
     };
+	void seed(const unsigned int seed)
+	{
+		randomSeed_ = seed;
+	}
 
+	unsigned int getSeed() const
+	{
+		return randomSeed_;
+	}
   };
 } // namespace
 

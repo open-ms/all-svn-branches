@@ -43,7 +43,7 @@ namespace OpenMS
 
   class OPENMS_DLLAPI Killer
   {
-public:
+private:
 	/// The maximum population of the gen pool that is allowed (may be exceeded during mating).
 	int maxPopulation_;
 	/// The population size after the last killing round.

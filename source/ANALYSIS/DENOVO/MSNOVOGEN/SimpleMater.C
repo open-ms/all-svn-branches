@@ -50,18 +50,16 @@ namespace OpenMS
   {
 	Size min = std::min(lhs.getSequence().size(), rhs.getSequence().size());
 	std::vector<Chromosome> ret;
-    if(Utilities::editDistance(lhs.getSequence(), rhs.getSequence()) < 3)
-	  return ret; //return empty set since there is no need to perform a crossover with too similar individuals.
 	int cop = rand() % min;
 	String uc(lhs.getSequence().getSubsequence(0,cop).toString() + rhs.getSequence().getSubsequence(cop,rhs.getSequence().size()-cop).toString());
 	AASequence ucaa(uc);
-	if(Utilities::adjustToFitMass(getRandomSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+	if(Utilities::adjustToFitMass(getSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 	{
 		ret.push_back(Chromosome(ucaa,0));
 	}
 	String lc(rhs.getSequence().getSubsequence(0,cop).toString() + lhs.getSequence().getSubsequence(cop,lhs.getSequence().size()-cop).toString());
 	AASequence lcaa(lc);
-	if(Utilities::adjustToFitMass(getRandomSeed(),lcaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+	if(Utilities::adjustToFitMass(getSeed(),lcaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 		ret.push_back(Chromosome(lcaa,0));
 	return ret;
   }

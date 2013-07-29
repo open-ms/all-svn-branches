@@ -29,6 +29,7 @@ DefaultMater.h
 SimpleMater.h
 RandomMater.h
 ZipMater.h
+HomologyKiller.h
 )
 
 ### add path to the filenames

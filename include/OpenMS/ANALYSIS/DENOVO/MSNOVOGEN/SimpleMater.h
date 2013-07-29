@@ -54,7 +54,6 @@ public:
     /// Default c'tor
     SimpleMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
     virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs);
-
   };
 } // namespace
 

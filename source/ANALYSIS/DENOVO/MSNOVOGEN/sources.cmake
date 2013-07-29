@@ -29,6 +29,7 @@ DefaultMater.C
 SimpleMater.C
 RandomMater.C
 ZipMater.C
+HomologyKiller.C
 )
 
 ### add path to the filenames

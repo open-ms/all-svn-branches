@@ -36,6 +36,8 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <stdexcept>
 #include <algorithm>
+#include <time.h>
+#include <stdlib.h>
 
 namespace OpenMS
 {
@@ -44,20 +46,22 @@ namespace OpenMS
     maxPoolSize(200), precursorMassTolerance(0.3)
   {
 	  // mutater = new DefaultMutater(precursorMass,precursorMassTolerance,aaList);
+	  seed(time(0));
   }
 
   void GenPool::setMutater(const Mutater& mutater)
   {
   }
 
-  void GenPool::sort(const int sortMethod = Chromosome::sortScoreDescending)
+  void GenPool::sort(const int sortMethod)
   {
+	  //std::vector<Chromosome *> genPool;
 	  switch(sortMethod) {
 	    case Chromosome::sortScoreAscending :
-	      std::sort(*genPool.begin(), *genPool.end(), Chromosome::sortScoreAsc);
+	      std::sort(genPool.begin(), genPool.end(), Chromosome::sortScoreAsc);
 	      break;
 	    case Chromosome::sortScoreDescending :
-		  std::sort(*genPool.begin(), *genPool.end(), Chromosome::sortScoreDesc);
+		  std::sort(genPool.begin(), genPool.end(), Chromosome::sortScoreDesc);
 		  break;
 	  }
   }
@@ -108,4 +112,20 @@ namespace OpenMS
 	  }
 	  return false;
   }
+
+  void GenPool::replenish(const int targetSize)
+  {
+    int toAdd = targetSize - getPopulationSize();
+    std::vector<Chromosome *> ki;
+    for(std::map<String,Chromosome *>::iterator i = knownIndividuals.begin(); i != knownIndividuals.end(); i++) {
+    	ki.push_back(i->second);
+    }
+    for(int i=0; i<toAdd; i++)
+    {
+    	Size pos = rand() % ki.size();
+    	genPool.push_back(ki[pos]);
+    }
+    sort(Chromosome::sortScoreDescending);
+  }
+
 } // namespace

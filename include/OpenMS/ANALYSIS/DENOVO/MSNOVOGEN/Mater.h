@@ -42,6 +42,8 @@
 
 namespace OpenMS
 {
+  class GenPool;
+
   class OPENMS_DLLAPI Mater
   {
 private:
@@ -66,6 +68,10 @@ public:
     Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
     virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs) = 0;
+
+    void tournament(const GenPool & genPool);
+
+    virtual ~Mater();
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
@@ -97,14 +103,6 @@ public:
 
 	void setPrecursorMassTolerance(double precursorMassTolerance) {
 		precursorMassTolerance_ = precursorMassTolerance;
-	}
-
-	unsigned int getRandomSeed() const {
-		return randomSeed_;
-	}
-
-	void setRandomSeed(unsigned int randomSeed) {
-		randomSeed_ = randomSeed;
 	}
   };
 } // namespace

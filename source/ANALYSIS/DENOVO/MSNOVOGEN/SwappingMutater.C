@@ -43,16 +43,16 @@ namespace OpenMS
   {
   };
 
-  void SwappingMutater::mutate(Chromosome& chromosome)
+  void SwappingMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
   {
-    AASequence as = chromosome.getSequence();
+    AASequence as = chromosome->getSequence();
     Size mid = as.size()/2;
     Size lpos = rand() % mid;
     Size rpos = rand() % mid + mid;
     const Residue & r = as.getResidue(rpos);
     const Residue & nr = as.setResidue(lpos, &r);
     as.setResidue(rpos, &nr);
-    chromosome.setSequence(as);
+    chromosome->setSequence(as);
   }
 
   SwappingMutater::~SwappingMutater()

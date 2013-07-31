@@ -89,16 +89,16 @@ START_SECTION((static const AASequence getRandomSequence(const int seed, const i
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-	int test[]{0,3000,10000,12000,18000,20000};
-	String 	expSeq[]{"DGIISID","VVDVVVC","VVVCVDV","HHHGMGG","IGIDIDS",""};
-	int		expLen[]{7,7,7,7,7,0};
-	bool	expRes[]{true,true,true,true,true,false};
+	int test[]{0,3000,10000,12000,14000,15500};
+	String 	expSeq[]{"GGQGIWD","KNHGYGG","WGGAWGV","","GCAVVRK","RGMEGAI"};
+	int		expLen[]{7,7,7,0,7,7};
+	bool	expRes[]{true,true,true,false,true,true};
 	for(int i=0; i<6; i++) {
 		AASequence rand = Utilities::getRandomSequence(test[i],7,seq.getMonoWeight(Residue::Full),1.5,aaList);
-		TEST_EQUAL(expRes[i],(std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5));
+		TEST_STRING_EQUAL(rand.toString(), expSeq[i]);
+		TEST_NOT_EQUAL(rand.toString(), seq.toString());
 		TEST_EQUAL(expLen[i],rand.size());
-		TEST_NOT_EQUAL(seq.toString(),rand.toString());
-		TEST_EQUAL(expSeq[i],rand.toString());
+		TEST_EQUAL(expRes[i],(std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5));
 	}
 }
 END_SECTION
@@ -163,7 +163,6 @@ START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence,
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
 	int test[]{0,6000,10000,14000,15000};
-	String 	res[]  {"DPPPFGC","GEPQVFG","VGASNFH","VQQAASE","DDNIALA"};
 	String 	inSeq[]{"DPPAFGC","GEPIVFG","VGASNFK","VQQAASR","DDNIALR"};
 	String 	exSeq[]{"DQPAFGC","GEPQVFG","VGASNRK","VQMAAGR","DDNIALA"};
 	bool 	expRes[] {false,true,true,true,true,true};

@@ -41,14 +41,16 @@
 namespace OpenMS
 {
 
-  MSNovoGen::MSNovoGen()
+  MSNovoGen::MSNovoGen() :
+    maxGenNum(500), maxPopulation(500), genPool(500,0.5)
   {}
 
-  MSNovoGen::MSNovoGen(const MSNovoGen& other)
+  MSNovoGen::MSNovoGen(const MSNovoGen& other) :
+    	    maxGenNum(500), maxPopulation(500), genPool(500,0.5)
   {}
 
   MSNovoGen & MSNovoGen::operator=(const MSNovoGen& rhs)
-  {}
+  {return *this;}
 
 bool MSNovoGen::isTerminated()
 {
@@ -81,7 +83,7 @@ void MSNovoGen::run()
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-	GenPool genPool();
+	GenPool genPool(500,0.5);
 	const RandomSequenceSeeder rss(precursorMass, precursorMassTolerance, aaList);
 	//genPool.setSeeder(&rss);
 }

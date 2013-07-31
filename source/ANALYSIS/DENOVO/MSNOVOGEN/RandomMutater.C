@@ -50,7 +50,7 @@ namespace OpenMS
     weights_.push_back(1.0);
   }
 
-  void RandomMutater::mutate(Chromosome& chromosome)
+  void RandomMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
   {
 	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
     for(unsigned int i=0; i<weights_.size(); i++)

@@ -42,8 +42,8 @@ namespace OpenMS
     Mater(precursorMass, precursorMassTolerance, aaList)
   {}
 
-	std::vector<Chromosome> DefaultMater::mate(const Chromosome& lhs,
-	  const Chromosome& rhs)
+	std::vector<boost::shared_ptr<Chromosome> > DefaultMater::mate(boost::shared_ptr<Chromosome> lhs,
+			boost::shared_ptr<Chromosome> rhs)
 	{
 		SimpleMater sm(getPrecursorMass(), getPrecursorMassTolerance(), getAAList());
 		sm.seed(getSeed());

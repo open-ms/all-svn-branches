@@ -35,7 +35,7 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
@@ -45,29 +45,28 @@
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(SimpleMater, "$Id$")
+START_TEST(DefaultMater, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-SimpleMater* ptr = 0;
-SimpleMater* null_ptr = 0;
-START_SECTION(SimpleMater())
+DefaultMater* ptr = 0;
+DefaultMater* null_ptr = 0;
+START_SECTION(DefaultMater())
 {
-
 	std::vector<const Residue*> aaList;
-	ptr = new SimpleMater(100.0,0.3,aaList);
+	ptr = new DefaultMater(100.0,0.3,aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION(~SimpleMater())
+START_SECTION(~DefaultMater())
 {
 	delete ptr;
 }
 END_SECTION
 
-START_SECTION((SimpleMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
+START_SECTION((DefaultMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
   // TODO
 }
@@ -98,17 +97,17 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-	SimpleMater sm(m.getMonoWeight(Residue::Full),1.5,aaList);
-	sm.seed(50);
-	vector<boost::shared_ptr<Chromosome> > res = sm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
+	DefaultMater dm(m.getMonoWeight(Residue::Full),1.5,aaList);
+	dm.seed(50);
+	vector<boost::shared_ptr<Chromosome> > res = dm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
+	TEST_EQUAL(1,res.size());
 	TEST_STRING_EQUAL("GGVAAAAAAA",res[0]->getSequence().toString());
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
-	TEST_EQUAL(1,res.size()); //a different seed may lead to 2 valid children of m and f.
 	AASequence bt("AAAAAA");
 	AASequence bc("WWWWW");
-	res = sm.mate(boost::shared_ptr<Chromosome>(new Chromosome(bt,0)), boost::shared_ptr<Chromosome>(new Chromosome(bc,0)));
+	res = dm.mate(boost::shared_ptr<Chromosome>(new Chromosome(bt,0)), boost::shared_ptr<Chromosome>(new Chromosome(bc,0)));
 	TEST_EQUAL(0,res.size()); //a different seed may lead to 2 valid children of m and f.
 }
 END_SECTION

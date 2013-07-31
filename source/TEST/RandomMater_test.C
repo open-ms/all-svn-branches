@@ -99,18 +99,18 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 	RandomMater rm(m.getMonoWeight(Residue::Full),1.5,aaList);
 	rm.seed(150);
-	vector<Chromosome> res = rm.mate(Chromosome(m,0),Chromosome(f,0));
+	vector<boost::shared_ptr<Chromosome> > res = rm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
 	TEST_EQUAL(2,res.size());
-	TEST_STRING_EQUAL("GGAGGGLAGL",res[0].getSequence().toString());
-	TEST_STRING_EQUAL("GGGIAAAAAA",res[1].getSequence().toString());
-	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0].getSequence().getMonoWeight(Residue::Full)) < 1.5));
-	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[1].getSequence().getMonoWeight(Residue::Full)) < 1.5));
+	TEST_STRING_EQUAL("GGAGGGLAGL",res[0]->getSequence().toString());
+	TEST_STRING_EQUAL("GGGIAAAAAA",res[1]->getSequence().toString());
+	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
+	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[1]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 
 	AASequence bt("AAAAAA");
 	AASequence bc("WWWWW");
-	res = rm.mate(Chromosome(bt,0),Chromosome(bc,0));
+	res = rm.mate(boost::shared_ptr<Chromosome>(new Chromosome(bt,0)), boost::shared_ptr<Chromosome>(new Chromosome(bc,0)));
 	TEST_EQUAL(0,res.size()); //a different seed may lead to 2 valid children of m and f.
 }
 END_SECTION

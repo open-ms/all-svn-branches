@@ -37,6 +37,7 @@
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <stdlib.h>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -46,7 +47,7 @@ namespace OpenMS
   {
   }
 
-  Chromosome RandomSequenceSeeder::createIndividual() const
+  boost::shared_ptr<Chromosome> RandomSequenceSeeder::createIndividual() const
   {
 	  Size minLen = getPrecursorMass() / ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
 	  Size maxLen = getPrecursorMass() / ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
@@ -56,14 +57,18 @@ namespace OpenMS
 	  AASequence aaSeq;
 	  do
 	  {
-		sequence += Utilities::getRandomAA(getSeed(),getAaList());
+		sequence += Utilities::getRandomAA(rand() % 1000000,getAaList());
 		aaSeq = AASequence(sequence);
 		curMass = aaSeq.getMonoWeight();
 	  } while(curMass < maxMass && sequence.length() <= maxLen);
 	  if(sequence.length() >= minLen)
-		  Utilities::adjustToFitMass(getSeed(),aaSeq,getPrecursorMass(),getPrecursorMassTolerance(),getAaList());
-	  else
-		  return(Chromosome(AASequence(""),0));
-	  return(Chromosome(aaSeq,0));
+	  {
+		  if(Utilities::adjustToFitMass(getSeed(),aaSeq,getPrecursorMass(),getPrecursorMassTolerance(),getAaList()))
+		  {
+		    return boost::shared_ptr<Chromosome>(new Chromosome(aaSeq,0));
+		  }
+	  }
+	  return boost::shared_ptr<Chromosome>(new Chromosome(AASequence(""),0));
+
   }
 } // namespace

@@ -39,6 +39,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -75,12 +76,12 @@ START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 	AASequence aas("WLQSEVIHAR");
-	Chromosome chr;
-	chr.setSequence(aas);
+	boost::shared_ptr<Chromosome> chr(new Chromosome());
+	chr->setSequence(aas);
 	SwappingMutater swm(aas.getMonoWeight(),0.3,aaList);
 	swm.mutate(chr);
-	TEST_EQUAL((double)chr.getSequence().getMonoWeight(), aas.getMonoWeight());
-	TEST_NOT_EQUAL(chr.getSequence().toString(), aas.toString());
+	TEST_EQUAL((double)chr->getSequence().getMonoWeight(), aas.getMonoWeight());
+	TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());
 }
 END_SECTION
 

@@ -35,6 +35,7 @@
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/SimpleDecreasingKiller.h>
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -55,9 +56,9 @@ namespace OpenMS
     if(currentPopulation > targetPopulation)
     {
 	  genPool.sort(GenPool::BYSCOREDEC);
-	  std::vector<Chromosome *> ngp;
+	  std::vector<boost::shared_ptr<Chromosome> > ngp;
 	  int c = 0;
-	  for(std::vector<Chromosome *>::iterator i = genPool.begin(); i != genPool.end(); i++) {
+	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator i = genPool.begin(); i != genPool.end(); i++) {
 		if(c++ >= targetPopulation)
 			break;
 		ngp.insert(ngp.begin(), *i);

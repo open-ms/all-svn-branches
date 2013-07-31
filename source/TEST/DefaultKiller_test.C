@@ -39,6 +39,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -52,27 +53,28 @@ START_TEST(DefaultKiller, "$Id$")
 
 START_SECTION((virtual void kill(GenPool &genPool)))
 {
-  GenPool gp;
-  gp.addIndividual(Chromosome(AASequence("TESTA"),0.1));
-  gp.addIndividual(Chromosome(AASequence("TESTR"),0.15));
-  gp.addIndividual(Chromosome(AASequence("TESTN"),0.17));
-  gp.addIndividual(Chromosome(AASequence("TESTD"),0.2));
-  gp.addIndividual(Chromosome(AASequence("TESTC"),0.25));
-  gp.addIndividual(Chromosome(AASequence("TESTE"),0.27));
-  gp.addIndividual(Chromosome(AASequence("TESTQ"),0.3));
-  gp.addIndividual(Chromosome(AASequence("TESTG"),0.35));
-  gp.addIndividual(Chromosome(AASequence("TESTH"),0.37));
-  gp.addIndividual(Chromosome(AASequence("TESTO"),0.4));
-  gp.addIndividual(Chromosome(AASequence("TESTI"),0.45));
-  gp.addIndividual(Chromosome(AASequence("TESTL"),0.47));
-  gp.addIndividual(Chromosome(AASequence("TESTK"),0.5));
-  gp.addIndividual(Chromosome(AASequence("TESTM"),0.55));
-  gp.addIndividual(Chromosome(AASequence("TESTF"),0.57));
-  gp.addIndividual(Chromosome(AASequence("TESTP"),0.6));
-  gp.addIndividual(Chromosome(AASequence("TESTU"),0.65));
-  gp.addIndividual(Chromosome(AASequence("TESTS"),0.67));
-  gp.addIndividual(Chromosome(AASequence("TESTT"),0.7));
-  gp.addIndividual(Chromosome(AASequence("TESTW"),0.75));
+  GenPool gp(20,20000); //precursor mass tolerance is 20000 so that not 20 sequences with similar mass have to be found below.
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),0.1)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),0.15)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),0.17)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),0.2)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),0.25)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTE"),0.27)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTQ"),0.3)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTG"),0.35)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTH"),0.37)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),0.4)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),0.45)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),0.47)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTK"),0.5)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTM"),0.55)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTF"),0.57)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTP"),0.6)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTU"),0.65)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTS"),0.67)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTT"),0.7)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTW"),0.75)));
+  TEST_EQUAL(gp.getPopulationSize(),20);
   DefaultKiller dk(20,gp.getPopulationSize());
   dk.kill(gp);
   TEST_EQUAL(gp.getPopulationSize(),15);

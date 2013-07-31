@@ -37,6 +37,7 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
+#include <boost/shared_ptr.hpp>
 
 
 namespace OpenMS
@@ -54,7 +55,7 @@ public:
 	{
 	}
 
-    virtual void mutate(Chromosome& chromosome);
+    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
 private:
 
   };

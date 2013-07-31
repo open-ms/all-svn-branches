@@ -422,24 +422,25 @@ set(analysis_executables_list
 	TransformationDescription_test
 	TransformationModel_test
   #MSNOVOGEN
-	Mutater_test
-	SwappingMutater_test
-	InvertingMutater_test
-	SubstitutingMutater_test
-	DefaultMutater_test
-	RandomMutater_test
+	Chromosome_test
 	DefaultKiller_test
+	DefaultMater_test
+	DefaultMutater_test
+	GenPool_test
 	HomologyKiller_test
-	SimpleDecreasingKiller_test
+	InvertingMutater_test
+	Mater_test
+	Mutater_test
+	RandomMater_test
+	RandomMutater_test
 	RandomSequenceSeeder_test
 	Seeder_test
-	Utilities_test
-	Mater_test
+	SimpleDecreasingKiller_test
 	SimpleMater_test
-	DefaultMater_test
+	SubstitutingMutater_test
+	SwappingMutater_test
+	Utilities_test
 	ZipMater_test
-	RandomMater_test
-	Chromosome_test
 )
 
 set(applications_executables_list

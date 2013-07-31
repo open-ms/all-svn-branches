@@ -42,9 +42,9 @@ namespace OpenMS
     : Mutater(precursorMass, precursorMassTolerance, aaList)
   {}
 
-  void InvertingMutater::mutate(Chromosome& chromosome)
+  void InvertingMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
   {
-	AASequence seq = chromosome.getSequence();
+	AASequence seq = chromosome->getSequence();
 	Size mid = seq.size()/2;
 	Size lpos = rand() % mid;
     Size rpos = rand() % mid + mid;
@@ -55,6 +55,6 @@ namespace OpenMS
       seq.setResidue(lpos+i, &as.getResidue(s));
     }
 
-    chromosome.setSequence(seq);
+    chromosome->setSequence(seq);
   }
 } // namespace

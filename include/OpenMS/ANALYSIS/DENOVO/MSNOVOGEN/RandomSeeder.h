@@ -66,7 +66,7 @@ public:
     /// Default c'tor
     RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    virtual Chromosome createIndividual() const;
+    virtual boost::shared_ptr<Chromosome> createIndividual() const;
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const

@@ -37,6 +37,7 @@
 ///////////////////////////
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -49,9 +50,9 @@ struct TestMater :
 			Mater(precursorMass, precursorMassTolerance, aaList)
 		{}
 
-	    std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome& rhs)
+	    std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)
 	    {
-	    	std::vector<Chromosome> ret;
+	    	std::vector<boost::shared_ptr<Chromosome> > ret;
 	    	return(ret);
 	    }
 };
@@ -196,24 +197,6 @@ START_SECTION((void setPrecursorMassTolerance(double precursorMassTolerance)))
   TestMater tm(100.1, 0.3, aaList);
   tm.setPrecursorMassTolerance(0.4);
   TEST_EQUAL(0.4,tm.getPrecursorMassTolerance());
-}
-END_SECTION
-
-START_SECTION((unsigned int getRandomSeed() const ))
-{
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  tm.setRandomSeed(10);
-  TEST_EQUAL(10,tm.getRandomSeed());
-}
-END_SECTION
-
-START_SECTION((void setRandomSeed(unsigned int randomSeed)))
-{
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  tm.setRandomSeed(10);
-  TEST_EQUAL(10,tm.getRandomSeed());
 }
 END_SECTION
 

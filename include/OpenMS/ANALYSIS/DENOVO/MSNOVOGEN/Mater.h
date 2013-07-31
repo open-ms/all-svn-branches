@@ -39,6 +39,7 @@
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -67,7 +68,7 @@ public:
     /// Default c'tor
     Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs) = 0;
+    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) = 0;
 
     void tournament(const GenPool & genPool);
 

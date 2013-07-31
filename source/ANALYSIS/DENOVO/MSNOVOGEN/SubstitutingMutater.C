@@ -42,9 +42,9 @@ namespace OpenMS
     : Mutater(precursorMass, precursorMassTolerance, aaList)
   {}
 
-  void SubstitutingMutater::mutate(Chromosome& chromosome)
+  void SubstitutingMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
   {
-	AASequence as = chromosome.getSequence();
+	AASequence as = chromosome->getSequence();
 	double seqMass = as.getMonoWeight();
     Size rp = rand() % as.size();
     int sa = rand() % getAaList().size();
@@ -74,7 +74,7 @@ namespace OpenMS
     if(possRep.size() > 0) {
       int w = rand() % possRep.size();
       as.setResidue(possRep[w].first, possRep[w].second);
-      chromosome.setSequence(as);
+      chromosome->setSequence(as);
     }
   }
 

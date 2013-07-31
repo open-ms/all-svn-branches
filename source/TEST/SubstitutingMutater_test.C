@@ -79,14 +79,14 @@ START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
 	for(int i=0; i<7; i ++)
 	{
 		AASequence aas("WLQSEVIHAR");
-		Chromosome chr;
-		chr.setSequence(aas);
+		boost::shared_ptr<Chromosome> chr(new Chromosome());
+		chr->setSequence(aas);
 		SubstitutingMutater swm(aas.getMonoWeight(),fimt,aaList);
 		swm.seed(test[i]);
 		swm.mutate(chr);
-		double diff = std::abs((double)chr.getSequence().getMonoWeight()-aas.getMonoWeight());
+		double diff = std::abs((double)chr->getSequence().getMonoWeight()-aas.getMonoWeight());
 		TEST_EQUAL(diff <= fimt, true);
-		TEST_EQUAL(chr.getSequence().toString(), res[i]);
+		TEST_EQUAL(chr->getSequence().toString(), res[i]);
 	}
 }
 END_SECTION

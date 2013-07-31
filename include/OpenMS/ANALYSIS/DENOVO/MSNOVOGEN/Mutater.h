@@ -39,6 +39,7 @@
 #include <OpenMS/CONCEPT/Macros.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -74,7 +75,7 @@ public:
     void mutate(GenPool& genPool);
 
     /// The Chromosome that is submitted to this function will be mutated and changed.
-    virtual void mutate(Chromosome& chromosome) = 0;
+    virtual void mutate(boost::shared_ptr<Chromosome> chromosome) = 0;
 
     /// The Chromosome submitted to this function will be copied
     /// and changes will be performed on the copy which will then be returned.

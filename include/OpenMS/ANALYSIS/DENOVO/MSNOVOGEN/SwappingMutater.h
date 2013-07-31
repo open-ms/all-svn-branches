@@ -38,6 +38,7 @@
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -47,7 +48,7 @@ public:
 
 	SwappingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-	virtual void mutate(Chromosome& chromosome);
+	virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
 
 	virtual ~SwappingMutater();
 

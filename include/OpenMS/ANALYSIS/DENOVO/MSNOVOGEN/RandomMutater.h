@@ -43,6 +43,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMutater.h>
 #include <map>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -74,7 +75,7 @@ public:
 
     /// Generates a random number between 0 and 1 and then chooses one of the defined Mutaters to
     /// mutate the Chromosome. Returns the mutated Chromosome.
-    virtual void mutate(Chromosome& chromosome);
+    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const

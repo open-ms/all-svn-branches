@@ -36,6 +36,7 @@
 
 ///////////////////////////
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -48,9 +49,9 @@ struct TestMutater :
 			Mutater(precursorMass, precursorMassTolerance, aaList)
 		{}
 
-	    Chromosome& mutate(Chromosome& chromosome)
+		void mutate(boost::shared_ptr<Chromosome> chromosome)
 	    {
-	    	return(chromosome);
+
 	    }
 };
 
@@ -69,7 +70,8 @@ END_SECTION
 
 START_SECTION((Mutater(double precursorMass, double precursorMassTolerance, std::vector< Residue & > aaList)))
 {
-	ptr = new TestMutater(0.1, 0.2, );
+	std::vector< const Residue * > aaList;
+	ptr = new TestMutater(0.1, 0.2, aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr);
 }
 END_SECTION

@@ -32,23 +32,31 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_INVERTINGMUTATER_H
-#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_INVERTINGMUTATER_H
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_HOMOLOGYKILLER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_HOMOLOGYKILLER_H
 
 #include <OpenMS/config.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
-#include <boost/shared_ptr.hpp>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI InvertingMutater : Mutater
+  class OPENMS_DLLAPI HomologyKiller : public Killer
   {
-public:
-    /// Default c'tor
-    InvertingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+private:
+	int minEditDistance;
+	/// Assignment operator
+	HomologyKiller & operator=(const HomologyKiller& rhs);
+	/// Copy c'tor
+	HomologyKiller(const HomologyKiller& other);
 
-    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
+
+public:
+	/// Default c'tor
+	HomologyKiller(const int maxPopulation, const int initialPopulation);
+
+	void kill(GenPool& genPool);
+
   };
 } // namespace
 
-#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_INVERTINGMUTATER_H
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_HOMOLOGYKILLER_H

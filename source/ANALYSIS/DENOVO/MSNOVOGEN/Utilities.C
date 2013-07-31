@@ -57,9 +57,9 @@ namespace OpenMS
 		srand(seed);
 	    String str;
 	    for(int i=0; i<len; i++)
-	      str += Utilities::getRandomAA(seed, aaList);
+	      str += Utilities::getRandomAA(rand() % 1000000, aaList);
 	    AASequence seq(str);
-	    if(Utilities::adjustToFitMass(seed, seq, weight, tolerance, aaList))
+	    if(Utilities::adjustToFitMass(rand() % 1000000, seq, weight, tolerance, aaList))
 	    	return(seq);
 	    else
 	    	return(AASequence(""));
@@ -106,7 +106,7 @@ namespace OpenMS
 			  curWeight = sequence.getMonoWeight(Residue::Full);
 			  diff = std::abs(curWeight - weight);
 		  }
-		  if(--mi == 0)
+		  if(--mi == 0 && (diff > tolerance))
 			  return(false);
 	    }
 		return(true);

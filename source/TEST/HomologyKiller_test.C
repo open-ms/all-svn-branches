@@ -35,77 +35,66 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/HomologyKiller.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
-#include <OpenMS/CHEMISTRY/Residue.h>
-#include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(RandomSequenceSeeder, "$Id$")
+START_TEST(HomologyKiller, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-RandomSequenceSeeder* ptr = 0;
-RandomSequenceSeeder* null_ptr = 0;
-START_SECTION(RandomSequenceSeeder())
+HomologyKiller* ptr = 0;
+HomologyKiller* null_ptr = 0;
+START_SECTION(HomologyKiller())
 {
-	double precursorMass=10;
-	double precursorMassTolerance=2;
-	std::vector<const Residue*> aaList;
-	ptr = new RandomSequenceSeeder(precursorMass, precursorMassTolerance, aaList);
+	ptr = new HomologyKiller(10,10);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION(~RandomSequenceSeeder())
+START_SECTION(~HomologyKiller())
 {
 	delete ptr;
 }
 END_SECTION
 
-
-START_SECTION(Chromosome RandomSequenceSeeder::createIndividual())
+START_SECTION((void kill(GenPool &genPool)))
 {
-    AASequence seq("ALLMER");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-
-	int test[]{0,3000,6000,10000,14000,15000,16000};
-	String expSeq[]{"GDQIIW","MGRGRR","DAHSCIS","WEMHM","GCAVVRAG","FDHIEA","RMRLVG"};
-	bool expRes[]  {true, true, true, true, true, true, true};
-	double pm = seq.getMonoWeight(Residue::Full);
-	for(int i=0; i<7; i++) {
-		RandomSequenceSeeder rss(seq.getMonoWeight(Residue::Full),1.5,aaList);
-		rss.seed(test[i]);
-		boost::shared_ptr<Chromosome> rand = rss.createIndividual();
-		double diff = abs(rand->getSequence().getMonoWeight(Residue::Full) - pm);
-		TEST_EQUAL(diff <= 1.5, expRes[i]);
-		TEST_STRING_EQUAL(rand->getSequence().toString(),expSeq[i]);
-	}
-
+	  GenPool gp(20,20000);
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),0.1)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),0.15)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),0.17)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),0.2)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),0.25)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTE"),0.27)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTQ"),0.3)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTG"),0.35)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTH"),0.37)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),0.4)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),0.45)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),0.47)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTK"),0.5)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTM"),0.55)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTF"),0.57)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTP"),0.6)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTU"),0.65)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTS"),0.67)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTT"),0.7)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTW"),0.75)));
+	  TEST_EQUAL(gp.getPopulationSize(),20);
+	  HomologyKiller sdk(10,gp.getPopulationSize());
+	  sdk.kill(gp);
+	  TEST_EQUAL(gp.getPopulationSize(),20);
+	  std::vector<boost::shared_ptr<Chromosome> >::iterator best = gp.begin();
+	  TEST_REAL_SIMILAR((*best)->getScore(),0.75);
+	  TEST_STRING_EQUAL((*best)->getSequence().toString(),"TESTW");
 }
 END_SECTION
 

@@ -39,6 +39,7 @@
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -67,7 +68,7 @@ public:
     virtual ~Seeder();
 
     /// Creates a new individual.
-    virtual Chromosome createIndividual() const = 0;
+    virtual boost::shared_ptr<Chromosome> createIndividual() const = 0;
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
@@ -99,14 +100,6 @@ public:
 
 	void setPrecursorMassTolerance(double precursorMassTolerance) {
 		precursorMassTolerance_ = precursorMassTolerance;
-	}
-
-	unsigned int getRandomSeed() const {
-		return randomSeed_;
-	}
-
-	void setRandomSeed(unsigned int randomSeed) {
-		randomSeed_ = randomSeed;
 	}
 };
 } // namespace

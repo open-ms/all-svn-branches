@@ -56,12 +56,12 @@ namespace  OpenMS
 
   void Mutater::mutate(GenPool& genPool)
   {
-	for(std::vector<Chromosome*>::iterator iter = genPool.begin(); iter!= genPool.end(); ++iter)
+	for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = genPool.begin(); iter!= genPool.end(); ++iter)
 	{
 	  double rv = (rand() % 101)/100;
 	  if(rv > mutationRate_)
 		continue;
-	  mutate(**iter);
+	  mutate(*(*iter).get());
 	}
   }
 

@@ -37,7 +37,7 @@
 
 namespace OpenMS
 {
-  void DefaultMutater::mutate(Chromosome& chromosome)
+  void DefaultMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
   {
     SubstitutingMutater subm(getPrecursorMass(), getPrecursorMassTolerance(), getAaList());
     subm.mutate(chromosome);

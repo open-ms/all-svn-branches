@@ -32,23 +32,45 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_INVERTINGMUTATER_H
-#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_INVERTINGMUTATER_H
-
-#include <OpenMS/config.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/HomologyKiller.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI InvertingMutater : Mutater
+
+  HomologyKiller::HomologyKiller(const int maxPopulation, const int initialPopulation) :
+    Killer(maxPopulation, initialPopulation), minEditDistance(2)
+  {}
+
+  void HomologyKiller::kill(GenPool& genPool)
   {
-public:
-    /// Default c'tor
-    InvertingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+	  genPool.sort(Chromosome::sortScoreDescending);
+	  std::vector<boost::shared_ptr<Chromosome> > ngp;
+	  std::vector<boost::shared_ptr<Chromosome> >::iterator i = genPool.begin();
+	  boost::shared_ptr<Chromosome> b = * i;
+	  ngp.push_back(b);
+	  b->getSequence().toString();
+	  while(i != genPool.end())
+	  {
+		boost::shared_ptr<Chromosome> o = *i;
+		boost::shared_ptr<Chromosome> p;
+		bool homolog = false;
+		for(std::vector<boost::shared_ptr<Chromosome> >::iterator n = ngp.begin(); n != ngp.end(); n++) {
+			p = *n;
+			if(Utilities::editDistance(p->getSequence(),o->getSequence()) < minEditDistance)
+			{
+			  homolog = true;
+			  break;
+			}
+		}
+		if(!homolog)
+		  ngp.push_back(p);
+		i++;
+	  }
+	  genPool.setPool(ngp);
+	  genPool.replenish(Killer::getPreviousPopulation());
+  }
 
-    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
-  };
 } // namespace
-
-#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_INVERTINGMUTATER_H

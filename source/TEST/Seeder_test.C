@@ -55,9 +55,9 @@ struct TestSeeder :
 	    ~TestSeeder()
 	    {}
 
-	    Chromosome createIndividual() const
+	    boost::shared_ptr<Chromosome> createIndividual() const
 	    {
-	    	return(Chromosome(AASequence("ALLMER"), 1.0));
+	    	return(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLMER"), 1.0)));
 	    }
 };
 START_TEST(Seeder, "$Id$")

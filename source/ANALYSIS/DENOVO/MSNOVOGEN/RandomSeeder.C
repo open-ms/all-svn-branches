@@ -46,9 +46,9 @@ namespace OpenMS
 	weights.push_back(1.0);
   }
 
-  Chromosome RandomSeeder::createIndividual() const
+  boost::shared_ptr<Chromosome> RandomSeeder::createIndividual() const
   {
-	Chromosome chr;
+	boost::shared_ptr<Chromosome> chr;
 	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
     for(unsigned int i=0; i<weights.size(); i++)
     {

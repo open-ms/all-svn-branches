@@ -45,7 +45,7 @@ namespace OpenMS
 public:
 	/// Default c'tor
 	DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-	virtual Chromosome createIndividual() const;
+	virtual boost::shared_ptr<Chromosome> createIndividual() const;
   };
 } // namespace
 

@@ -28,102 +28,55 @@
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 // 
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: $
+// $Maintainer: Jens Allmer$
+// $Authors: Jens Allmer$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomMutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
+#include <time.h>
 #include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(RandomMutater, "$Id$")
+START_TEST(GenPool, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
+GenPool* ptr = 0;
+GenPool* null_ptr = 0;
+START_SECTION((GenPool(const int maxPoolSize, const double precursorMassTolerance)))
 {
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-	for(int i=0; i<5; i++) {
-		AASequence aas("WLQSEVIHAR");
-		boost::shared_ptr<Chromosome> chr(new Chromosome());
-		chr->setSequence(aas);
-		RandomMutater rm(aas.getMonoWeight(),2.0,aaList);
-		rm.seed(i);
-		rm.mutate(chr);
-		TEST_EQUAL(std::abs((double)chr->getSequence().getMonoWeight() - aas.getMonoWeight()) < 2.0, true);
-		TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());
-	}
+	ptr = new GenPool(10,0.1);
+	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION((const std::vector<double>& getWeights() const ))
+START_SECTION(~GenPool())
 {
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-    AASequence aas("WLQSEVIHAR");
-    RandomMutater rm(aas.getMonoWeight(),0.3,aaList);
-    vector<double> res = rm.getWeights();
-    TEST_REAL_SIMILAR(res[0],0.4);
-    TEST_REAL_SIMILAR(res[1],0.3);
-    TEST_REAL_SIMILAR(res[2],0.3);
+	delete ptr;
 }
 END_SECTION
 
-START_SECTION((void setWeights(const std::vector< double > &weights)))
+START_SECTION((~GenPool()))
 {
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void initGenPool(const int maxPoolSize)))
+{
+	double pm = 1500.5;
+	double pmt = 2;
 	std::vector<const Residue*> aaList;
 	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
@@ -134,34 +87,238 @@ START_SECTION((void setWeights(const std::vector< double > &weights)))
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-    AASequence aas("WLQSEVIHAR");
-    RandomMutater rm(aas.getMonoWeight(),0.3,aaList);
-    vector<double> res = rm.getWeights();
-    TEST_REAL_SIMILAR(res[0],0.4);
-    TEST_REAL_SIMILAR(res[1],0.3);
-    TEST_REAL_SIMILAR(res[2],0.3);
-    res[0] = 0.1;
-    res[1] = 0.5;
-    res[2] = 0.4;
-    RandomMutater rm1(aas.getMonoWeight(),0.3,aaList);
-    rm1.setWeights(res);
-    res = rm.getWeights();
-    TEST_REAL_SIMILAR(res[0],0.4);
-    TEST_REAL_SIMILAR(res[1],0.3);
-    TEST_REAL_SIMILAR(res[2],0.3);
+
+	int rs = 84864;
+	GenPool gp(5,pmt);
+	gp.setRandomSeed(rs);
+	gp.setMSMSSpectrum(pm);
+	RandomSequenceSeeder rss(pm,pmt,aaList);
+	rss.seed(gp.getRandomSeed());
+	gp.setSeeder(rss);
+	gp.initGenPool(5);
+	TEST_EQUAL(gp.getPopulationSize(),5);
+	TEST_STRING_EQUAL("LNSFCGHWKPNAAG",gp.getIndividual(0)->getSequence().toString());
+	TEST_STRING_EQUAL("YIQGQTSSIGGGSMD",gp.getIndividual(1)->getSequence().toString());
+	TEST_STRING_EQUAL("WSVQMNKFTDMI",gp.getIndividual(2)->getSequence().toString());
+	TEST_STRING_EQUAL("QQPEHRGEIIPVV",gp.getIndividual(3)->getSequence().toString());
+	TEST_STRING_EQUAL("CNGTQQFETMIND",gp.getIndividual(4)->getSequence().toString());
+}
+END_SECTION
+
+START_SECTION((void mutate()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setMutater(const Mutater &mutater)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void crossover()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setMater(const Mater &mater)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void kill()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setKiller(const Killer &killer)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setSeeder(const Seeder &seeder)))
+{
+	double pm = 1500.5;
+	double pmt = 2;
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
+	int rs = 84864;
+	GenPool gp(5,pmt);
+	gp.setRandomSeed(rs);
+	gp.setMSMSSpectrum(pm);
+	RandomSequenceSeeder rss(pm,pmt,aaList);
+	rss.seed(gp.getRandomSeed());
+	gp.setSeeder(rss);
+	gp.initGenPool(5);
+	TEST_EQUAL(gp.getPopulationSize(),5);
+	//gp.setSeeder(RandomSequenceSeeder(pm,pmt,aaList)); //Apparently not allowed
+}
+END_SECTION
+
+START_SECTION((Size getPopulationSize()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void sort(const int sortMethod)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setPool(std::vector< Chromosome * > newPool)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((bool addIndividual(const Chromosome & individual)))
+{
+  GenPool gp(10,0.5);
+  gp.setMSMSSpectrum(AASequence("ALLMER").getMonoWeight(Residue::Full));
+
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLMER"),1.0)));
+  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTER"),1.0)));
+  TEST_EQUAL(gp.getPopulationSize(),1);
+}
+END_SECTION
+
+START_SECTION((void replenish(const int targetSize)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((std::vector<Chromosome *>::iterator begin()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((std::vector<Chromosome *>::iterator end()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void seed(const unsigned int seed)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((unsigned int getSeed() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((const std::vector<const Residue*>& getAaList() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setAaList(const std::vector< const Residue * > &aaList)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((const std::vector<Chromosome*>& getGenPool() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setGenPool(const std::vector< Chromosome * > &genPool)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((const std::map<String, Chromosome*>& getKnownIndividuals() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setKnownIndividuals(const std::map< String, Chromosome * > &knownIndividuals)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((int getMaxPoolSize() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setMaxPoolSize(int maxPoolSize)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((double getPrecursorMassTolerance() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setPrecursorMassTolerance(double precursorMassTolerance)))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((unsigned int getRandomSeed() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void setRandomSeed(unsigned int randomSeed)))
+{
+  // TODO
 }
 END_SECTION
 

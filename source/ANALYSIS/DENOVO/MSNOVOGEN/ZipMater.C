@@ -42,46 +42,46 @@ namespace OpenMS
     Mater(precursorMass,precursorMassTolerance, aaList)
   {}
 
-  std::vector<Chromosome> ZipMater::mate(const Chromosome& lhs, const Chromosome & rhs)
+  std::vector<boost::shared_ptr<Chromosome> > ZipMater::mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)
   {
     String uc("");
     String lc("");
     Size i = 0;
     bool swap = false;
-    while(i < lhs.getSequence().size() && i < rhs.getSequence().size())
+    while(i < lhs->getSequence().size() && i < rhs->getSequence().size())
     {
     	if(swap)
     	{
-			uc += rhs.getSequence().getResidue(i).getModifiedOneLetterCode();
-			lc += lhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+			uc += rhs->getSequence().getResidue(i).getModifiedOneLetterCode();
+			lc += lhs->getSequence().getResidue(i).getModifiedOneLetterCode();
     	}
     	else
     	{
-			uc += lhs.getSequence().getResidue(i).getModifiedOneLetterCode();
-			lc += rhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+			uc += lhs->getSequence().getResidue(i).getModifiedOneLetterCode();
+			lc += rhs->getSequence().getResidue(i).getModifiedOneLetterCode();
     	}
     	swap = !swap;
     	++i;
     }
     // since either lhs or rhs ran out of aas the remainder of the longer sequence can be appended
     // without test which on is actually longer.
-    while(i < lhs.getSequence().size())
+    while(i < lhs->getSequence().size())
     {
-    	lc += lhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+    	lc += lhs->getSequence().getResidue(i).getModifiedOneLetterCode();
     	++i;
     }
-    while(i < lhs.getSequence().size())
+    while(i < lhs->getSequence().size())
 	{
-		uc += rhs.getSequence().getResidue(i).getModifiedOneLetterCode();
+		uc += rhs->getSequence().getResidue(i).getModifiedOneLetterCode();
     	++i;
 	}
-    std::vector<Chromosome> ret;
+    std::vector<boost::shared_ptr<Chromosome> > ret;
     AASequence ucaa(uc);
     if(Utilities::adjustToFitMass(getSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
-    	ret.push_back(Chromosome(ucaa,0));
+    	ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(ucaa,0)));
     AASequence lcaa(lc);
     if(Utilities::adjustToFitMass(getSeed(),lcaa,getPrecursorMass(), getPrecursorMassTolerance(), getAAList()))
-		ret.push_back(Chromosome(lcaa,0));
+		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(lcaa,0)));
     return ret;
   }
 } // namespace

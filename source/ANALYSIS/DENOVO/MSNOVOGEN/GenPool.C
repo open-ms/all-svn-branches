@@ -42,8 +42,8 @@
 namespace OpenMS
 {
 
-  GenPool::GenPool() :
-    maxPoolSize(200), precursorMassTolerance(0.3)
+  GenPool::GenPool(const int maxPoolSize, const double pmt) :
+    maxPoolSize(maxPoolSize), precursorMassTolerance(pmt)
   {
 	  // mutater = new DefaultMutater(precursorMass,precursorMassTolerance,aaList);
 	  seed(time(0));
@@ -55,7 +55,6 @@ namespace OpenMS
 
   void GenPool::sort(const int sortMethod)
   {
-	  //std::vector<Chromosome *> genPool;
 	  switch(sortMethod) {
 	    case Chromosome::sortScoreAscending :
 	      std::sort(genPool.begin(), genPool.end(), Chromosome::sortScoreAsc);
@@ -70,18 +69,20 @@ namespace OpenMS
     return(genPool.size());
   }
 
-  void GenPool::setPool(std::vector<Chromosome *> newPool)
+  void GenPool::setPool(std::vector<boost::shared_ptr<Chromosome> > newPool)
   {
     genPool = newPool;
   }
 
-  void GenPool::initGenPool(const int maxPoolSize)
+  void GenPool::initGenPool(const int mps)
   {
-	Size maxTries = 10 * maxPoolSize;
+	maxPoolSize = mps;
+	Size maxTries = 20 * maxPoolSize;
     while((maxTries > 0) && (genPool.size() < maxPoolSize))
     {
-      Chromosome ni = seeder->createIndividual();
-      addIndividual(ni);
+      boost::shared_ptr<Chromosome> ni = seeder->createIndividual();
+      if(ni.get()->getSequence().size() > 0)
+        addIndividual(ni);
       maxTries--;
     }
   }
@@ -99,26 +100,40 @@ namespace OpenMS
 	  this->seeder = &seeder;
 	}
 
-  bool GenPool::addIndividual(Chromosome individual) {
+  bool GenPool::addIndividual(boost::shared_ptr<Chromosome> individual) {
 	  try
 	  {
-		Chromosome *known = knownIndividuals.at(individual.getSequence().toString());
+		const boost::shared_ptr<Chromosome> chr = knownIndividuals.at(individual->getSequence().toString());
 	  }
 	  catch(const std::out_of_range& oor)
 	  {
-		genPool.push_back(&individual);
-		knownIndividuals.insert(std::pair<String,Chromosome *>(individual.getSequence().toString(),&individual));
-		return true;
+		if(std::abs(precursorMass - individual->getSequence().getMonoWeight(Residue::Full)) < precursorMassTolerance)
+		{
+			genPool.push_back(individual);
+			knownIndividuals.insert(std::pair<String,boost::shared_ptr<Chromosome> >(individual->getSequence().toString(),individual));
+			return true;
+		}
 	  }
 	  return false;
+  }
+
+  const boost::shared_ptr<Chromosome> GenPool::getIndividual(const int which)
+  {
+    if(which >= 0 && which < genPool.size())
+      return genPool[which];
+    boost::shared_ptr<Chromosome> ret(new Chromosome(AASequence(""),0));
+    return(ret);
   }
 
   void GenPool::replenish(const int targetSize)
   {
     int toAdd = targetSize - getPopulationSize();
-    std::vector<Chromosome *> ki;
-    for(std::map<String,Chromosome *>::iterator i = knownIndividuals.begin(); i != knownIndividuals.end(); i++) {
-    	ki.push_back(i->second);
+    std::vector<boost::shared_ptr<Chromosome> > ki;
+    if(knownIndividuals.size() > 0)
+    {
+      for(std::map<String, boost::shared_ptr<Chromosome> >::iterator i = knownIndividuals.begin(); i != knownIndividuals.end(); i++) {
+    	 ki.push_back(i->second);
+      }
     }
     for(int i=0; i<toAdd; i++)
     {

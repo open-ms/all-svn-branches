@@ -40,6 +40,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/ZipMater.h>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -70,7 +71,7 @@ private:
 public:
     /// Default c'tor
     RandomMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-    virtual std::vector<Chromosome> mate(const Chromosome& lhs, const Chromosome & rhs);
+    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs);
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const

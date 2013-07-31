@@ -58,8 +58,8 @@ public:
 
 private:
 	  unsigned int randomSeed_;
-	  std::map<String,Chromosome *> knownIndividuals;
-	  std::vector<Chromosome *> genPool;
+	  std::map<String,boost::shared_ptr<Chromosome> > knownIndividuals;
+	  std::vector<boost::shared_ptr<Chromosome> > genPool;
 	  Mutater* mutater;
 	  Mater* mater;
 	  Killer* killer;
@@ -75,7 +75,7 @@ private:
 	  GenPool & operator=(const GenPool &);
 public:
     /// Default c'tor
-    GenPool();
+    GenPool(const int maxPoolSize, const double precursorMassTolerance);
 
     ~GenPool()
     {};
@@ -93,19 +93,21 @@ public:
     void setSeeder(const Seeder& seeder);
     Size getPopulationSize();
     void sort(const int sortMethod);
-    void setPool(std::vector<Chromosome *> newPool);
+    void setPool(std::vector<boost::shared_ptr<Chromosome> > newPool);
 
     /// Add a Chromosome which must not have been seen before.
     /// Returns true if added and false if not.
-    bool addIndividual(Chromosome individual);
+    bool addIndividual(boost::shared_ptr<Chromosome> individual);
+
+    const boost::shared_ptr<Chromosome> getIndividual(const int which);
 
     void replenish(const int targetSize);
-    std::vector<Chromosome *>::iterator begin()
+    std::vector<boost::shared_ptr<Chromosome> >::iterator begin()
     {
       return(genPool.begin());
     };
 
-    std::vector<Chromosome *>::iterator end() {
+    std::vector<boost::shared_ptr<Chromosome> >::iterator end() {
     	return(genPool.end());
     };
 	void seed(const unsigned int seed)
@@ -117,7 +119,64 @@ public:
 	{
 		return randomSeed_;
 	}
-  };
+
+	const std::vector<const Residue*>& getAaList() const {
+		return aaList;
+	}
+
+	void setAaList(const std::vector<const Residue*>& aaList) {
+		this->aaList = aaList;
+	}
+
+	const std::vector<boost::shared_ptr<Chromosome> >& getGenPool() const {
+		return genPool;
+	}
+
+	void setGenPool(const std::vector<boost::shared_ptr<Chromosome> >& genPool) {
+		this->genPool = genPool;
+	}
+
+	const std::map<String, boost::shared_ptr<Chromosome> >& getKnownIndividuals() const {
+		return knownIndividuals;
+	}
+
+	void setKnownIndividuals(
+			const std::map<String, boost::shared_ptr<Chromosome> >& knownIndividuals) {
+		this->knownIndividuals = knownIndividuals;
+	}
+
+	int getMaxPoolSize() const {
+		return maxPoolSize;
+	}
+
+	void setMaxPoolSize(int maxPoolSize) {
+		this->maxPoolSize = maxPoolSize;
+	}
+
+	double getPrecursorMassTolerance() const {
+		return precursorMassTolerance;
+	}
+
+	void setPrecursorMassTolerance(double precursorMassTolerance) {
+		this->precursorMassTolerance = precursorMassTolerance;
+	}
+
+	const unsigned int getRandomSeed() const {
+		return randomSeed_;
+	}
+
+	void setRandomSeed(unsigned int randomSeed) {
+		randomSeed_ = randomSeed;
+	}
+
+	void setMSMSSpectrum(double precursorMass) {
+		this->precursorMass = precursorMass;
+	}
+
+	double getPrecursorMass() const {
+		return precursorMass;
+	}
+};
 } // namespace
 
 #endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_GENPOOL_H

@@ -40,6 +40,7 @@
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <vector>
 #include <algorithm>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -136,29 +137,29 @@ START_SECTION((void setSequence(const AASequence &sequence)))
 }
 END_SECTION
 
-START_SECTION((static bool sortScoreDesc(const Chromosome &lhs, const Chromosome &rhs)))
+START_SECTION((static bool sortScoreDesc(boost::shared_ptr<Chromosome> lhs, cboost::shared_ptr<Chromosome> rhs)))
 {
-  Chromosome chrT(AASequence("TESTER"),0.5);
-  Chromosome chrA(AASequence("ALLMER"),1.0);
-  TEST_EQUAL(Chromosome::sortScoreDesc(&chrT,&chrA),false);
+  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),0.5));
+  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1.0));
+  TEST_EQUAL(Chromosome::sortScoreDesc(chrT, chrA),false);
 }
 END_SECTION
 
-START_SECTION((static bool sortScoreAsc(const Chromosome &lhs, const Chromosome &rhs)))
+START_SECTION((static bool sortScoreAsc(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)))
 {
-  Chromosome chrT(AASequence("TESTER"),0.5);
-  Chromosome chrA(AASequence("ALLMER"),1.0);
-  TEST_EQUAL(Chromosome::sortScoreAsc(&chrT,&chrA),true);
+  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),0.5));
+  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1.0));
+  TEST_EQUAL(Chromosome::sortScoreAsc(chrT,chrA),true);
 }
 END_SECTION
 
 START_SECTION((void sort()))
 {
-  vector<Chromosome *> chrs;
-  Chromosome chrT(AASequence("TESTER"),0.5);
-  chrs.push_back(&chrT);
-  Chromosome chrA(AASequence("ALLMER"),1.0);
-  chrs.push_back(&chrA);
+  vector<boost::shared_ptr<Chromosome> > chrs;
+  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),0.5));
+  chrs.push_back(chrT);
+  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1.0));
+  chrs.push_back(chrA);
   std::sort(chrs.begin(),chrs.end(),Chromosome::sortScoreDesc);
   TEST_STRING_EQUAL(chrs[0]->getSequence().toString(),"ALLMER");
   TEST_STRING_EQUAL(chrs[1]->getSequence().toString(),"TESTER");

@@ -44,9 +44,10 @@ namespace OpenMS
 	{
 	}
 
-	Chromosome SequenceTagSeeder::createIndividual() const
+	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual() const
 	{
-		return Chromosome(AASequence(""),0);
+		boost::shared_ptr<Chromosome> chr(new Chromosome(AASequence(""),0));
+		return chr;
 	}
 
 } // namespace

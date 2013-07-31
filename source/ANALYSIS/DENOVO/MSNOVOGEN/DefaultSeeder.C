@@ -42,7 +42,7 @@ namespace OpenMS
   {
   }
 
-  Chromosome DefaultSeeder::createIndividual() const
+  boost::shared_ptr<Chromosome> DefaultSeeder::createIndividual() const
   {
 	RandomSequenceSeeder rss(getPrecursorMass(), getPrecursorMassTolerance(), getAaList());
 	return(rss.createIndividual());

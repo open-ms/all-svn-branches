@@ -71,15 +71,14 @@ public:
 
     virtual ~Mutater();
 
-    /// Given a GenPool iterates over the members (Chromosomes) and given the mutationRate randomly selects Chromosomes to be mutated using mutate(Chromosome).
-    void mutate(GenPool& genPool);
+    void mutatePool(GenPool & pool) const;
+
+    void mutateAndAddToPool(GenPool & pool) const;
+
+    boost::shared_ptr<Chromosome> mutateCpy(boost::shared_ptr<Chromosome> chromosome) const;
 
     /// The Chromosome that is submitted to this function will be mutated and changed.
-    virtual void mutate(boost::shared_ptr<Chromosome> chromosome) = 0;
-
-    /// The Chromosome submitted to this function will be copied
-    /// and changes will be performed on the copy which will then be returned.
-    Chromosome mutate(const Chromosome & chromosome) const;
+    virtual void mutate(boost::shared_ptr<Chromosome> chromosome) const = 0;
 
 	double getMutationRate() const {
 		return mutationRate_;
@@ -93,7 +92,7 @@ public:
 	}
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const unsigned int seed);
+	void seed(unsigned int seed);
 
 	const std::vector<const Residue*>& getAaList() const {
 		return aaList_;
@@ -119,7 +118,7 @@ public:
 		precursorMassTolerance_ = precursorMassTolerance;
 	}
 
-	unsigned int getRandomSeed() const {
+	unsigned int getRandomSeed() {
 		return randomSeed_;
 	}
 };

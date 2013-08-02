@@ -42,7 +42,7 @@ namespace OpenMS
     : Mutater(precursorMass, precursorMassTolerance, aaList)
   {}
 
-  void InvertingMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
+  void InvertingMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
 	AASequence seq = chromosome->getSequence();
 	Size mid = seq.size()/2;

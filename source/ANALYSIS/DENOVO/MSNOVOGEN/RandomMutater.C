@@ -48,9 +48,13 @@ namespace OpenMS
     weights_.push_back(0.4);
     weights_.push_back(0.7);
     weights_.push_back(1.0);
+	subm_.seed(getRandomSeed());
+	swam_.seed(getRandomSeed());
+	invm_.seed(getRandomSeed());
+	defm_.seed(getRandomSeed());
   }
 
-  void RandomMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
+  void RandomMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
 	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
     for(unsigned int i=0; i<weights_.size(); i++)
@@ -62,14 +66,14 @@ namespace OpenMS
 			   subm_.mutate(chromosome);
 			   break;
           case RandomMutater::swappingMutater :
-			  swam_.mutate(chromosome);
-			  break;
+			   swam_.mutate(chromosome);
+			   break;
           case RandomMutater::invertingMutater :
-        	  	   invm_.mutate(chromosome);
-        	  	   break;
+			   invm_.mutate(chromosome);
+			   break;
           default:
- 	  	   	   	   defm_.mutate(chromosome);
- 	  	   	   	   break;
+			   defm_.mutate(chromosome);
+			   break;
         }
       }
     }

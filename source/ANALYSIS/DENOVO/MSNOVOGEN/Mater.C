@@ -33,6 +33,8 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
 #include <time.h>
 #include <stdlib.h>
 
@@ -40,7 +42,7 @@
 namespace OpenMS
 {
   Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance), aaList_(aaList)
+    aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
   {
 	  seed(time(0));
   }
@@ -49,17 +51,47 @@ namespace OpenMS
   {
   }
 
-  void Mater::seed(const unsigned int seed)
+	boost::shared_ptr<Chromosome> Mater::getPartner(GenPool& genPool, boost::shared_ptr<Chromosome> exclude) const
+	{
+		boost::shared_ptr<Chromosome> ret;
+		boost::shared_ptr<Chromosome> test;
+		Size rv = 0;
+		int dist = 0;
+		while(!ret)
+		{
+			rv = rand() % genPool.getPopulationSize();
+			test = genPool.getGenPool()[rv];
+			dist = Utilities::editDistance(exclude->getSequence(),test->getSequence());
+			if(dist < 3)
+				continue;
+			ret = test;
+		}
+		return(ret);
+	}
+
+  void Mater::seed(unsigned int seed)
   {
 	randomSeed_ = seed;
 	srand(randomSeed_);
   }
 
-  void Mater::tournament(const GenPool& genPool)
+  std::vector<boost::shared_ptr<Chromosome> > Mater::tournament(GenPool & pool) const
   {
+	std::vector<boost::shared_ptr<Chromosome> > ret;
+	for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
+	{
+	  boost::shared_ptr<Chromosome> p1 = this->getPartner(pool,*iter);
+	  boost::shared_ptr<Chromosome> p2 = *iter;
+	  std::vector<boost::shared_ptr<Chromosome> > children = this->mate(p1, p2);
+	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator c = children.begin(); c != children.end(); ++c)
+		  ret.push_back(*c);
+	}
+	return ret;
+  }
 
-//	if(Utilities::editDistance(lhs.getSequence(), rhs.getSequence()) < 3)
-//	  return ret; //return empty set since there is no need to perform a crossover with too similar individuals.
-
+  void Mater::tournamentAndAddToPool(GenPool & pool) const
+  {
+	  std::vector<boost::shared_ptr<Chromosome> > children = tournament(pool);
+	  pool.addIndividuals(children);
   }
 } // namespace

@@ -37,15 +37,19 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI DefaultSeeder : Seeder
+  class OPENMS_DLLAPI DefaultSeeder : public Seeder
   {
+private:
+	  RandomSequenceSeeder rss_;
+
 public:
 	/// Default c'tor
 	DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-	virtual boost::shared_ptr<Chromosome> createIndividual() const;
+	boost::shared_ptr<Chromosome> createIndividual() const;
   };
 } // namespace
 

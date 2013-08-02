@@ -54,7 +54,7 @@ namespace OpenMS
 
 bool MSNovoGen::isTerminated()
 {
-
+  return(true);
 }
 
 void MSNovoGen::run()

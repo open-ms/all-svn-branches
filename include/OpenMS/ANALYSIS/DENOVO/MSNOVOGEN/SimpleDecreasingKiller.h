@@ -49,22 +49,22 @@ namespace OpenMS
   {
 private:
 	  /// By how many members a population should shrink per generation.
-	  int decreasePerGeneration;
+	  unsigned int decreasePerGeneration;
 
 public:
     /// Default c'tor
-    SimpleDecreasingKiller(int maxPopulation, int initialPopulation);
+    SimpleDecreasingKiller();
 
     ~SimpleDecreasingKiller();
 
-    virtual void kill(GenPool& genPool);
+    void kill(GenPool& genPool) const;
 
-	int getDecreasePerGeneration() const
+	unsigned int getDecreasePerGeneration() const
 	{
 		return decreasePerGeneration;
 	}
 
-	void setDecreasePerGeneration(int decreasePerGeneration)
+	void setDecreasePerGeneration(unsigned int decreasePerGeneration)
 	{
 		this->decreasePerGeneration = decreasePerGeneration;
 	}

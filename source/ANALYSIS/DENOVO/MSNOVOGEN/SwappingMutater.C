@@ -43,7 +43,7 @@ namespace OpenMS
   {
   };
 
-  void SwappingMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
+  void SwappingMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
     AASequence as = chromosome->getSequence();
     Size mid = as.size()/2;

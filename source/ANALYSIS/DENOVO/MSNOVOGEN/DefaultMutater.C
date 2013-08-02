@@ -33,14 +33,21 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMutater.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
 
 namespace OpenMS
 {
-  void DefaultMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
+	DefaultMutater::DefaultMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+		Mutater(precursorMass, precursorMassTolerance, aaList), subm_(precursorMass, precursorMassTolerance, aaList)
+	{
+		subm_.seed(getRandomSeed());
+	}
+
+	DefaultMutater::~DefaultMutater()
+	{}
+
+  void DefaultMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
-    SubstitutingMutater subm(getPrecursorMass(), getPrecursorMassTolerance(), getAaList());
-    subm.mutate(chromosome);
+    subm_.mutate(chromosome);
   }
 
 } // namespace

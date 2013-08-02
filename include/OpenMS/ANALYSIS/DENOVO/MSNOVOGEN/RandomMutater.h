@@ -75,7 +75,7 @@ public:
 
     /// Generates a random number between 0 and 1 and then chooses one of the defined Mutaters to
     /// mutate the Chromosome. Returns the mutated Chromosome.
-    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
+    void mutate(boost::shared_ptr<Chromosome> chromosome) const;
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const

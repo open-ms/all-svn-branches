@@ -44,12 +44,6 @@ namespace OpenMS
   class OPENMS_DLLAPI Killer
   {
 private:
-	/// The maximum population of the gen pool that is allowed (may be exceeded during mating).
-	int maxPopulation_;
-	/// The population size after the last killing round.
-    int previousPopulation_;
-
-private:
 	/// To prevent copy construction; Copy c'tor
 	Killer(const Killer& other);
 	/// To prevent assignment; Assignment operator
@@ -57,17 +51,11 @@ private:
 
 public:
     /// c'tor
-    Killer(const int maxPopulation, const int initialPopulation);
+    Killer();
 
     virtual ~Killer() = 0;
 
-    virtual void kill(GenPool& genPool) = 0;
-
-    int getMaxPopulation() const;
-
-    int getPreviousPopulation() const;
-
-    void setPreviousPopulation(const int previous_population);
+    virtual void kill(GenPool& genPool) const = 0;
 
   };
 } // namespace

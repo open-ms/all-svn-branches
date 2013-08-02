@@ -41,7 +41,7 @@ namespace OpenMS
 {
 
   Seeder::Seeder(double pm, double pmt, std::vector<const Residue*> al) :
-    precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
+    aaList_(al), precursorMass_(pm), precursorMassTolerance_(pmt)
   {
 	seed(time(0));
   }

@@ -40,11 +40,11 @@
 namespace OpenMS
 {
 
-  HomologyKiller::HomologyKiller(const int maxPopulation, const int initialPopulation) :
-    Killer(maxPopulation, initialPopulation), minEditDistance(2)
-  {}
+  HomologyKiller::HomologyKiller() :
+    Killer(), minEditDistance(2)
+  {  }
 
-  void HomologyKiller::kill(GenPool& genPool)
+  void HomologyKiller::kill(GenPool& genPool) const
   {
 	  genPool.sort(Chromosome::sortScoreDescending);
 	  std::vector<boost::shared_ptr<Chromosome> > ngp;
@@ -70,7 +70,7 @@ namespace OpenMS
 		i++;
 	  }
 	  genPool.setPool(ngp);
-	  genPool.replenish(Killer::getPreviousPopulation());
+	  genPool.replenish(genPool.getPreviousPoolSize());
   }
 
 } // namespace

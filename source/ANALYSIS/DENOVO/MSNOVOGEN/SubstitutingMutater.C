@@ -42,7 +42,7 @@ namespace OpenMS
     : Mutater(precursorMass, precursorMassTolerance, aaList)
   {}
 
-  void SubstitutingMutater::mutate(boost::shared_ptr<Chromosome> chromosome)
+  void SubstitutingMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
 	AASequence as = chromosome->getSequence();
 	double seqMass = as.getMonoWeight();

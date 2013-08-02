@@ -33,16 +33,14 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
-
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <seqan/align.h>
 #include <seqan/score.h>
 #include <seqan/basic.h>
 #include <seqan/sequence.h>
-
-
-
 #include <stdlib.h>
 #include <iostream>
+#include <boost/shared_ptr.hpp>
 
 namespace OpenMS
 {
@@ -113,7 +111,7 @@ namespace OpenMS
 	}
 
 	using namespace seqan;
-	int Utilities::editDistance(const AASequence& lhs, const AASequence& rhs)
+	unsigned int Utilities::editDistance(const AASequence& lhs, const AASequence& rhs)
 	{
 		Align<std::string> align;
 		resize(rows(align), 2);
@@ -121,4 +119,5 @@ namespace OpenMS
 		assignSource(row(align,1),rhs.toUnmodifiedString());
 		return std::abs(globalAlignment(align, seqan::Score<int,Simple>(0,-1,-1)));
 	}
+
 } // namespace

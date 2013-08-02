@@ -36,21 +36,43 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_SCORER_H
 
 #include <OpenMS/config.h>
+#include <boost/shared_ptr.hpp>
+#include <OpenMS/KERNEL/MSSpectrum.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 
 namespace OpenMS
 {
+  class GenPool;
+
   class OPENMS_DLLAPI Scorer
   {
+private:
+	double fragmentMassTolerance;
+
+	/// Copy c'tor
+	Scorer(const Scorer& other);
+
+	/// Assignment operator
+	Scorer & operator=(const Scorer& rhs);
+
 public:
     /// Default c'tor
-    Scorer();
+    Scorer(const double fragmentMassTolerance = 0.5);
 
-    /// Copy c'tor
-    Scorer(const Scorer& other);
+    virtual ~Scorer();
 
-    /// Assignment operator
-    Scorer & operator=(const Scorer& rhs);
-  };
+    void scorePool(const MSSpectrum<> & msms, GenPool & pool) const;
+
+    virtual void score(const MSSpectrum<> & msms, boost::shared_ptr<Chromosome> chromosome) const = 0;
+
+	double getFragmentMassTolerance() const {
+		return fragmentMassTolerance;
+	}
+
+	void setFragmentMassTolerance(double fragmentMassTolerance) {
+		this->fragmentMassTolerance = fragmentMassTolerance;
+	}
+};
 } // namespace
 
 #endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_SCORER_H

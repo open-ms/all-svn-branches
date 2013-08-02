@@ -33,17 +33,24 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Scorer.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 
 namespace OpenMS
 {
 
-  Scorer::Scorer()
+  Scorer::Scorer(const double fmt) :
+    fragmentMassTolerance(fmt)
   {}
 
-  Scorer::Scorer(const Scorer& other)
+  Scorer::~Scorer()
   {}
 
-  Scorer & Scorer::operator=(const Scorer& rhs)
-  {}
+  void Scorer::scorePool(const MSSpectrum<> & msms, GenPool & pool) const
+  {
+	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter != pool.end(); iter++)
+	  {
+		  this->score(msms, *iter);
+	  }
+  }
 
 } // namespace

@@ -46,7 +46,7 @@ public:
 	/// Default c'tor
 	  SequenceTagSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-	virtual boost::shared_ptr<Chromosome> createIndividual() const;
+	boost::shared_ptr<Chromosome> createIndividual() const;
   };
 } // namespace
 

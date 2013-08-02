@@ -38,6 +38,7 @@
 #include <OpenMS/config.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
 #include <vector>
 
 namespace OpenMS
@@ -66,7 +67,8 @@ private:
     /// The passed in sequence is directly modified.
     static bool adjustToFitMass(const int seed, AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
 
-    static int editDistance(const AASequence & lhs, const AASequence & rhs);
+    static unsigned int editDistance(const AASequence & lhs, const AASequence & rhs);
+
   };
 } // namespace
 

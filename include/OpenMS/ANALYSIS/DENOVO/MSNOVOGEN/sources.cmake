@@ -30,6 +30,7 @@ SimpleMater.h
 RandomMater.h
 ZipMater.h
 HomologyKiller.h
+NormShrAbuScorer.h
 )
 
 ### add path to the filenames

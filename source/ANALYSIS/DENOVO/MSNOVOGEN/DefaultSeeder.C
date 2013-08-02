@@ -33,19 +33,18 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h>
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
 
 namespace OpenMS
 {
   DefaultSeeder::DefaultSeeder(double pm, double pmt, std::vector<const Residue*> al) :
-	Seeder(pm,pmt,al)
+	Seeder(pm,pmt,al), rss_(pm, pmt, al)
   {
+	  rss_.seed(getSeed());
   }
 
   boost::shared_ptr<Chromosome> DefaultSeeder::createIndividual() const
   {
-	RandomSequenceSeeder rss(getPrecursorMass(), getPrecursorMassTolerance(), getAaList());
-	return(rss.createIndividual());
+	return(rss_.createIndividual());
   }
 } // namespace
 

@@ -52,31 +52,40 @@ namespace  OpenMS
 	  seed(time(0));
   }
 
-
-
-  void Mutater::mutate(GenPool& genPool)
-  {
-	for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = genPool.begin(); iter!= genPool.end(); ++iter)
-	{
-	  double rv = (rand() % 101)/100;
-	  if(rv > mutationRate_)
-		continue;
-	  mutate(*(*iter).get());
-	}
-  }
-
   Mutater::~Mutater()
   {
   }
 
-  Chromosome Mutater::mutate(const Chromosome& chromosome) const
-  {
-    Chromosome cpy(AASequence(chromosome.getSequence().toString()),chromosome.getScore());
-    mutate(cpy);
-    return cpy;
-  }
+	void Mutater::mutatePool(GenPool& pool) const
+	{
+		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
+		{
+		  double rv = (rand() % 101)/100.0;
+		  if(rv > getMutationRate())
+			continue;
+		  this->mutate(*iter);
+		}
+	}
 
-  void Mutater::seed(const unsigned int seed)
+	void Mutater::mutateAndAddToPool(GenPool& pool) const
+	{
+		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
+		{
+		  double rv = (rand() % 101)/100.0;
+		  if(rv > getMutationRate())
+			continue;
+		  pool.addIndividual(this->mutateCpy(*iter));
+		}
+	}
+
+	boost::shared_ptr<Chromosome> Mutater::mutateCpy(boost::shared_ptr<Chromosome> chromosome) const
+	{
+		boost::shared_ptr<Chromosome> cpy(new Chromosome(AASequence(chromosome->getSequence()),chromosome->getScore()));
+		this->mutate(cpy);
+		return cpy;
+	}
+
+  void Mutater::seed(unsigned int seed)
   {
 	randomSeed_ = seed;
 	srand(randomSeed_);

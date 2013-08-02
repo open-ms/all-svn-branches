@@ -32,71 +32,38 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
-#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_NORMSHRABUSCORER_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_NORMSHRABUSCORER_H
 
 #include <OpenMS/config.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Scorer.h>
 #include <vector>
+#include <OpenMS/KERNEL/MSSpectrum.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI RandomSeeder : public Seeder
+  class OPENMS_DLLAPI NormShrAbuScorer : public Scorer
   {
 private:
-	/// The vector holds the weights for the random decision of which Mutater to use.
-	/// The weights are increasing with the size of the vector and the last double must be 1.0.
-	std::vector<double> weights;
+	/// Assignment operator
+	NormShrAbuScorer & operator=(const NormShrAbuScorer& rhs);
 
-	RandomSequenceSeeder rss;
+	/// Copy c'tor
+	NormShrAbuScorer(const NormShrAbuScorer& other);
 
-	SequenceTagSeeder sts;
-
-	DefaultSeeder ds;
-
+	std::vector<Peak1D> getPeaksInRange(const MSSpectrum<> & msms,
+										const double rangeStart,
+										const double rangeEnd,
+										std::vector<Peak1D>::const_iterator start,
+										std::vector<Peak1D>::const_iterator end
+										) const;
 public:
-	/// identifier for SubstitutingMutater
-	const static int randomSequenceSeeder = 0;
-	/// identifier for SwappingMutater
-	const static int sequenceTagSeeder = 1;
+	/// Default c'tor
+	NormShrAbuScorer(const double fragmentMassTolerance);
 
-    /// Default c'tor
-    RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+    void score(const MSSpectrum<> & msms, boost::shared_ptr<Chromosome> chromosome) const;
 
-    boost::shared_ptr<Chromosome> createIndividual() const;
-
-    /// Returns the weights currently set for the Mutaters.
-	const std::vector<double> getWeights() const
-	{
-		if(weights.size() < 1)
-			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-		std::vector<double> ret;
-		double val = weights[0];
-		ret.push_back(val);
-		for(Size i = 1; i < weights.size(); i++)
-		{
-	      val = weights[i] - weights[i-1];
-		  ret.push_back(val);
-		}
-		return ret;
-	}
-
-	/// Sets the input weights for the decision which Mutater to use
-	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
-	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
-	void setWeights(const std::vector<double>& weights) {
-		this->weights[0] = weights[0];
-		for(unsigned int i=1; i<this->weights.size(); i++)
-		{
-		  this->weights[i] = weights[i]+this->weights[i-1];
-		}
-		if(this->weights[this->weights.size()-1] < 1 || this->weights[this->weights.size()-1] > 1)
-			this->weights[this->weights.size()-1] = 1.0;
-	}
   };
 } // namespace
 
-#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_NORMSHRABUSCORER_H

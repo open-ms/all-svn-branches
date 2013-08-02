@@ -47,9 +47,12 @@ namespace OpenMS
 	weights_.push_back(0.4);
 	weights_.push_back(0.7);
 	weights_.push_back(1.0);
+	sm.seed(getSeed());
+    zm.seed(getSeed());
+    dm.seed(getSeed());
   }
 
-  std::vector<boost::shared_ptr<Chromosome> > RandomMater::mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)
+  std::vector<boost::shared_ptr<Chromosome> > RandomMater::mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const
   {
 	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
     for(unsigned int i=0; i<weights_.size(); i++)
@@ -58,15 +61,12 @@ namespace OpenMS
       {
         switch(i) {
           case RandomMater::simpleMater :
-        	   sm.seed(getSeed());
 			   sm.mate(lhs, rhs);
 			   break;
           case RandomMater::zipMater :
-        	   zm.seed(getSeed());
 			   zm.mate(lhs, rhs);
 			   break;
           default:
-        	   dm.seed(getSeed());
 			   dm.mate(lhs, rhs);
 			   break;
         }

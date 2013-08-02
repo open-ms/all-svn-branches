@@ -40,8 +40,8 @@
 namespace OpenMS
 {
 
-  SimpleDecreasingKiller::SimpleDecreasingKiller(int maxPopulation, int initialPopulation) :
-    Killer(maxPopulation, initialPopulation), decreasePerGeneration(5)
+  SimpleDecreasingKiller::SimpleDecreasingKiller() :
+    Killer(), decreasePerGeneration(5)
   {
   }
 
@@ -49,10 +49,11 @@ namespace OpenMS
   {
   }
 
-  void SimpleDecreasingKiller::kill(GenPool& genPool)
+  void SimpleDecreasingKiller::kill(GenPool& genPool) const
   {
     int currentPopulation = genPool.getPopulationSize();
-    int targetPopulation = getPreviousPopulation() - decreasePerGeneration;
+    int diff = genPool.getPreviousPoolSize() - decreasePerGeneration;
+    int targetPopulation = std::max(diff,1);
     if(currentPopulation > targetPopulation)
     {
 	  genPool.sort(GenPool::BYSCOREDEC);
@@ -64,11 +65,11 @@ namespace OpenMS
 		ngp.insert(ngp.begin(), *i);
 	  }
 	  genPool.setPool(ngp);
-	  setPreviousPopulation(targetPopulation);
+	  genPool.setPreviousPoolSize(targetPopulation);
     }
     else
     {
-      setPreviousPopulation(currentPopulation);
+      genPool.setPreviousPoolSize(currentPopulation);
     }
   } // namespace
 }

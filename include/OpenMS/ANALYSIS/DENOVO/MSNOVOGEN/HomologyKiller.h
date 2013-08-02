@@ -43,18 +43,17 @@ namespace OpenMS
   class OPENMS_DLLAPI HomologyKiller : public Killer
   {
 private:
-	int minEditDistance;
+	unsigned int minEditDistance;
 	/// Assignment operator
 	HomologyKiller & operator=(const HomologyKiller& rhs);
 	/// Copy c'tor
 	HomologyKiller(const HomologyKiller& other);
 
-
 public:
 	/// Default c'tor
-	HomologyKiller(const int maxPopulation, const int initialPopulation);
+	HomologyKiller();
 
-	void kill(GenPool& genPool);
+	void kill(GenPool& genPool) const;
 
   };
 } // namespace

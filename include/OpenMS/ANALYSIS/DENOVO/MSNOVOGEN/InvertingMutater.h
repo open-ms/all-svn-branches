@@ -41,13 +41,13 @@
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI InvertingMutater : Mutater
+  class OPENMS_DLLAPI InvertingMutater : public Mutater
   {
 public:
     /// Default c'tor
     InvertingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
+    void mutate(boost::shared_ptr<Chromosome> chromosome) const;
   };
 } // namespace
 

@@ -37,6 +37,7 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
@@ -45,6 +46,7 @@ namespace OpenMS
   class OPENMS_DLLAPI DefaultMater : public Mater
   {
 private:
+	SimpleMater sm_;
 	/// Copy c'tor
 	DefaultMater(const DefaultMater& other);
 
@@ -54,7 +56,7 @@ private:
 public:
     /// Default c'tor
     DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs);
+    std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
   };
 } // namespace
 

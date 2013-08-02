@@ -37,26 +37,24 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
 #include <boost/shared_ptr.hpp>
 
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI DefaultMutater : Mutater
+  class OPENMS_DLLAPI DefaultMutater : public Mutater
   {
+private:
+	  SubstitutingMutater subm_;
+
 public:
 
-	DefaultMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-		Mutater(precursorMass, precursorMassTolerance, aaList)
-	{
-	}
+	DefaultMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-	~DefaultMutater()
-	{
-	}
+	~DefaultMutater();
 
-    virtual void mutate(boost::shared_ptr<Chromosome> chromosome);
-private:
+	void mutate(boost::shared_ptr<Chromosome> chromosome) const;
 
   };
 } // namespace

@@ -38,19 +38,23 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleDecreasingKiller.h>
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI DefaultKiller : public Killer
   {
+private:
+	  SimpleDecreasingKiller sdk_;
+
 public:
     /// Default c'tor
-    DefaultKiller(const int maxPopulation, const int initialPopulation);
+    DefaultKiller();
 
     /// Implementation of virtual ~Killer()
     ~DefaultKiller();
 
-    virtual void kill(GenPool& genPool);
+    void kill(GenPool& genPool) const;
 
   };
 } // namespace

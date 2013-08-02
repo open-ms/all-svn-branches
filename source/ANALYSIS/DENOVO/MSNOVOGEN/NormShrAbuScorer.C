@@ -32,71 +32,52 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
-#define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H
-
-#include <OpenMS/config.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/NormShrAbuScorer.h>
+#include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
+#include <OpenMS/KERNEL/StandardTypes.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
 #include <vector>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI RandomSeeder : public Seeder
+
+  NormShrAbuScorer::NormShrAbuScorer(const double fmt) :
+    Scorer(fmt)
+  {}
+
+  std::vector<Peak1D> NormShrAbuScorer::getPeaksInRange(
+		const MSSpectrum<> & msms,
+		const double rangeStart,
+		const double rangeEnd,
+		std::vector<Peak1D>::const_iterator start,
+		std::vector<Peak1D>::const_iterator end        ) const
   {
-private:
-	/// The vector holds the weights for the random decision of which Mutater to use.
-	/// The weights are increasing with the size of the vector and the last double must be 1.0.
-	std::vector<double> weights;
+	std::vector<Peak1D> ret;
 
-	RandomSequenceSeeder rss;
+    return ret;
+  }
 
-	SequenceTagSeeder sts;
-
-	DefaultSeeder ds;
-
-public:
-	/// identifier for SubstitutingMutater
-	const static int randomSequenceSeeder = 0;
-	/// identifier for SwappingMutater
-	const static int sequenceTagSeeder = 1;
-
-    /// Default c'tor
-    RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-
-    boost::shared_ptr<Chromosome> createIndividual() const;
-
-    /// Returns the weights currently set for the Mutaters.
-	const std::vector<double> getWeights() const
-	{
-		if(weights.size() < 1)
-			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-		std::vector<double> ret;
-		double val = weights[0];
-		ret.push_back(val);
-		for(Size i = 1; i < weights.size(); i++)
-		{
-	      val = weights[i] - weights[i-1];
-		  ret.push_back(val);
-		}
-		return ret;
-	}
-
-	/// Sets the input weights for the decision which Mutater to use
-	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
-	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
-	void setWeights(const std::vector<double>& weights) {
-		this->weights[0] = weights[0];
-		for(unsigned int i=1; i<this->weights.size(); i++)
-		{
-		  this->weights[i] = weights[i]+this->weights[i-1];
-		}
-		if(this->weights[this->weights.size()-1] < 1 || this->weights[this->weights.size()-1] > 1)
-			this->weights[this->weights.size()-1] = 1.0;
-	}
-  };
+  void NormShrAbuScorer::score(const MSSpectrum<> & msms, boost::shared_ptr<Chromosome> chromosome) const
+  {
+	  double score = 0;
+	  double ems = 0; //abundance of peaks in experimental spectrum not shared with theoretical spectrum.
+	  int epue = 0;   //number of peaks in experimental spectrum not in theoretical spectrum.
+	  int tpms = 0;   //number of peaks in theoretical spectrum not in experimental specetrum.
+	  double sms = 0; //abundance of shared peaks (taken from theoretical spectrum).
+	  double rangeStart;
+	  double rangeEnd;
+	  AASequence peptide = chromosome->getSequence();
+	  TheoreticalSpectrumGenerator tsg;
+	  RichPeakSpectrum rms;
+	  tsg.getSpectrum(rms,peptide,2);
+	  std::vector<Peak1D>::const_iterator curExp = msms.begin();
+	  std::vector<Peak1D>::const_iterator end = msms.end();
+	  for(std::vector<RichPeak1D>::const_iterator iter = rms.begin(); iter != rms.end(); iter++)
+	  {
+		  rangeStart = iter->getMZ() - getFragmentMassTolerance();
+		  rangeEnd = iter->getMZ() + getFragmentMassTolerance();
+		  std::vector<Peak1D> sp = getPeaksInRange(msms,rangeStart,rangeEnd,curExp, end);
+	  }
+	  chromosome->setScore(score);
+  }
 } // namespace
-
-#endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_RANDOMSEEDER_H

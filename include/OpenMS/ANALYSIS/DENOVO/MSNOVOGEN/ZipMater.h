@@ -52,7 +52,7 @@ private:
 public:
     /// Default c'tor
     ZipMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs);
+    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
 
   };
 } // namespace

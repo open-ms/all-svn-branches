@@ -41,8 +41,11 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Scorer.h>
 #include <vector>
 #include <map>
+#include <boost/shared_ptr.hpp>
+#include <OpenMS/KERNEL/MSSpectrum.h>
 
 namespace OpenMS
 {
@@ -58,16 +61,19 @@ public:
 
 private:
 	  unsigned int randomSeed_;
-	  std::map<String,boost::shared_ptr<Chromosome> > knownIndividuals;
 	  std::vector<boost::shared_ptr<Chromosome> > genPool;
-	  Mutater* mutater;
-	  Mater* mater;
-	  Killer* killer;
+	  std::map<String, boost::shared_ptr<Chromosome> > knownIndividuals;
+	  const Mutater* mutater;
+	  const Mater* mater;
+	  const Killer* killer;
 	  const Seeder* seeder;
-	  int maxPoolSize;
+	  const Scorer* scorer;
+	  unsigned int maxPoolSize;
+	  unsigned int previousPoolSize;
 	  double precursorMass;
 	  double precursorMassTolerance;
 	  std::vector<const Residue *> aaList;
+	  MSSpectrum<> msms;
 
 	  ///not implemented, should not be copied
 	  GenPool( const GenPool& );
@@ -80,28 +86,37 @@ public:
     ~GenPool()
     {};
 
+    void mutate();
+    void setMutater(const Mutater* mutater);
+
+    void crossover();
+    void setMater(const Mater * mater);
+
+    void kill();
+    void setKiller(const Killer * killer);
+
     /// Tries to initialize the gen pool with maxPoolSize individials.
     /// If not successful within 10*maxPoolSize tries, gives up.
     void initGenPool(const int maxPoolSize);
+    void setSeeder(const Seeder * seeder);
 
-    void mutate();
-    void setMutater(const Mutater& mutater);
-    void crossover();
-    void setMater(const Mater& mater);
-    void kill();
-    void setKiller(const Killer& killer);
-    void setSeeder(const Seeder& seeder);
+    void setScorer(const Scorer * scoer);
+    void score();
+
     Size getPopulationSize();
-    void sort(const int sortMethod);
+    void sort(const int sortMethod = Chromosome::sortScoreDescending);
     void setPool(std::vector<boost::shared_ptr<Chromosome> > newPool);
 
     /// Add a Chromosome which must not have been seen before.
     /// Returns true if added and false if not.
     bool addIndividual(boost::shared_ptr<Chromosome> individual);
 
-    const boost::shared_ptr<Chromosome> getIndividual(const int which);
+    int addIndividuals(std::vector<boost::shared_ptr<Chromosome> > individuals);
+
+    const boost::shared_ptr<Chromosome> getIndividual(const Size which);
 
     void replenish(const int targetSize);
+
     std::vector<boost::shared_ptr<Chromosome> >::iterator begin()
     {
       return(genPool.begin());
@@ -132,11 +147,9 @@ public:
 		return genPool;
 	}
 
-	void setGenPool(const std::vector<boost::shared_ptr<Chromosome> >& genPool) {
-		this->genPool = genPool;
-	}
+	void setGenPool(std::vector<boost::shared_ptr<Chromosome> > genPool);
 
-	const std::map<String, boost::shared_ptr<Chromosome> >& getKnownIndividuals() const {
+	const std::map<String, boost::shared_ptr<Chromosome> > getKnownIndividuals() const {
 		return knownIndividuals;
 	}
 
@@ -161,7 +174,7 @@ public:
 		this->precursorMassTolerance = precursorMassTolerance;
 	}
 
-	const unsigned int getRandomSeed() const {
+	unsigned int getRandomSeed() const {
 		return randomSeed_;
 	}
 
@@ -175,6 +188,18 @@ public:
 
 	double getPrecursorMass() const {
 		return precursorMass;
+	}
+
+	unsigned int getPreviousPoolSize() const {
+		return previousPoolSize;
+	}
+
+	void setPrecursorMass(double precursorMass) {
+		this->precursorMass = precursorMass;
+	}
+
+	void setPreviousPoolSize(unsigned int previousPoolSize) {
+		this->previousPoolSize = previousPoolSize;
 	}
 };
 } // namespace

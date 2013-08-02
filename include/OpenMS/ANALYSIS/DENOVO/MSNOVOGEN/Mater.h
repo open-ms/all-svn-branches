@@ -64,18 +64,24 @@ private:
 	/// Assignment operator
 	Mater & operator=(const Mater& rhs);
 
+	boost::shared_ptr<Chromosome> getPartner(GenPool & genPool, boost::shared_ptr<Chromosome> exclude) const;
+
 public:
     /// Default c'tor
     Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
-    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) = 0;
+    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const = 0;
 
-    void tournament(const GenPool & genPool);
+
+
+    std::vector<boost::shared_ptr<Chromosome> > tournament(GenPool & genPool) const;
+
+    void tournamentAndAddToPool(GenPool & genPool) const;
 
     virtual ~Mater();
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const unsigned int seed);
+	void seed(unsigned int seed);
 
 	unsigned int getSeed() const
 	{

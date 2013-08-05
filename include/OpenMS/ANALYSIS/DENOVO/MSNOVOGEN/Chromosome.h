@@ -50,6 +50,8 @@ namespace OpenMS
 private:
 	AASequence sequence;
 	double score;
+	int charge;
+
 public:
     /// identifier for sorting Chromosomes such that scores are in ascending order
     const static int sortScoreAscending = 0;
@@ -62,6 +64,9 @@ public:
 
     // c'tor providing all necessary information.
     Chromosome(AASequence seq, double val);
+
+    // c'tor providing all necessary information.
+    Chromosome(AASequence seq, double val, int charge);
 
     /// Copy c'tor
     Chromosome(const Chromosome& other);
@@ -88,6 +93,14 @@ public:
 	// to be used with std::sort e.g.: "std::sort(chrs.begin(),chrs.end(),Chromosome::sortScoreDesc);" in order to
 	// get a sorting in a increasing manner by score (largest score last).
 	static bool sortScoreAsc(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs);
+
+	int getCharge() const {
+		return charge;
+	}
+
+	void setCharge(int charge) {
+		this->charge = charge;
+	}
 };
 } // namespace
 

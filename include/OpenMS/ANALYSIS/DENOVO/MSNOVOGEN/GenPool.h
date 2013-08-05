@@ -71,14 +71,21 @@ private:
 	  unsigned int maxPoolSize;
 	  unsigned int previousPoolSize;
 	  double precursorMass;
+	  int precursorCharge;
+	  double precursorIntensity;
+	  double precursorMZ;
 	  double precursorMassTolerance;
 	  std::vector<const Residue *> aaList;
-	  MSSpectrum<> msms;
+	  const MSSpectrum<> * msms;
 
 	  ///not implemented, should not be copied
 	  GenPool( const GenPool& );
 	  ///not implemented, should not be assigned.
 	  GenPool & operator=(const GenPool &);
+
+	  /// Takes the most abundant of availbable precursors and assigns m/z, intensity and charge to this.
+	  void setPrecursorInfo(const MSSpectrum<> * ms);
+
 public:
     /// Default c'tor
     GenPool(const int maxPoolSize, const double precursorMassTolerance);
@@ -116,6 +123,7 @@ public:
     const boost::shared_ptr<Chromosome> getIndividual(const Size which);
 
     void replenish(const int targetSize);
+
 
     std::vector<boost::shared_ptr<Chromosome> >::iterator begin()
     {
@@ -182,24 +190,30 @@ public:
 		randomSeed_ = randomSeed;
 	}
 
-	void setMSMSSpectrum(double precursorMass) {
-		this->precursorMass = precursorMass;
+	void setMSMSSpectrum(const MSSpectrum<> * msms);
+
+	unsigned int getPreviousPoolSize() const {
+		return previousPoolSize;
+	}
+
+	void setPreviousPoolSize(unsigned int previousPoolSize) {
+		this->previousPoolSize = previousPoolSize;
+	}
+
+	int getPrecursorCharge() const {
+		return precursorCharge;
+	}
+
+	double getPrecursorIntensity() const {
+		return precursorIntensity;
 	}
 
 	double getPrecursorMass() const {
 		return precursorMass;
 	}
 
-	unsigned int getPreviousPoolSize() const {
-		return previousPoolSize;
-	}
-
-	void setPrecursorMass(double precursorMass) {
-		this->precursorMass = precursorMass;
-	}
-
-	void setPreviousPoolSize(unsigned int previousPoolSize) {
-		this->previousPoolSize = previousPoolSize;
+	double getPrecursorMz() const {
+		return precursorMZ;
 	}
 };
 } // namespace

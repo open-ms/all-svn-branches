@@ -39,6 +39,12 @@
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
+#include <OpenMS/KERNEL/StandardTypes.h>
+#include <OpenMS/KERNEL/MSSpectrum.h>
+#include <OpenMS/KERNEL/RichPeak1D.h>
+#include <OpenMS/KERNEL/Peak1D.h>
+#include <OpenMS/DATASTRUCTURES/Param.h>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -195,6 +201,22 @@ START_SECTION((static int editDistance(const AASequence &lhs, const AASequence &
 }
 END_SECTION
 
+START_SECTION((static double getSummedIntensity(const MSSpectrum<> *ms)))
+{
+	TheoreticalSpectrumGenerator tsg;
+	RichPeakSpectrum theoMS;
+	tsg.getSpectrum(theoMS,AASequence("ALLMER"),1);
+	TEST_EQUAL(theoMS.size(),9); //just b,y peaks, but all of them.
+	MSSpectrum<> ms;
+	for(std::vector<RichPeak1D>::const_iterator iter = theoMS.begin(); iter != theoMS.end(); iter++)
+	{
+		ms.push_back(Peak1D(*iter));
+	}
+	Param param;
+	double tic = Utilities::getSummedIntensity(&ms);
+	TEST_REAL_SIMILAR(tic,9);
+}
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

@@ -120,4 +120,14 @@ namespace OpenMS
 		return std::abs(globalAlignment(align, seqan::Score<int,Simple>(0,-1,-1)));
 	}
 
+	double Utilities::getSummedIntensity(const MSSpectrum<>* ms)
+	{
+		double ret = 0;
+		for(std::vector<Peak1D>::const_iterator iter = ms->begin(); iter != ms->end(); iter++)
+		{
+			ret += iter->getIntensity();
+		}
+		return(ret);
+	}
+
 } // namespace

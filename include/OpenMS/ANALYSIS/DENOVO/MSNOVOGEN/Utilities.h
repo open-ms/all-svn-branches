@@ -40,6 +40,7 @@
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
 #include <vector>
+#include <OpenMS/KERNEL/MSSpectrum.h>
 
 namespace OpenMS
 {
@@ -68,6 +69,8 @@ private:
     static bool adjustToFitMass(const int seed, AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
 
     static unsigned int editDistance(const AASequence & lhs, const AASequence & rhs);
+
+    static double getSummedIntensity(const MSSpectrum<> * ms);
 
   };
 } // namespace

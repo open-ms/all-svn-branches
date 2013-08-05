@@ -32,11 +32,12 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/NormShrAbuScorer.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/NormShrAbuScorer.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <vector>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
 
 namespace OpenMS
 {
@@ -45,39 +46,44 @@ namespace OpenMS
     Scorer(fmt)
   {}
 
-  std::vector<Peak1D> NormShrAbuScorer::getPeaksInRange(
-		const MSSpectrum<> & msms,
-		const double rangeStart,
-		const double rangeEnd,
-		std::vector<Peak1D>::const_iterator start,
-		std::vector<Peak1D>::const_iterator end        ) const
-  {
-	std::vector<Peak1D> ret;
-
-    return ret;
-  }
-
-  void NormShrAbuScorer::score(const MSSpectrum<> & msms, boost::shared_ptr<Chromosome> chromosome) const
+  void NormShrAbuScorer::score(const MSSpectrum<> * expMS, boost::shared_ptr<Chromosome> & chromosome) const
   {
 	  double score = 0;
 	  double ems = 0; //abundance of peaks in experimental spectrum not shared with theoretical spectrum.
 	  int epue = 0;   //number of peaks in experimental spectrum not in theoretical spectrum.
-	  int tpms = 0;   //number of peaks in theoretical spectrum not in experimental specetrum.
+	  int tpms = 0;   //number of peaks in theoretical spectrum not in experimental spectrum.
+	  int nsp = 0;    //Number of peaks shared between spectra.
 	  double sms = 0; //abundance of shared peaks (taken from theoretical spectrum).
 	  double rangeStart;
 	  double rangeEnd;
 	  AASequence peptide = chromosome->getSequence();
 	  TheoreticalSpectrumGenerator tsg;
-	  RichPeakSpectrum rms;
-	  tsg.getSpectrum(rms,peptide,2);
-	  std::vector<Peak1D>::const_iterator curExp = msms.begin();
-	  std::vector<Peak1D>::const_iterator end = msms.end();
-	  for(std::vector<RichPeak1D>::const_iterator iter = rms.begin(); iter != rms.end(); iter++)
+	  RichPeakSpectrum theoMS;
+	  tsg.getSpectrum(theoMS,peptide,chromosome->getCharge());
+	  MSSpectrum<>::ConstIterator wndBeg = expMS->begin();
+	  MSSpectrum<>::ConstIterator wndEnd;
+	  for(std::vector<RichPeak1D>::const_iterator iter = theoMS.begin(); iter != theoMS.end(); iter++)
 	  {
 		  rangeStart = iter->getMZ() - getFragmentMassTolerance();
 		  rangeEnd = iter->getMZ() + getFragmentMassTolerance();
-		  std::vector<Peak1D> sp = getPeaksInRange(msms,rangeStart,rangeEnd,curExp, end);
+		  wndBeg = expMS->MZBegin(wndBeg, rangeStart, expMS->end());
+		  wndEnd = expMS->MZEnd(wndBeg, rangeEnd, expMS->end());
+		  int ct = 0;
+		  for(MSSpectrum<>::ConstIterator ri=wndBeg; ri != wndEnd; ri++)
+		  {
+			  sms += ri->getIntensity();
+			  nsp ++;
+			  ct++;
+		  }
+		  if(ct == 0)
+		  {
+			  tpms++;
+		  }
 	  }
+	  epue = expMS->size() - nsp;
+	  double tic = Utilities::getSummedIntensity(expMS);
+	  ems = tic  - sms;
+	  score = sms/tic/(double)chromosome->getSequence().size();
 	  chromosome->setScore(score);
   }
 } // namespace

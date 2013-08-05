@@ -51,17 +51,11 @@ private:
 	/// Copy c'tor
 	NormShrAbuScorer(const NormShrAbuScorer& other);
 
-	std::vector<Peak1D> getPeaksInRange(const MSSpectrum<> & msms,
-										const double rangeStart,
-										const double rangeEnd,
-										std::vector<Peak1D>::const_iterator start,
-										std::vector<Peak1D>::const_iterator end
-										) const;
 public:
 	/// Default c'tor
 	NormShrAbuScorer(const double fragmentMassTolerance);
 
-    void score(const MSSpectrum<> & msms, boost::shared_ptr<Chromosome> chromosome) const;
+    void score(const MSSpectrum<> * msms, boost::shared_ptr<Chromosome> & chromosome) const;
 
   };
 } // namespace

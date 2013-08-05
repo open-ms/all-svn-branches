@@ -39,6 +39,10 @@
 #include <time.h>
 #include <stdlib.h>
 #include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h"
+#include <vector>
+#include <OpenMS/METADATA/Precursor.h>
+
+using std::vector;
 
 namespace OpenMS
 {
@@ -129,6 +133,7 @@ namespace OpenMS
 	  {
 		if(std::abs(precursorMass - individual->getSequence().getMonoWeight(Residue::Full)) < precursorMassTolerance)
 		{
+			individual->setCharge(getPrecursorCharge());
 			scorer->score(msms, individual);
 			genPool.push_back(individual);
 			knownIndividuals.insert(std::pair<String,boost::shared_ptr<Chromosome> >(individual->getSequence().toString(),individual));
@@ -187,7 +192,30 @@ namespace OpenMS
     scorer->scorePool(msms, *this);
   }
 
-  void GenPool::setGenPool(std::vector<boost::shared_ptr<Chromosome> > genPool) {
-  		addIndividuals(genPool);
-  	}
+  void GenPool::setPrecursorInfo(const MSSpectrum<>* ms)
+  {
+	  double abMax = 0;
+	  const vector<Precursor>& precursors = ms->getPrecursors();
+	  for (vector<Precursor>::const_iterator pc_it = precursors.begin();
+	  					pc_it != precursors.end(); ++pc_it) {
+		  if(abMax < pc_it->getIntensity())
+		  {
+			  precursorMZ = pc_it->getMZ();
+			  precursorCharge = pc_it->getCharge();
+			  precursorMass = precursorMZ * precursorCharge - precursorCharge;
+			  precursorIntensity = pc_it->getIntensity();
+		  }
+	  }
+  }
+
+	void GenPool::setGenPool(std::vector<boost::shared_ptr<Chromosome> > genPool)
+	{
+		addIndividuals(genPool);
+	}
+
+	void GenPool::setMSMSSpectrum(const MSSpectrum<> * msms)
+	{
+		this->msms = msms;
+		setPrecursorInfo(this->msms);
+	}
 } // namespace

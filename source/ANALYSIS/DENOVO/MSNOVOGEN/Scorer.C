@@ -45,7 +45,7 @@ namespace OpenMS
   Scorer::~Scorer()
   {}
 
-  void Scorer::scorePool(const MSSpectrum<> & msms, GenPool & pool) const
+  void Scorer::scorePool(const MSSpectrum<> * msms, GenPool & pool) const
   {
 	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter != pool.end(); iter++)
 	  {

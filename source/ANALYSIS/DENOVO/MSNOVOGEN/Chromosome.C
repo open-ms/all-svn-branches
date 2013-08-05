@@ -37,14 +37,18 @@
 namespace OpenMS
 {
 
-  Chromosome::Chromosome()
+  Chromosome::Chromosome():
+    sequence(""), score(0), charge(1)
   {
-	  score = -1;
-	  sequence = "";
   }
 
   Chromosome::Chromosome(AASequence seq, double val) :
-    sequence(seq), score(val)
+    sequence(seq), score(val), charge(1)
+  {
+  }
+
+  Chromosome::Chromosome(AASequence seq, double val, int c) :
+    sequence(seq), score(val), charge(c)
   {
   }
 

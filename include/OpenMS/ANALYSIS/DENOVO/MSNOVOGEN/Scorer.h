@@ -61,9 +61,9 @@ public:
 
     virtual ~Scorer();
 
-    void scorePool(const MSSpectrum<> & msms, GenPool & pool) const;
+    void scorePool(const MSSpectrum<> * msms, GenPool & pool) const;
 
-    virtual void score(const MSSpectrum<> & msms, boost::shared_ptr<Chromosome> chromosome) const = 0;
+    virtual void score(const MSSpectrum<> * msms, boost::shared_ptr<Chromosome> & chromosome) const = 0;
 
 	double getFragmentMassTolerance() const {
 		return fragmentMassTolerance;

@@ -431,9 +431,11 @@ set(analysis_executables_list
 	InvertingMutater_test
 	Mater_test
 	Mutater_test
+	NormShrAbuScorer_test
 	RandomMater_test
 	RandomMutater_test
 	RandomSequenceSeeder_test
+	Scorer_test
 	Seeder_test
 	SimpleDecreasingKiller_test
 	SimpleMater_test

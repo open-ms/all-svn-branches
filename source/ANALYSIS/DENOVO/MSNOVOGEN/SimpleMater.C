@@ -55,12 +55,12 @@ namespace OpenMS
 	AASequence ucaa(uc);
 	if(Utilities::adjustToFitMass(getSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 	{
-		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(ucaa,0)));
+		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(ucaa,lhs->getCharge())));
 	}
 	String lc(rhs->getSequence().getSubsequence(0,cop).toString() + lhs->getSequence().getSubsequence(cop,lhs->getSequence().size()-cop).toString());
 	AASequence lcaa(lc);
 	if(Utilities::adjustToFitMass(getSeed(),lcaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
-		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(lcaa,0)));
+		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(lcaa,lhs->getCharge())));
 	return ret;
   }
 

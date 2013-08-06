@@ -74,7 +74,8 @@ namespace  OpenMS
 		  double rv = (rand() % 101)/100.0;
 		  if(rv > getMutationRate())
 			continue;
-		  pool.addIndividual(this->mutateCpy(*iter));
+		  boost::shared_ptr<Chromosome> ni(new Chromosome((*iter)->getSequence(),(*iter)->getCharge()));
+		  pool.addIndividual(ni);
 		}
 	}
 

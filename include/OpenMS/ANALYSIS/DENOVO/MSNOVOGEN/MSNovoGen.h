@@ -47,11 +47,12 @@ namespace OpenMS
   class OPENMS_DLLAPI MSNovoGen
   {
 private:
+	  /*
 	  int maxGenNum;
 	  int maxPopulation;
 	  GenPool genPool;
 	  std::vector<Residue> aminoAcids;
-
+*/
 public:
     /// Default c'tor
     MSNovoGen();

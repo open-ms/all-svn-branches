@@ -31,6 +31,7 @@ RandomMater.C
 ZipMater.C
 HomologyKiller.C
 NormShrAbuScorer.C
+GenAlg.C
 )
 
 ### add path to the filenames

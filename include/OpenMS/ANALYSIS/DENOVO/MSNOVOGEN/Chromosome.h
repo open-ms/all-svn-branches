@@ -48,9 +48,10 @@ namespace OpenMS
   class OPENMS_DLLAPI Chromosome
   {
 private:
-	AASequence sequence;
-	double score;
-	int charge;
+	AASequence sequence_;
+	double score_;
+	int charge_;
+	bool isScored_;
 
 public:
     /// identifier for sorting Chromosomes such that scores are in ascending order
@@ -63,10 +64,10 @@ public:
     Chromosome();
 
     // c'tor providing all necessary information.
-    Chromosome(AASequence seq, double val);
+    Chromosome(AASequence seq, const int charge);
 
     // c'tor providing all necessary information.
-    Chromosome(AASequence seq, double val, int charge);
+    Chromosome(AASequence seq, const int charge, const double val);
 
     /// Copy c'tor
     Chromosome(const Chromosome& other);
@@ -95,11 +96,19 @@ public:
 	static bool sortScoreAsc(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs);
 
 	int getCharge() const {
-		return charge;
+		return charge_;
 	}
 
 	void setCharge(int charge) {
-		this->charge = charge;
+		this->charge_ = charge;
+	}
+
+	void setScored(bool isScored) {
+		this->isScored_ = isScored;
+	}
+
+	bool isScored() const {
+		return(isScored_);
 	}
 };
 } // namespace

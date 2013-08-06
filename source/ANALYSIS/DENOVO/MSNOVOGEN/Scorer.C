@@ -49,7 +49,8 @@ namespace OpenMS
   {
 	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter != pool.end(); iter++)
 	  {
-		  this->score(msms, *iter);
+		  if(!(*iter)->isScored())
+			  this->score(msms, *iter);
 	  }
   }
 

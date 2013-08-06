@@ -56,7 +56,7 @@ namespace OpenMS
     int targetPopulation = std::max(diff,1);
     if(currentPopulation > targetPopulation)
     {
-	  genPool.sort(GenPool::BYSCOREDEC);
+	  genPool.sort(Chromosome::sortScoreDescending);
 	  std::vector<boost::shared_ptr<Chromosome> > ngp;
 	  int c = 0;
 	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator i = genPool.begin(); i != genPool.end(); i++) {
@@ -64,7 +64,7 @@ namespace OpenMS
 			break;
 		ngp.insert(ngp.begin(), *i);
 	  }
-	  genPool.setPool(ngp);
+	  genPool.setGenPool(ngp);
 	  genPool.setPreviousPoolSize(targetPopulation);
     }
     else

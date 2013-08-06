@@ -69,8 +69,7 @@ namespace OpenMS
 		  ngp.push_back(p);
 		i++;
 	  }
-	  genPool.setPool(ngp);
-	  genPool.replenish(genPool.getPreviousPoolSize());
+	  genPool.setGenPool(ngp);
   }
 
 } // namespace

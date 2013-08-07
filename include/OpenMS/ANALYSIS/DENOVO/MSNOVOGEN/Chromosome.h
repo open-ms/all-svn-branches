@@ -44,13 +44,18 @@ namespace OpenMS
   * @brief A Chromosome, part of the MSNovoGen optimization approach holds
   * basic information about the sequence to be optimized and its score in
   * respect to the scoring system since recalculating a score may be expensive.
+  * A Chromosome represents an individual.
   */
   class OPENMS_DLLAPI Chromosome
   {
 private:
+	/// The amino acid sequence for this Chromosome (default: "").
 	AASequence sequence_;
+	/// The score for this Chromosome (default: -1).
 	double score_;
+	/// The charge of this Chromosome (default: 1).
 	int charge_;
+	/// The status of whether this Chromosome has been scored (default: false).
 	bool isScored_;
 
 public:
@@ -95,18 +100,20 @@ public:
 	// get a sorting in a increasing manner by score (largest score last).
 	static bool sortScoreAsc(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs);
 
+	/// Returns the charge that was set for this Chromosome
 	int getCharge() const {
 		return charge_;
 	}
 
+	/// Allows to set the charge of this Chromosome object.
 	void setCharge(int charge) {
 		this->charge_ = charge;
 	}
 
-	void setScored(bool isScored) {
-		this->isScored_ = isScored;
-	}
+	/// Allows setting whether this object has been scored or not.
+	void setScored(bool isScored);
 
+	/// Returns the scoring status of this object.
 	bool isScored() const {
 		return(isScored_);
 	}

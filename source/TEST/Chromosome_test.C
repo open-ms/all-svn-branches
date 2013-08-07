@@ -51,18 +51,13 @@ START_TEST(Chromosome, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-Chromosome* ptr = 0;
+Chromosome* ptr = new Chromosome(AASequence("TESTER"),1,0.5);;
 Chromosome* null_ptr = 0;
+Chromosome* ptt = 0;
 START_SECTION(Chromosome())
 {
-	ptr = new Chromosome();
-	TEST_NOT_EQUAL(ptr, null_ptr)
-}
-END_SECTION
-
-START_SECTION(~Chromosome())
-{
-	delete ptr;
+	ptt = new Chromosome();
+	TEST_NOT_EQUAL(ptt, null_ptr)
 }
 END_SECTION
 
@@ -77,78 +72,69 @@ END_SECTION
 
 START_SECTION((Chromosome(const Chromosome &other)))
 {
-  Chromosome chrT(AASequence("TESTER"),0.5);
+  Chromosome chrT(AASequence("TESTER"),1,0.5);
   Chromosome chrA(chrT);
   TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
-  chrA = Chromosome(AASequence("ALLMER"),1.0);
-  TEST_EQUAL(chrA.getSequence().toString(),"ALLMER");
-  TEST_EQUAL(chrT.getSequence().toString(),"TESTER");
+  TEST_EQUAL(chrA.getCharge(),1);
+  TEST_REAL_SIMILAR(chrA.getScore(),0.5);
+  TEST_EQUAL(chrA.isScored(),true);
 }
 END_SECTION
 
 START_SECTION((Chromosome& operator=(const Chromosome &rhs)))
 {
-  Chromosome chrT(AASequence("TESTER"),0.5);
+  Chromosome chrT(AASequence("TESTER"),1,0.5);
   Chromosome chrA = chrT;
   TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
-  chrA = Chromosome(AASequence("ALLMER"),1.0);
-  TEST_EQUAL(chrA.getSequence().toString(),"ALLMER");
-  TEST_EQUAL(chrT.getSequence().toString(),"TESTER");
+  TEST_EQUAL(chrA.getCharge(),1);
+  TEST_REAL_SIMILAR(chrA.getScore(),0.5);
+  TEST_EQUAL(chrA.isScored(),true);
 }
 END_SECTION
 
 START_SECTION((double getScore() const ))
 {
-  AASequence aas("TESTER");
-  double val = 1.0;
-  Chromosome chr(aas,val);
-  TEST_REAL_SIMILAR(chr.getScore(),1.0);
+  TEST_REAL_SIMILAR(ptr->getScore(),0.5);
 }
 END_SECTION
 
 START_SECTION((void setScore(double score)))
 {
-  AASequence aas("TESTER");
-  double val = 1.0;
-  Chromosome chr(aas,val);
-  TEST_REAL_SIMILAR(chr.getScore(),1.0);
-  chr.setScore(0.5);
-  TEST_REAL_SIMILAR(chr.getScore(),0.5);
+  ptr->setScore(1.0);
+  TEST_REAL_SIMILAR(ptr->getScore(),1.0);
 }
 END_SECTION
 
 START_SECTION((const AASequence& getSequence() const ))
 {
-  AASequence aas("TESTER");
-  double val = 1.0;
-  Chromosome chr(aas,val);
-  TEST_STRING_EQUAL(chr.getSequence().toString(),"TESTER");
+  TEST_STRING_EQUAL(ptr->getSequence().toString(),"TESTER");
 }
 END_SECTION
 
 START_SECTION((void setSequence(const AASequence &sequence)))
 {
-  AASequence aas("TESTER");
-  double val = 1.0;
-  Chromosome chr(aas,val);
-  TEST_STRING_EQUAL(chr.getSequence().toString(),"TESTER");
-  chr.setSequence(AASequence("ALLMER"));
-  TEST_STRING_EQUAL(chr.getSequence().toString(),"ALLMER");
+  ptr->setSequence(AASequence("ALLMER"));
+  TEST_STRING_EQUAL(ptr->getSequence().toString(),"ALLMER");
 }
 END_SECTION
 
 START_SECTION((static bool sortScoreDesc(boost::shared_ptr<Chromosome> lhs, cboost::shared_ptr<Chromosome> rhs)))
 {
-  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),0.5));
-  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1.0));
+  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),1,0.5));
+  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1,1.0));
   TEST_EQUAL(Chromosome::sortScoreDesc(chrT, chrA),false);
 }
+START_SECTION(~Chromosome())
+{
+	delete ptr;
+}
+END_SECTION
 END_SECTION
 
 START_SECTION((static bool sortScoreAsc(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)))
 {
-  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),0.5));
-  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1.0));
+  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),1,0.5));
+  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1,1.0));
   TEST_EQUAL(Chromosome::sortScoreAsc(chrT,chrA),true);
 }
 END_SECTION
@@ -156,9 +142,9 @@ END_SECTION
 START_SECTION((void sort()))
 {
   vector<boost::shared_ptr<Chromosome> > chrs;
-  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),0.5));
+  boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),1,0.5));
   chrs.push_back(chrT);
-  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1.0));
+  boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1,1.0));
   chrs.push_back(chrA);
   std::sort(chrs.begin(),chrs.end(),Chromosome::sortScoreDesc);
   TEST_STRING_EQUAL(chrs[0]->getSequence().toString(),"ALLMER");
@@ -169,7 +155,61 @@ START_SECTION((void sort()))
 
 }
 END_SECTION
+START_SECTION((Chromosome(AASequence seq, const int charge)))
+{
+  Chromosome chrA(AASequence("TESTER"),2);
+  TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
+  TEST_EQUAL(chrA.getCharge(),2);
+  TEST_REAL_SIMILAR(chrA.getScore(),-1);
+  TEST_EQUAL(chrA.isScored(),false);
+}
+END_SECTION
 
+START_SECTION((Chromosome(AASequence seq, const int charge, const double val)))
+{
+  Chromosome chrA(AASequence("TESTER"),2,0.7);
+  TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
+  TEST_EQUAL(chrA.getCharge(),2);
+  TEST_REAL_SIMILAR(chrA.getScore(),0.7);
+  TEST_EQUAL(chrA.isScored(),true);
+}
+END_SECTION
+
+START_SECTION((int getCharge() const ))
+{
+  TEST_EQUAL(ptr->getCharge(),1);
+}
+END_SECTION
+
+START_SECTION((void setCharge(int charge)))
+{
+  ptr->setCharge(2);
+  TEST_EQUAL(ptr->getCharge(),2);
+}
+END_SECTION
+
+START_SECTION((void setScored(bool isScored)))
+{
+  TEST_EQUAL(ptr->isScored(),true);
+  TEST_REAL_SIMILAR(ptr->getScore(),0.5);
+  ptr->setScored(false);
+  TEST_EQUAL(ptr->isScored(),false);
+  TEST_REAL_SIMILAR(ptr->getScore(),-1);
+}
+END_SECTION
+
+START_SECTION((bool isScored() const ))
+{
+	TEST_EQUAL(ptr->isScored(),false);
+}
+END_SECTION
+
+START_SECTION(~Chromosome())
+{
+	delete ptr;
+	delete ptt;
+}
+END_SECTION
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

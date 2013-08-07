@@ -39,6 +39,11 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The Killer base class provides a framework for
+	* derived classes to implement the killing differently.
+	* Killer may not be instantiated and kill must be implemented.
+	*/
   class GenPool;
 
   class OPENMS_DLLAPI Killer
@@ -50,11 +55,14 @@ private:
 	Killer & operator=(const Killer& rhs);
 
 public:
-    /// c'tor
+    /// default c'tor
     Killer();
 
+    /// d'tor
     virtual ~Killer() = 0;
 
+    /// virtual method kill which ought to be implemented in all deriving classes.
+    /// individuals from the provided GenPool are directly removed.
     virtual void kill(GenPool& genPool) const = 0;
 
   };

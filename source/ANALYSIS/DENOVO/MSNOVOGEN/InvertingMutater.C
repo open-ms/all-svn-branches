@@ -54,7 +54,6 @@ namespace OpenMS
     {
       seq.setResidue(lpos+i, &as.getResidue(s));
     }
-
     chromosome->setSequence(seq);
   }
 } // namespace

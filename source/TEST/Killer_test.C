@@ -35,66 +35,47 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/InvertingMutater.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
-#include <OpenMS/CHEMISTRY/AASequence.h>
-#include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(InvertingMutater, "$Id$")
-
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-std::vector<const Residue*> aaList;
-aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("O"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("U"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-AASequence aas("WLQSEVIHAR");
-boost::shared_ptr<Chromosome> chr(new Chromosome());
-chr->setSequence(aas);
-chr->setScore(1.0);
-
-InvertingMutater* ptr = 0;
-InvertingMutater* null_ptr = 0;
-
-START_SECTION((InvertingMutater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
+struct TestKiller :
+	public Killer
 {
-	ptr = new InvertingMutater(aas.getMonoWeight(),0.3,aaList);
+		TestKiller() :
+			Killer()
+		{}
+
+		void kill(GenPool& genPool) const
+	    {
+
+	    }
+};
+
+START_TEST(Killer, "$Id$")
+
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+
+Killer* ptr = 0;
+Killer* null_ptr = 0;
+START_SECTION(Killer())
+{
+	ptr = new TestKiller();
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION((void mutate(boost::shared_ptr< Chromosome > chromosome) const ))
+START_SECTION((virtual void kill(GenPool &genPool) const =0))
 {
-	ptr->mutate(chr);
-	TEST_EQUAL((double)chr->getSequence().getMonoWeight(), aas.getMonoWeight());
-	TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());
+
 }
 END_SECTION
 
-START_SECTION(~InvertingMutater())
+START_SECTION(~Killer())
 {
 	delete ptr;
 }

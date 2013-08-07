@@ -41,15 +41,14 @@
 
 namespace OpenMS
 {
-  Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
-  {
+	Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+	aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
+	{
 	  seed(time(0));
-  }
+	}
 
-  Mater::~Mater()
-  {
-  }
+	Mater::~Mater()
+	{}
 
 	boost::shared_ptr<Chromosome> Mater::getPartner(GenPool& genPool, boost::shared_ptr<Chromosome> exclude) const
 	{
@@ -69,29 +68,29 @@ namespace OpenMS
 		return(ret);
 	}
 
-  void Mater::seed(const unsigned int seed)
-  {
-	randomSeed_ = seed;
-	srand(randomSeed_);
-  }
-
-  std::vector<boost::shared_ptr<Chromosome> > Mater::tournament(GenPool & pool) const
-  {
-	std::vector<boost::shared_ptr<Chromosome> > ret;
-	for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
+	void Mater::seed(const unsigned int seed)
 	{
-	  boost::shared_ptr<Chromosome> p1 = this->getPartner(pool,*iter);
-	  boost::shared_ptr<Chromosome> p2 = *iter;
-	  std::vector<boost::shared_ptr<Chromosome> > children = this->mate(p1, p2);
-	  for(std::vector<boost::shared_ptr<Chromosome> >::iterator c = children.begin(); c != children.end(); ++c)
-		  ret.push_back(*c);
+		randomSeed_ = seed;
+		srand(randomSeed_);
 	}
-	return ret;
-  }
 
-  void Mater::tournamentAndAddToPool(GenPool & pool) const
-  {
-	  std::vector<boost::shared_ptr<Chromosome> > children = tournament(pool);
-	  pool.addIndividuals(children);
-  }
+	std::vector<boost::shared_ptr<Chromosome> > Mater::tournament(GenPool & pool) const
+	{
+		std::vector<boost::shared_ptr<Chromosome> > ret;
+		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
+		{
+		  boost::shared_ptr<Chromosome> p1 = this->getPartner(pool,*iter);
+		  boost::shared_ptr<Chromosome> p2 = *iter;
+		  std::vector<boost::shared_ptr<Chromosome> > children = this->mate(p1, p2);
+		  for(std::vector<boost::shared_ptr<Chromosome> >::iterator c = children.begin(); c != children.end(); ++c)
+			  ret.push_back(*c);
+		}
+		return ret;
+	}
+
+	void Mater::tournamentAndAddToPool(GenPool & pool) const
+	{
+		std::vector<boost::shared_ptr<Chromosome> > children = tournament(pool);
+		pool.addIndividuals(children);
+	}
 } // namespace

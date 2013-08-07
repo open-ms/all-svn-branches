@@ -54,8 +54,53 @@ HomologyKiller* ptr = 0;
 HomologyKiller* null_ptr = 0;
 START_SECTION(HomologyKiller())
 {
-	ptr = new HomologyKiller(10,10);
+	ptr = new HomologyKiller();
 	TEST_NOT_EQUAL(ptr, null_ptr)
+}
+END_SECTION
+
+START_SECTION((void kill(GenPool &genPool)))
+{
+	  GenPool gp(500,1000,1000,1);
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),1,0.1)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),1,0.15)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),1,0.17)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),1,0.2)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),1,0.25)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTE"),1,0.27)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTQ"),1,0.3)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTG"),1,0.35)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTH"),1,0.37)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),1,0.4)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),1,0.45)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),1,0.47)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTK"),1,0.5)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTM"),1,0.55)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTF"),1,0.57)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTP"),1,0.6)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTU"),1,0.65)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTS"),1,0.67)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTT"),1,0.7)));
+	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTW"),1,0.75)));
+	  TEST_EQUAL(gp.getPopulationSize(),20);
+	  ptr->kill(gp);
+	  TEST_EQUAL(gp.getPopulationSize(),1);
+	  std::vector<boost::shared_ptr<Chromosome> >::iterator best = gp.begin();
+	  TEST_REAL_SIMILAR((*best)->getScore(),0.75);
+	  TEST_STRING_EQUAL((*best)->getSequence().toString(),"TESTW");
+}
+END_SECTION
+
+START_SECTION(unsigned int getMinEditDistance() const)
+{
+	TEST_EQUAL(ptr->getMinEditDistance(),2);
+}
+END_SECTION
+
+START_SECTION(void setMinEditDistance(unsigned int minEditDistance))
+{
+	ptr->setMinEditDistance(5);
+	TEST_EQUAL(ptr->getMinEditDistance(),5);
 }
 END_SECTION
 
@@ -64,40 +109,6 @@ START_SECTION(~HomologyKiller())
 	delete ptr;
 }
 END_SECTION
-
-START_SECTION((void kill(GenPool &genPool)))
-{
-	  GenPool gp(20,20000);
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),0.1)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),0.15)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),0.17)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),0.2)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),0.25)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTE"),0.27)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTQ"),0.3)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTG"),0.35)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTH"),0.37)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),0.4)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),0.45)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),0.47)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTK"),0.5)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTM"),0.55)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTF"),0.57)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTP"),0.6)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTU"),0.65)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTS"),0.67)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTT"),0.7)));
-	  gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTW"),0.75)));
-	  TEST_EQUAL(gp.getPopulationSize(),20);
-	  HomologyKiller sdk(10,gp.getPopulationSize());
-	  sdk.kill(gp);
-	  TEST_EQUAL(gp.getPopulationSize(),20);
-	  std::vector<boost::shared_ptr<Chromosome> >::iterator best = gp.begin();
-	  TEST_REAL_SIMILAR((*best)->getScore(),0.75);
-	  TEST_STRING_EQUAL((*best)->getSequence().toString(),"TESTW");
-}
-END_SECTION
-
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

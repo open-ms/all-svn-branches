@@ -40,22 +40,40 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The HomologyKiller is an implementation of Killer
+	* and kills all individuals within the given GenePool which
+	* have an edit distance of less than minEditDistance (2 i.e.: 1).
+	*/
   class OPENMS_DLLAPI HomologyKiller : public Killer
   {
 private:
+	/// The minimum edit distance to all other individuals in a pool to survive the kill (default: 2).
 	unsigned int minEditDistance;
-	/// Assignment operator
+
+	/// Assignment operator sjouldn't be used
 	HomologyKiller & operator=(const HomologyKiller& rhs);
-	/// Copy c'tor
+
+	/// Copy c'tor shouldn't be used.
 	HomologyKiller(const HomologyKiller& other);
 
 public:
 	/// Default c'tor
 	HomologyKiller();
 
+	/// Implementation of the virtual function Killer::kill.
 	void kill(GenPool& genPool) const;
 
-  };
+	/// Returns the currently set minimum edit distance.
+	unsigned int getMinEditDistance() const {
+		return minEditDistance;
+	}
+
+	/// Allows setting of the minimum edit distance threshold.
+	void setMinEditDistance(unsigned int minEditDistance) {
+		this->minEditDistance = minEditDistance;
+	}
+};
 } // namespace
 
 #endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_HOMOLOGYKILLER_H

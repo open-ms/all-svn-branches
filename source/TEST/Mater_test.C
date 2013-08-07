@@ -38,6 +38,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <boost/shared_ptr.hpp>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -50,9 +51,11 @@ struct TestMater :
 			Mater(precursorMass, precursorMassTolerance, aaList)
 		{}
 
-	    std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)
+		std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
 	    {
 	    	std::vector<boost::shared_ptr<Chromosome> > ret;
+	    	ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(AASequence(lhs->getSequence().toString() + rhs->getSequence().toString()),1,0.1)));
+	    	ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(AASequence(rhs->getSequence().toString() + lhs->getSequence().toString()),1,0.1)));
 	    	return(ret);
 	    }
 };
@@ -60,35 +63,46 @@ START_TEST(Mater, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+	GenPool gp(500,1000,1000,1);
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),1,0.1)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),1,0.15)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),1,0.17)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),1,0.2)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),1,0.25)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTE"),1,0.27)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTQ"),1,0.3)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTG"),1,0.35)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTH"),1,0.37)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),1,0.4)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),1,0.45)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),1,0.47)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTK"),1,0.5)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTM"),1,0.55)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTF"),1,0.57)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTP"),1,0.6)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTU"),1,0.65)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTS"),1,0.67)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTT"),1,0.7)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTW"),1,0.75)));
 
 Mater* ptr = 0;
 Mater* null_ptr = 0;
-START_SECTION(Mater())
-{
-	double precursorMass=10;
-	double precursorMassTolerance=2;
-	std::vector<const Residue*> aaList;
 
+START_SECTION((Mater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
+{
+	double precursorMass=1000;
+	double precursorMassTolerance=20000;
+	std::vector<const Residue*> aaList;
 	ptr = new TestMater(precursorMass, precursorMassTolerance, aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION(~Mater())
+START_SECTION((virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr< Chromosome > lhs, const boost::shared_ptr< Chromosome > rhs) const =0))
 {
-	delete ptr;
-}
-END_SECTION
-
-START_SECTION((Mater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromosome &rhs)=0))
-{
-  // TODO
+	std::vector<boost::shared_ptr<Chromosome> > res = ptr->mate(gp.getIndividual(0),gp.getIndividual(1));
+	TEST_STRING_EQUAL(res[0]->getSequence().toString(),"TESTATESTR");
+	TEST_STRING_EQUAL(res[1]->getSequence().toString(),"TESTRTESTA");
 }
 END_SECTION
 
@@ -110,96 +124,41 @@ START_SECTION((unsigned int getSeed() const ))
 }
 END_SECTION
 
-START_SECTION((const std::vector<const Residue*>& getAAList() const ))
+START_SECTION((std::vector<boost::shared_ptr<Chromosome> > tournament(GenPool &genPool) const ))
 {
-	std::vector<const Residue*> aaList1a;
-	aaList1a.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList1a.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList1a.push_back(ResidueDB::getInstance()->getResidue("N"));
-	std::vector<const Residue*> aaList1b;
-	aaList1b.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList1b.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList1b.push_back(ResidueDB::getInstance()->getResidue("N"));
-	std::vector<const Residue*> aaList2;
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("H"));
-	TestMater tm(100.1, 0.3, aaList1a);
-	TEST_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList1b[1]->getModifiedOneLetterCode());
-	TEST_NOT_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList2[1]->getModifiedOneLetterCode());
-	tm.setAAList(aaList2);
-	TEST_NOT_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList1b[1]->getModifiedOneLetterCode());
-	TEST_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList2[1]->getModifiedOneLetterCode());
+	ptr->seed(10000);
+	std::vector<boost::shared_ptr<Chromosome> > res = ptr->tournament(gp);
+	TEST_EQUAL(res.size(),40);
+	for(int i=0; i<res.size(); i++)
+		cerr << res[i]->getSequence().toString() << endl;
 }
 END_SECTION
 
-START_SECTION((void setAAList(const std::vector< const Residue * > &aaList)))
+START_SECTION((void tournamentAndAddToPool(GenPool &genPool) const ))
 {
-	std::vector<const Residue*> aaList1a;
-	aaList1a.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList1a.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList1a.push_back(ResidueDB::getInstance()->getResidue("N"));
-	std::vector<const Residue*> aaList1b;
-	aaList1b.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList1b.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList1b.push_back(ResidueDB::getInstance()->getResidue("N"));
-	std::vector<const Residue*> aaList2;
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList2.push_back(ResidueDB::getInstance()->getResidue("H"));
-	TestMater tm(100.1, 0.3, aaList1a);
-	TEST_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList1b[1]->getModifiedOneLetterCode());
-	TEST_NOT_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList2[1]->getModifiedOneLetterCode());
-	tm.setAAList(aaList2);
-	TEST_NOT_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList1b[1]->getModifiedOneLetterCode());
-	TEST_EQUAL(tm.getAAList()[1]->getModifiedOneLetterCode(),aaList2[1]->getModifiedOneLetterCode());
+  ptr->tournamentAndAddToPool(gp);
 }
 END_SECTION
 
-START_SECTION((double getPrecursorMass() const ))
+START_SECTION((void seed(const unsigned int seed)))
 {
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  TEST_EQUAL(100.1,tm.getPrecursorMass());
-  tm.setPrecursorMass(200.2);
-  TEST_EQUAL(200.2,tm.getPrecursorMass());
+  TEST_NOT_EQUAL(ptr->getSeed(),50);
+  ptr->seed(50);
+  TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 
-START_SECTION((void setPrecursorMass(double precursorMass)))
+START_SECTION((unsigned int getSeed() const ))
 {
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  tm.setPrecursorMass(200.2);
-  TEST_EQUAL(200.2,tm.getPrecursorMass());
+	TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 
-START_SECTION((double getPrecursorMassTolerance() const ))
+START_SECTION(~Mater())
 {
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  TEST_EQUAL(0.3,tm.getPrecursorMassTolerance());
-  tm.setPrecursorMassTolerance(0.4);
-  TEST_EQUAL(0.4,tm.getPrecursorMassTolerance());
+	delete ptr;
 }
 END_SECTION
-
-START_SECTION((void setPrecursorMassTolerance(double precursorMassTolerance)))
-{
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  tm.setPrecursorMassTolerance(0.4);
-  TEST_EQUAL(0.4,tm.getPrecursorMassTolerance());
-}
-END_SECTION
-
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

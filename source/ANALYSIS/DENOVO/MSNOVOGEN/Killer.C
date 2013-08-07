@@ -38,10 +38,8 @@ namespace OpenMS
 {
 
   Killer::Killer()
-  {
-  }
+  {}
 
   Killer::~Killer()
-  {
-  }
+  {}
 } // namespace

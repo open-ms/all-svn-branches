@@ -43,6 +43,11 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The Mater base class provides a framework for
+	* derived classes to implement the mating differently.
+	* MAter may not be instantiated and mate must be implemented in derived classes.
+	*/
   class GenPool;
 
   class OPENMS_DLLAPI Mater
@@ -58,60 +63,57 @@ private:
 	double precursorMassTolerance_;
 
 private:
-	/// Copy c'tor
+	/// Copy c'tor shouldn't be used.
 	Mater(const Mater& other);
 
-	/// Assignment operator
+	/// Assignment operator shouldn't be used.
 	Mater & operator=(const Mater& rhs);
 
+	/// Randomly selects a mating partner, not using exclude, with an edit distance of at least 2.
 	boost::shared_ptr<Chromosome> getPartner(GenPool & genPool, boost::shared_ptr<Chromosome> exclude) const;
 
 public:
-    /// Default c'tor
+    /// Default c'tor providing all necessary parameters.
     Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+    /// d'tor
+    virtual ~Mater();
+
+    /// virtual mate method needs to be implemented in all deriving classes.
+    /// This differentiates between differnet possibilities to perform crossover.
     virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const = 0;
 
-
-
+    /// This method performs mating for all individuals in a GenPool.
+    /// It calls the deriving classes mate method and is implemented in this base class.
     std::vector<boost::shared_ptr<Chromosome> > tournament(GenPool & genPool) const;
 
+    /// Same as tournament but instead of returning the new individuals directly adds them to the GenPool.
     void tournamentAndAddToPool(GenPool & genPool) const;
-
-    virtual ~Mater();
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
 
+	/// Returns the currently set seed.
 	unsigned int getSeed() const
 	{
 		return randomSeed_;
 	}
 
+	/// Allows derived classes to access the amino acid list.
 	const std::vector<const Residue*>& getAAList() const {
 		return aaList_;
 	}
 
-	void setAAList(const std::vector<const Residue*>& aaList) {
-		aaList_ = aaList;
-	}
-
+	/// Allows derived classes to access the set precursor mass.
 	double getPrecursorMass() const {
 		return precursorMass_;
 	}
 
-	void setPrecursorMass(double precursorMass) {
-		precursorMass_ = precursorMass;
-	}
-
+	/// Allows derived classes to access the set precursor mass tolerance.
 	double getPrecursorMassTolerance() const {
 		return precursorMassTolerance_;
 	}
-
-	void setPrecursorMassTolerance(double precursorMassTolerance) {
-		precursorMassTolerance_ = precursorMassTolerance;
-	}
-  };
+};
 } // namespace
 
 #endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_MATER_H

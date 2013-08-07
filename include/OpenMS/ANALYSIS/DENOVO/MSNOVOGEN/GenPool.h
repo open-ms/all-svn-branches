@@ -46,8 +46,8 @@
 namespace OpenMS
 {
   /**
-  * @brief The GenPool is the collection of Chromosomes (individuals) and it
-  * also allows to perform operations on the pool like mutations and crossovers.
+  * @brief The GenPool is the collection of Chromosomes (individuals).
+  * It further stores all individuals that ever lived in the pool as knownIndividuals.
   *
   */
   class OPENMS_DLLAPI GenPool

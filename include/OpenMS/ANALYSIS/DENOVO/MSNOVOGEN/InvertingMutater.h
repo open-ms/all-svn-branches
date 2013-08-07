@@ -41,12 +41,25 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The InvertingMutater is an implementation of Mutater
+	* which randomly selects subsequence of the sequence represented in Chromosome
+	* and inverts them in-place.
+	*/
   class OPENMS_DLLAPI InvertingMutater : public Mutater
   {
+private:
+	/// To forbid copy construction
+	  InvertingMutater(const InvertingMutater & rhs);
+
+	/// To forbid assignment
+	  InvertingMutater & operator=(const InvertingMutater & rhs);
+
 public:
-    /// Default c'tor
+    /// Default c'tor providing all necessary parameters.
     InvertingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+    /// Implementation of the virtual method Mutater::mutate.
     void mutate(boost::shared_ptr<Chromosome> chromosome) const;
   };
 } // namespace

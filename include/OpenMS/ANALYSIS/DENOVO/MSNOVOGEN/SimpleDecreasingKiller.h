@@ -44,26 +44,31 @@ namespace OpenMS
   * @brief The SimpleDecreasingKiller aims to decrease the population size by
   * a set number of individuals in each generation (if possible).
   * If less individuals exist than should be killed, less are being killed to account for that.
+  * The last individual always survives.
   */
   class OPENMS_DLLAPI SimpleDecreasingKiller : public Killer
   {
 private:
-	  /// By how many members a population should shrink per generation.
+	  /// By how many absolute members a population (genPool) should shrink per generation (default: 5).
 	  unsigned int decreasePerGeneration;
 
 public:
     /// Default c'tor
     SimpleDecreasingKiller();
 
+    /// Implementation of virtual ~Killer()
     ~SimpleDecreasingKiller();
 
+    /// Implementing virtual function from Killer to actually delete Chromosomes from the current genPool.
     void kill(GenPool& genPool) const;
 
+    /// Returns how many individuals should be killed per generation.
 	unsigned int getDecreasePerGeneration() const
 	{
 		return decreasePerGeneration;
 	}
 
+	/// Allows setting of how many individuals should be killed per generation.
 	void setDecreasePerGeneration(unsigned int decreasePerGeneration)
 	{
 		this->decreasePerGeneration = decreasePerGeneration;

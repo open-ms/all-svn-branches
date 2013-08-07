@@ -36,20 +36,34 @@
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_DEFAULTSCORER_H
 
 #include <OpenMS/config.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Scorer.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/NormShrAbuScorer.h>
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI DefaultScorer
+	/**
+	* @brief The DefaultScorer calls one of the classes derived from Scorer
+	* and uses it to perform scoring of the individual.
+	* Currently the DefaultScorer is NormShrAbuScorer.
+	*/
+  class OPENMS_DLLAPI DefaultScorer : public Scorer
   {
+private:
+	/// The current DefaultScorer (NormShrAbuScorer).
+	NormShrAbuScorer ds_;
+
+	/// Copy c'tor shouldn't be used
+	DefaultScorer(const DefaultScorer& other);
+
+	/// Assignment operator shouldn't be used
+	DefaultScorer & operator=(const DefaultScorer& rhs);
+
 public:
-    /// Default c'tor
-    DefaultScorer();
+    /// Default c'tor providing all neccessary information.
+    DefaultScorer(const double fragmentMassTolerance);
 
-    /// Copy c'tor
-    DefaultScorer(const DefaultScorer& other);
-
-    /// Assignment operator
-    DefaultScorer & operator=(const DefaultScorer& rhs);
+    /// Implementation of virtual method Scorer::score.
+    void score(const MSSpectrum<> * msms, boost::shared_ptr<Chromosome> & chromosome) const;
   };
 } // namespace
 

@@ -41,15 +41,38 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The DefaultSeeder calls one of the classes derived from Seeder
+	* and uses it to perform seeding of an individual.
+	* Currently the DefaultSeeder is a RandomSequenceSeeder.
+	*/
   class OPENMS_DLLAPI DefaultSeeder : public Seeder
   {
 private:
-	  RandomSequenceSeeder rss_;
+	/// The currently set DefaultSeeder (RandomSequenceSeeder).
+	RandomSequenceSeeder ds_;
+
+	/// To forbid copy construction
+	DefaultSeeder(const DefaultSeeder& other);
+
+	/// To forbid assignment
+	DefaultSeeder & operator=(const DefaultSeeder& rhs);
 
 public:
-	/// Default c'tor
+	/// Default c'tor providing all necessary input.
 	DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+
+	/// Implementation of the virtual method Seeder::createIndividual.
 	boost::shared_ptr<Chromosome> createIndividual() const;
+
+	/// Overridden to forward the seed to the default seeder.
+	void seed(const unsigned int seed);
+
+	/// Overridden to request the seed from the default seeder.
+	unsigned int getSeed() const
+	{
+		return ds_.getSeed();
+	}
   };
 } // namespace
 

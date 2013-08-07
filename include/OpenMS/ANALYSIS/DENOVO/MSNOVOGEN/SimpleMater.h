@@ -42,19 +42,28 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The SimpleMater takes two Chromosomes and randomly chooses
+	* a crossover site. At this position the sequences of the chromosomes are
+	* joint and two children result. The mass of them may not confirm to the
+	* required precursor MH+ +/- tolerance so Utilities::adjustToFitMass is called
+	* on both children in order to try to change the sequence such that it suits the mass constraint.
+	*/
   class OPENMS_DLLAPI SimpleMater : public Mater
   {
 private:
-	/// Copy c'tor
+	/// Copy c'tor shouldn't be used.
 	SimpleMater(const SimpleMater& other);
 
-	/// Assignment operator
+	/// Assignment operator shouldn't be used.
 	SimpleMater & operator=(const SimpleMater& rhs);
 
 public:
-    /// Default c'tor
+    /// Default c'tor taking all necessary parameters.
     SimpleMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const;
+
+    /// Implementation of the virtual function mate in Mater.
+    std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const;
   };
 } // namespace
 

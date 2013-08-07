@@ -41,13 +41,21 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The SubstitutingMutater replaces a randombly chosen amino acid from the
+	* Chromosome with one from the amino acid list.
+	* Afterwards it iterates over the sequence and amino acid list to find pairs which
+	* can compensate the mass difference (except for initial change reversion).
+	* Among the possible pairs one is chosen randomly.
+	*/
   class OPENMS_DLLAPI SubstitutingMutater : public Mutater
   {
 
 public:
-
+	/// constructor providing all neccessary information.
 	SubstitutingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+	/// Implementation of virtual method Mutater::mutate.
     void mutate(boost::shared_ptr<Chromosome> chromosome) const;
   };
 } // namespace

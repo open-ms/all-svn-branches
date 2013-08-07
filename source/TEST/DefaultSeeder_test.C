@@ -35,20 +35,24 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
-#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <vector>
+#include <OpenMS/CHEMISTRY/Residue.h>
+#include <boost/shared_ptr.hpp>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(SubstitutingMutater, "$Id$")
+START_TEST(DefaultSeeder, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
-
+double precursorMassTolerance=1.5;
+AASequence seq("ALLMER");
+double precursorMass = seq.getMonoWeight(Residue::Full);
 std::vector<const Residue*> aaList;
 aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
@@ -71,37 +75,47 @@ aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-AASequence aas("WLQSEVIHAR");
-double precursorMassTolerance = 0.3;
+DefaultSeeder* ptr = 0;
+DefaultSeeder* null_ptr = 0;
 
-SubstitutingMutater* ptr = 0;
-SubstitutingMutater* null_ptr = 0;
-
-START_SECTION(SubstitutingMutater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList))
+START_SECTION((DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
-	ptr = new SubstitutingMutater(aas.getMonoWeight(),precursorMassTolerance,aaList);
+	ptr = new DefaultSeeder(precursorMass,precursorMassTolerance,aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION((void mutate(boost::shared_ptr< Chromosome > chromosome) const))
+START_SECTION((boost::shared_ptr<Chromosome> createIndividual() const ))
 {
-	int test[]{0,3000,6000,6500,7000,8000,9000};
-	String res[]{"WLQQEVIHAD","WLQSEVIHQV","ELQSEVIHKR","WLQQEVIHAD","WLESKVIHAR","WLQQEVIHAD","WLQSNNIHAR"};
-	for(int i=0; i<7; i ++)
-	{
-		boost::shared_ptr<Chromosome> chr(new Chromosome());
-		chr->setSequence(aas);
+	int test[]{0,3000,6000,10000,14000,15000,16000};
+	String expSeq[]{"GDQIIW","MGRGRR","DAHSCIS","WEMHM","GCAVVRAG","FDHIEA","RMRLVG"};
+	bool expRes[]  {true, true, true, true, true, true, true};
+	double pm = seq.getMonoWeight(Residue::Full);
+	for(int i=0; i<7; i++) {
 		ptr->seed(test[i]);
-		ptr->mutate(chr);
-		double diff = std::abs((double)chr->getSequence().getMonoWeight()-aas.getMonoWeight());
-		TEST_EQUAL(diff <= precursorMassTolerance, true);
-		TEST_EQUAL(chr->getSequence().toString(), res[i]);
+		boost::shared_ptr<Chromosome> rand = ptr->createIndividual();
+		double diff = abs(rand->getSequence().getMonoWeight(Residue::Full) - pm);
+		TEST_EQUAL(diff <= 1.5, expRes[i]);
+		TEST_STRING_EQUAL(rand->getSequence().toString(),expSeq[i]);
 	}
 }
 END_SECTION
 
-START_SECTION(~SubstitutingMutater())
+START_SECTION((void seed(const unsigned int seed)))
+{
+  TEST_NOT_EQUAL(ptr->getSeed(),50);
+  ptr->seed(50);
+  TEST_EQUAL(ptr->getSeed(),50);
+}
+END_SECTION
+
+START_SECTION((unsigned int getSeed()))
+{
+  TEST_EQUAL(ptr->getSeed(),50);
+}
+END_SECTION
+
+START_SECTION(~DefaultSeeder())
 {
 	delete ptr;
 }

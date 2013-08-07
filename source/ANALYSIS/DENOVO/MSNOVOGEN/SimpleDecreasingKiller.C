@@ -42,16 +42,19 @@ namespace OpenMS
 
   SimpleDecreasingKiller::SimpleDecreasingKiller() :
     Killer(), decreasePerGeneration(5)
-  {
-  }
+  {}
 
   SimpleDecreasingKiller::~SimpleDecreasingKiller()
-  {
-  }
+  {}
 
   void SimpleDecreasingKiller::kill(GenPool& genPool) const
   {
     int currentPopulation = genPool.getPopulationSize();
+    int prePop = genPool.getPreviousPoolSize();
+    if(prePop == 0)
+    {
+    	genPool.setPreviousPoolSize(currentPopulation);
+    }
     int diff = genPool.getPreviousPoolSize() - decreasePerGeneration;
     int targetPopulation = std::max(diff,1);
     if(currentPopulation > targetPopulation)

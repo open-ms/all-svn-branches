@@ -43,20 +43,35 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The DefaultMater calls one of the classes derived from Mater
+	* and uses it to perform crossover of the two provided individuals.
+	* Currently the DefaultMater is a SimpleMater.
+	*/
   class OPENMS_DLLAPI DefaultMater : public Mater
   {
 private:
-	SimpleMater sm_;
-	/// Copy c'tor
+	/// The implementation of Mater that is the current default (SimpleMater).
+	SimpleMater dm_;
+
+	/// Copy c'tor shouldn't be used.
 	DefaultMater(const DefaultMater& other);
 
-	/// Assignment operator
+	/// Assignment operator shouldn't be used.
 	DefaultMater & operator=(const DefaultMater& rhs);
 
 public:
-    /// Default c'tor
+    /// Default c'tor providing all necessary input.
     DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+
+    /// The implementation of mate from Mater.
     std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
+
+    /// Overriding seed since it must be forwarded to the contained mating implementation (dm_).
+    void seed(const unsigned int seed);
+
+    /// Overriding getSeed since it must be requested from the mating implementation (dm_).
+    unsigned int getSeed();
   };
 } // namespace
 

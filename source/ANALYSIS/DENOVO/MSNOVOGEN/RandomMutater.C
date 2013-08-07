@@ -48,10 +48,10 @@ namespace OpenMS
     weights_.push_back(0.4);
     weights_.push_back(0.7);
     weights_.push_back(1.0);
-	subm_.seed(getRandomSeed());
-	swam_.seed(getRandomSeed());
-	invm_.seed(getRandomSeed());
-	defm_.seed(getRandomSeed());
+	subm_.seed(getSeed());
+	swam_.seed(getSeed());
+	invm_.seed(getSeed());
+	defm_.seed(getSeed());
   }
 
   void RandomMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const

@@ -35,78 +35,66 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
-#include <OpenMS/CHEMISTRY/AASequence.h>
-#include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultScorer.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(SubstitutingMutater, "$Id$")
+START_TEST(DefaultScorer, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-std::vector<const Residue*> aaList;
-aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+DefaultScorer* ptr = 0;
+DefaultScorer* null_ptr = 0;
 
-AASequence aas("WLQSEVIHAR");
-double precursorMassTolerance = 0.3;
-
-SubstitutingMutater* ptr = 0;
-SubstitutingMutater* null_ptr = 0;
-
-START_SECTION(SubstitutingMutater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList))
+START_SECTION((DefaultScorer(const double fragmentMassTolerance)))
 {
-	ptr = new SubstitutingMutater(aas.getMonoWeight(),precursorMassTolerance,aaList);
+	ptr = new DefaultScorer(0.5);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION((void mutate(boost::shared_ptr< Chromosome > chromosome) const))
+START_SECTION((void score(const MSSpectrum<> *msms, boost::shared_ptr< Chromosome > &chromosome) const ))
 {
-	int test[]{0,3000,6000,6500,7000,8000,9000};
-	String res[]{"WLQQEVIHAD","WLQSEVIHQV","ELQSEVIHKR","WLQQEVIHAD","WLESKVIHAR","WLQQEVIHAD","WLQSNNIHAR"};
-	for(int i=0; i<7; i ++)
-	{
-		boost::shared_ptr<Chromosome> chr(new Chromosome());
-		chr->setSequence(aas);
-		ptr->seed(test[i]);
-		ptr->mutate(chr);
-		double diff = std::abs((double)chr->getSequence().getMonoWeight()-aas.getMonoWeight());
-		TEST_EQUAL(diff <= precursorMassTolerance, true);
-		TEST_EQUAL(chr->getSequence().toString(), res[i]);
-	}
+	MSSpectrum<> msms;
+	//pm: 732.4073
+	//b: 185.1285	 298.2125	 429.2530	 558.2956
+	//y: 661.3702	 548.2861	 435.2020	 304.1615	 175.1190
+	Peak1D p1; p1.setMZ(185.1285); p1.setIntensity(3);
+	Peak1D p2; p2.setMZ(298.2125); p2.setIntensity(3);
+	Peak1D p3; p3.setMZ(429.2530); p3.setIntensity(3);
+	Peak1D p4; p4.setMZ(558.2956); p4.setIntensity(3);
+	Peak1D p5; p5.setMZ(661.3702); p5.setIntensity(5);
+	Peak1D p6; p6.setMZ(548.2861); p6.setIntensity(5);
+	Peak1D p7; p7.setMZ(435.2020); p7.setIntensity(5);
+	Peak1D p8; p8.setMZ(304.1615); p8.setIntensity(5);
+	Peak1D p9; p9.setMZ(175.1190); p9.setIntensity(5);
+	Peak1D p10; p10.setMZ(100.5000); p10.setIntensity(20);
+	msms.push_back(Peak1D(p1));
+	msms.push_back(Peak1D(p2));
+	msms.push_back(Peak1D(p3));
+	msms.push_back(Peak1D(p4));
+	msms.push_back(Peak1D(p5));
+	msms.push_back(Peak1D(p6));
+	msms.push_back(Peak1D(p7));
+	msms.push_back(Peak1D(p8));
+	msms.push_back(Peak1D(p9));
+	msms.push_back(Peak1D(p10));
+	msms.sortByPosition();
+	//4*3 + 5*5 = 37/57/6
+	boost::shared_ptr< Chromosome > chr(new Chromosome(AASequence("ALLMER"),1));
+	ptr->score(&msms,chr);
+	TEST_REAL_SIMILAR(37.0/57.0/6.0,chr->getScore());
 }
 END_SECTION
 
-START_SECTION(~SubstitutingMutater())
+START_SECTION(~DefaultScorer())
 {
 	delete ptr;
 }
 END_SECTION
-
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

@@ -72,7 +72,7 @@ public:
     /// Default c'tor
     RandomMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
     std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const;
-
+    void seed(unsigned int seed);
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const
 	{

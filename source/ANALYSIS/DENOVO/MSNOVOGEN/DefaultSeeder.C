@@ -33,18 +33,25 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h>
+#include <time.h>
 
 namespace OpenMS
 {
-  DefaultSeeder::DefaultSeeder(double pm, double pmt, std::vector<const Residue*> al) :
-	Seeder(pm,pmt,al), rss_(pm, pmt, al)
-  {
-	  rss_.seed(getSeed());
-  }
+	DefaultSeeder::DefaultSeeder(double pm, double pmt, std::vector<const Residue*> al) :
+	Seeder(pm,pmt,al), ds_(pm, pmt, al)
+	{
+		ds_.seed(time(0));
+	}
 
-  boost::shared_ptr<Chromosome> DefaultSeeder::createIndividual() const
-  {
-	return(rss_.createIndividual());
-  }
+	boost::shared_ptr<Chromosome> DefaultSeeder::createIndividual() const
+	{
+		return ds_.createIndividual();
+	}
+
+	void DefaultSeeder::seed(const unsigned int seed)
+	{
+		ds_.seed(seed);
+	}
+
 } // namespace
 

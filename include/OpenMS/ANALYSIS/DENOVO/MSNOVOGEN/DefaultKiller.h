@@ -42,10 +42,16 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The DefaultKiller calls one of the classes derived from Killer
+	* and uses it to perform killing of the individuals in the provided GenPool.
+	* Currently the DefaultKiller is a SimpleDecreasingKiller.
+	*/
   class OPENMS_DLLAPI DefaultKiller : public Killer
   {
 private:
-	  SimpleDecreasingKiller sdk_;
+	  /// The current default killer.
+	  SimpleDecreasingKiller dk_;
 
 public:
     /// Default c'tor
@@ -54,6 +60,7 @@ public:
     /// Implementation of virtual ~Killer()
     ~DefaultKiller();
 
+    /// Implementing virtual function from Killer to actually delete Chromosomes from the current genPool.
     void kill(GenPool& genPool) const;
 
   };

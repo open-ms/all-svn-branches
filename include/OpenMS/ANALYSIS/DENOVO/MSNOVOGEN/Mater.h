@@ -81,7 +81,7 @@ public:
     virtual ~Mater();
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(unsigned int seed);
+	void seed(const unsigned int seed);
 
 	unsigned int getSeed() const
 	{

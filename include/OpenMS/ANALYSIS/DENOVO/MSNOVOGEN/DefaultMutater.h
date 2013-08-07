@@ -43,19 +43,35 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The DefaultMutater calls one of the classes derived from Mutater
+	* and uses it to perform mutation of the provided individual.
+	* Currently the DefaultMutater is a SubstitutingMutater.
+	*/
   class OPENMS_DLLAPI DefaultMutater : public Mutater
   {
 private:
-	  SubstitutingMutater subm_;
+	  /// Current default Mutater (SubstitutingMutater).
+	  SubstitutingMutater dm_;
 
 public:
-
+	/// Constructor providing all neccessary information.
 	DefaultMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+	/// d'tor
 	~DefaultMutater();
 
+	/// Implementation of virtual method Mutater::mutate.
 	void mutate(boost::shared_ptr<Chromosome> chromosome) const;
 
+	/// Overriding Mutater::seed since the seed must be forwarded to the default mutater (dm_).
+	void seed(const unsigned int seed);
+
+	/// Overriding Mutater::getSeed since the seed must be requested from the default mutater (dm_).
+	unsigned int getSeed()
+	{
+		return dm_.getSeed();
+	}
   };
 } // namespace
 

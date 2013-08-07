@@ -52,7 +52,30 @@ START_TEST(SimpleMater, "$Id$")
 
 SimpleMater* ptr = 0;
 SimpleMater* null_ptr = 0;
-START_SECTION(SimpleMater())
+
+std::vector<const Residue*> aaList;
+aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
+START_SECTION(SimpleMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList))
 {
 
 	std::vector<const Residue*> aaList;
@@ -61,43 +84,10 @@ START_SECTION(SimpleMater())
 }
 END_SECTION
 
-START_SECTION(~SimpleMater())
-{
-	delete ptr;
-}
-END_SECTION
-
-START_SECTION((SimpleMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
-{
-  // TODO
-}
-END_SECTION
-
 START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromosome &rhs)))
 {
 	AASequence m("AAAAAAAAAA");
 	AASequence f("GGGGGLLLLL");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 	SimpleMater sm(m.getMonoWeight(Residue::Full),1.5,aaList);
 	sm.seed(50);
 	vector<boost::shared_ptr<Chromosome> > res = sm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
@@ -113,6 +103,11 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 }
 END_SECTION
 
+START_SECTION(~SimpleMater())
+{
+	delete ptr;
+}
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

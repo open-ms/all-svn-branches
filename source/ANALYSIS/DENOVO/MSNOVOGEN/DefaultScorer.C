@@ -36,14 +36,14 @@
 
 namespace OpenMS
 {
+	DefaultScorer::DefaultScorer(const double fmt) :
+	  Scorer(fmt),
+	  ds_(fmt)
+	{}
 
-  DefaultScorer::DefaultScorer()
-  {}
-
-  DefaultScorer::DefaultScorer(const DefaultScorer& other)
-  {}
-
-  DefaultScorer & DefaultScorer::operator=(const DefaultScorer& rhs)
-  {}
+	void DefaultScorer::score(const MSSpectrum<> * expMS, boost::shared_ptr<Chromosome> & chromosome) const
+	{
+		return ds_.score(expMS,chromosome);
+	}
 
 } // namespace

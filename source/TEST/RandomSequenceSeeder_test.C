@@ -49,58 +49,50 @@ START_TEST(RandomSequenceSeeder, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
+double precursorMassTolerance=1.5;
+AASequence seq("ALLMER");
+double precursorMass = seq.getMonoWeight(Residue::Full);
+std::vector<const Residue*> aaList;
+aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
 RandomSequenceSeeder* ptr = 0;
 RandomSequenceSeeder* null_ptr = 0;
+
 START_SECTION(RandomSequenceSeeder())
 {
-	double precursorMass=10;
-	double precursorMassTolerance=2;
-	std::vector<const Residue*> aaList;
 	ptr = new RandomSequenceSeeder(precursorMass, precursorMassTolerance, aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION(~RandomSequenceSeeder())
-{
-	delete ptr;
-}
-END_SECTION
-
-
 START_SECTION(Chromosome RandomSequenceSeeder::createIndividual())
 {
-    AASequence seq("ALLMER");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-
 	int test[]{0,3000,6000,10000,14000,15000,16000};
 	String expSeq[]{"GDQIIW","MGRGRR","DAHSCIS","WEMHM","GCAVVRAG","FDHIEA","RMRLVG"};
 	bool expRes[]  {true, true, true, true, true, true, true};
 	double pm = seq.getMonoWeight(Residue::Full);
 	for(int i=0; i<7; i++) {
-		RandomSequenceSeeder rss(seq.getMonoWeight(Residue::Full),1.5,aaList);
-		rss.seed(test[i]);
-		boost::shared_ptr<Chromosome> rand = rss.createIndividual();
+		ptr->seed(test[i]);
+		boost::shared_ptr<Chromosome> rand = ptr->createIndividual();
 		double diff = abs(rand->getSequence().getMonoWeight(Residue::Full) - pm);
 		TEST_EQUAL(diff <= 1.5, expRes[i]);
 		TEST_STRING_EQUAL(rand->getSequence().toString(),expSeq[i]);
@@ -109,6 +101,11 @@ START_SECTION(Chromosome RandomSequenceSeeder::createIndividual())
 }
 END_SECTION
 
+START_SECTION(~RandomSequenceSeeder())
+{
+	delete ptr;
+}
+END_SECTION
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

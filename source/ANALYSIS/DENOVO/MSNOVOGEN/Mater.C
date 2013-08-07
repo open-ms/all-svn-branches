@@ -69,7 +69,7 @@ namespace OpenMS
 		return(ret);
 	}
 
-  void Mater::seed(unsigned int seed)
+  void Mater::seed(const unsigned int seed)
   {
 	randomSeed_ = seed;
 	srand(randomSeed_);

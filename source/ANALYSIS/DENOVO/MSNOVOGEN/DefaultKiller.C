@@ -39,7 +39,7 @@ namespace OpenMS
 {
 
   DefaultKiller::DefaultKiller() :
-		Killer(), sdk_()
+		Killer(), dk_()
   {
   }
 
@@ -50,7 +50,7 @@ namespace OpenMS
 
   void DefaultKiller::kill(GenPool& genPool) const
   {
-	  sdk_.kill(genPool);
+	  dk_.kill(genPool);
   }
 
 } // namespace

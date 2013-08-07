@@ -426,6 +426,8 @@ set(analysis_executables_list
 	DefaultKiller_test
 	DefaultMater_test
 	DefaultMutater_test
+	DefaultScorer_test
+	DefaultSeeder_test
 	GenAlg_test
 	GenPool_test
 	HomologyKiller_test

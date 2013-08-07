@@ -40,12 +40,27 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The RandomSequenceSeeder first picks a random length
+	* between precursorMass / m(W) and precursorMass / m(G).
+	* For the selected random length a random sequence is generated
+	* using the provided amino acid list. Finally Utilities::adjustToFitMass is
+	* called to try and adjust the mass of the random sequence to fit the constraints (PM +/- pmt).
+	*/
   class OPENMS_DLLAPI RandomSequenceSeeder : public Seeder
   {
+private:
+	/// To forbid copy construction
+	  RandomSequenceSeeder(const RandomSequenceSeeder& other);
+
+	/// To forbid assignment
+	  RandomSequenceSeeder & operator=(const RandomSequenceSeeder& rhs);
+
 public:
-    /// Default c'tor
+	/// Default c'tor providing all necessary input.
     RandomSequenceSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+    /// Implementation of the virtual method Seeder::createIndividual.
     boost::shared_ptr<Chromosome> createIndividual() const;
   };
 } // namespace

@@ -118,7 +118,7 @@ public:
 		precursorMassTolerance_ = precursorMassTolerance;
 	}
 
-	unsigned int getRandomSeed() {
+	unsigned int getSeed() {
 		return randomSeed_;
 	}
 };

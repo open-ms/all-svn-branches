@@ -42,19 +42,26 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The NormShrAbuScorer collects the shared peaks among
+	* the given spectrum and the b,y-ion spectrum derived from the Chromosome.
+	* The abundance of these shared peaks is then divided by the sum of intensities in the provided spectrum
+	* and then divided by the length of the sequence in the Chromosome.
+	*/
   class OPENMS_DLLAPI NormShrAbuScorer : public Scorer
   {
 private:
-	/// Assignment operator
+	/// Assignment operator shouldn't be used
 	NormShrAbuScorer & operator=(const NormShrAbuScorer& rhs);
 
-	/// Copy c'tor
+	/// Copy c'tor shouldn't be used
 	NormShrAbuScorer(const NormShrAbuScorer& other);
 
 public:
-	/// Default c'tor
+	/// Default c'tor providing all neccessary information.
 	NormShrAbuScorer(const double fragmentMassTolerance);
 
+	/// Implementation of virtual method Scorer::score.
     void score(const MSSpectrum<> * msms, boost::shared_ptr<Chromosome> & chromosome) const;
 
   };

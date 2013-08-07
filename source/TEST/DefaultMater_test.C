@@ -52,11 +52,74 @@ START_TEST(DefaultMater, "$Id$")
 
 DefaultMater* ptr = 0;
 DefaultMater* null_ptr = 0;
-START_SECTION(DefaultMater())
+
+std::vector<const Residue*> aaList;
+aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
+START_SECTION(DefaultMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList))
 {
-	std::vector<const Residue*> aaList;
 	ptr = new DefaultMater(100.0,0.3,aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
+}
+END_SECTION
+
+START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromosome &rhs)))
+{
+	AASequence m("AAAAAAAAAA");
+	AASequence f("GGGGGLLLLL");
+	
+	SimpleMater sm(m.getMonoWeight(Residue::Full),1.5,aaList);
+	sm.seed(50);
+	vector<boost::shared_ptr<Chromosome> > resSimple = sm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
+	
+	DefaultMater dm(m.getMonoWeight(Residue::Full),1.5,aaList);
+	dm.seed(50);
+	vector<boost::shared_ptr<Chromosome> > resDefault = dm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
+	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
+	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
+	TEST_EQUAL(resDefault.size(),1);
+	TEST_STRING_EQUAL(resDefault[0]->getSequence().toString(),"GGVAAAAAAA");
+	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-resDefault[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
+
+	TEST_STRING_EQUAL(resSimple[0]->getSequence().toString(),resDefault[0]->getSequence().toString());
+
+	AASequence bt("AAAAAA");
+	AASequence bc("WWWWW");
+	resDefault = dm.mate(boost::shared_ptr<Chromosome>(new Chromosome(bt,0)), boost::shared_ptr<Chromosome>(new Chromosome(bc,0)));
+	TEST_EQUAL(0,resDefault.size()); //a different seed may lead to 2 valid children of m and f.
+}
+END_SECTION
+
+START_SECTION((void seed(const unsigned int seed)))
+{
+  TEST_NOT_EQUAL(ptr->getSeed(),50);
+  ptr->seed(50);
+  TEST_EQUAL(ptr->getSeed(),50);
+}
+END_SECTION
+
+START_SECTION((unsigned int getSeed()))
+{
+  TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 
@@ -65,53 +128,6 @@ START_SECTION(~DefaultMater())
 	delete ptr;
 }
 END_SECTION
-
-START_SECTION((DefaultMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromosome &rhs)))
-{
-	AASequence m("AAAAAAAAAA");
-	AASequence f("GGGGGLLLLL");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-	DefaultMater dm(m.getMonoWeight(Residue::Full),1.5,aaList);
-	dm.seed(50);
-	vector<boost::shared_ptr<Chromosome> > res = dm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
-	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
-	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
-	TEST_EQUAL(1,res.size());
-	TEST_STRING_EQUAL("GGVAAAAAAA",res[0]->getSequence().toString());
-	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
-	AASequence bt("AAAAAA");
-	AASequence bc("WWWWW");
-	res = dm.mate(boost::shared_ptr<Chromosome>(new Chromosome(bt,0)), boost::shared_ptr<Chromosome>(new Chromosome(bc,0)));
-	TEST_EQUAL(0,res.size()); //a different seed may lead to 2 valid children of m and f.
-}
-END_SECTION
-
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

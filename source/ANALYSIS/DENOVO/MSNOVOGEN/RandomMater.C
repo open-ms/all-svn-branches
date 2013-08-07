@@ -74,4 +74,11 @@ namespace OpenMS
     }
     return dm.mate(lhs, rhs);
   }
+
+  void RandomMater::seed(unsigned int seed)
+  {
+	  sm.seed(seed);
+	  zm.seed(seed);
+	  dm.seed(seed);
+  }
 } // namespace

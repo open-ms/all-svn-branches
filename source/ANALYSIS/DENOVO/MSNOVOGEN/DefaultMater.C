@@ -33,19 +33,30 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h>
+#include <time.h>
 
 namespace OpenMS
 {
 
-  DefaultMater::DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-    Mater(precursorMass, precursorMassTolerance, aaList), sm_(precursorMass, precursorMassTolerance, aaList)
-  {
-	  sm_.seed(getSeed());
-  }
+	DefaultMater::DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
+	Mater(precursorMass, precursorMassTolerance, aaList), dm_(precursorMass, precursorMassTolerance, aaList)
+	{
+		dm_.seed(time(0));
+	}
 
 	std::vector<boost::shared_ptr<Chromosome> > DefaultMater::mate(boost::shared_ptr<Chromosome> lhs,
 			boost::shared_ptr<Chromosome> rhs) const
 	{
-		return sm_.mate(lhs, rhs);
+		return dm_.mate(lhs, rhs);
+	}
+
+	void DefaultMater::seed(const unsigned int seed)
+	{
+		dm_.seed(seed);
+	}
+
+	unsigned int DefaultMater::getSeed()
+	{
+		return dm_.getSeed();
 	}
 } // namespace

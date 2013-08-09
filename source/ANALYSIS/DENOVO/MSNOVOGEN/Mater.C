@@ -44,7 +44,7 @@ namespace OpenMS
 	Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
 	aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
 	{
-	  seed(time(0));
+	  seed((unsigned int)time(0));
 	}
 
 	Mater::~Mater()

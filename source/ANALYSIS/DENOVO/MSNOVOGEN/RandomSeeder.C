@@ -34,6 +34,7 @@
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSeeder.h>
 #include <stdlib.h>
+#include <time.h>
 
 namespace OpenMS
 {
@@ -41,21 +42,19 @@ namespace OpenMS
   RandomSeeder::RandomSeeder(double pm, double pmt, std::vector<const Residue*> al) :
 	Seeder(pm,pmt,al), rss(pm, pmt, al), sts(pm, pmt, al), ds(pm, pmt, al)
   {
-	weights.push_back(0.4);
-	weights.push_back(0.7);
-	weights.push_back(1.0);
-	rss.seed(getSeed());
-	sts.seed(getSeed());
-	ds.seed(getSeed());
+	weights_.push_back(0.4);
+	weights_.push_back(0.7);
+	weights_.push_back(1.0);
+	seed((unsigned int)time(0));
   }
 
   boost::shared_ptr<Chromosome> RandomSeeder::createIndividual() const
   {
 	boost::shared_ptr<Chromosome> chr;
 	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
-    for(unsigned int i=0; i<weights.size(); i++)
+    for(unsigned int i=0; i<weights_.size(); i++)
     {
-      if(weights[i] <= rv)
+      if(weights_[i] > rv)
       {
         switch(i) {
           case RandomSeeder::randomSequenceSeeder :
@@ -71,5 +70,12 @@ namespace OpenMS
       }
     }
     return(chr);
+  }
+
+  void RandomSeeder::seed(const unsigned int seed) 
+  {
+	  rss.seed(seed);
+	  sts.seed(seed);
+	  ds.seed(seed);
   }
 } // namespace

@@ -47,6 +47,13 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The RandomMutater calls one of the classes derived from Mutater
+	* and uses it to perform mutate on the provided individual.
+	* Which implementation is randomly chosen but can be influenced by
+	* setting the weights. The number of weights must equal the number
+	* of available Mutaters (currently 3 and the DefaultMutater). 
+	*/
   class OPENMS_DLLAPI RandomMutater : public Mutater
   {
 private:
@@ -70,7 +77,10 @@ public:
     const static int swappingMutater = 1;
     /// identifier for InvertingMutater
     const static int invertingMutater = 2;
+	/// inditifier for DefaultMutater
+	const static int defaultMutater = 3;
 
+	/// Constructor with all necessary information.
     RandomMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
     /// Generates a random number between 0 and 1 and then chooses one of the defined Mutaters to
@@ -95,15 +105,17 @@ public:
 
 	/// Sets the input weights for the decision which Mutater to use
 	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
-	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
+	/// Weights must be given such that they sum up to 1 e.g.: {0.2,0.4,0.3,0.1}.
 	void setWeights(const std::vector<double>& weights) {
+		this->weights_.clear();
+		this->weights_.resize(weights.size());
 		this->weights_[0] = weights[0];
-		for(unsigned int i=1; i<this->weights_.size(); i++)
+		for(unsigned int i=1; i<weights.size(); i++)
 		{
 		  this->weights_[i] = weights[i]+this->weights_[i-1];
 		}
-		if(this->weights_[this->weights_.size()-1] < 1 || this->weights_[this->weights_.size()-1] > 1)
-			this->weights_[this->weights_.size()-1] = 1.0;
+		if(this->weights_[weights.size()-1] < 1 || this->weights_[weights.size()-1] > 1)
+			this->weights_[weights.size()-1] = 1.0;
 	}
 };
 } // namespace

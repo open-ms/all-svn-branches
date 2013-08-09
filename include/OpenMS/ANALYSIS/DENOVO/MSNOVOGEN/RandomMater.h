@@ -44,6 +44,13 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The RandomMater calls one of the classes derived from Mater
+	* and uses it to perform crossover of the two provided individuals.
+	* Which implementation is randomly chosen but can be influenced by
+	* setting the weights. The number of weights must equal the number
+	* of available maters (currently 3). 
+	*/
   class OPENMS_DLLAPI RandomMater : public Mater
   {
 public:
@@ -58,8 +65,11 @@ private:
 	/// The vector holds the weights for the random decision of which Mutater to use.
 	/// The weights are increasing with the size of the vector and the last double must be 1.0.
     std::vector<double> weights_;
+	/// object of the SimpleMater build in the constructor to avoid rebuilding during mating.
 	SimpleMater sm;
+	/// object of the DefaultMater build in the constructor to avoid rebuilding during mating.
 	DefaultMater dm;
+	/// object of the ZipMater build in the constructor to avoid rebuilding during mating.
 	ZipMater zm;
 
 private:
@@ -71,9 +81,14 @@ private:
 public:
     /// Default c'tor
     RandomMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+
+	/// Implementation of the virtual method Mater::mate.
     std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
-    void seed(unsigned int seed);
-    /// Returns the weights currently set for the Mutaters.
+    
+	/// Ovrerriding base method to ensure that seeding is forwarded to the contained objects.
+	void seed(unsigned int seed);
+    
+	/// Returns the weights currently set for the Mutaters ordered by their id.
 	const std::vector<double> getWeights() const
 	{
 		if(weights_.size() < 1)
@@ -92,14 +107,17 @@ public:
 	/// Sets the input weights for the decision which Mutater to use
 	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
 	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
+	/// Weights are associated by id.
 	void setWeights(const std::vector<double>& weights) {
+		this->weights_.clear();
+		this->weights_.resize(weights.size());
 		this->weights_[0] = weights[0];
-		for(unsigned int i=1; i<this->weights_.size(); i++)
+		for(unsigned int i=1; i<weights.size(); i++)
 		{
 		  this->weights_[i] = weights[i]+this->weights_[i-1];
 		}
-		if(this->weights_[this->weights_.size()-1] < 1 || this->weights_[this->weights_.size()-1] > 1)
-			this->weights_[this->weights_.size()-1] = 1.0;
+		if(this->weights_[weights.size()-1] < 1 || this->weights_[weights.size()-1] > 1)
+			this->weights_[weights.size()-1] = 1.0;
 	}
   };
 } // namespace

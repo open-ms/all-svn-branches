@@ -34,6 +34,7 @@
 
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/RandomMater.h>
 #include <stdlib.h>
+#include <time.h>
 
 namespace OpenMS
 {
@@ -47,9 +48,7 @@ namespace OpenMS
 	weights_.push_back(0.4);
 	weights_.push_back(0.7);
 	weights_.push_back(1.0);
-	sm.seed(getSeed());
-    zm.seed(getSeed());
-    dm.seed(getSeed());
+	seed((unsigned int)time(0));
   }
 
   std::vector<boost::shared_ptr<Chromosome> > RandomMater::mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const

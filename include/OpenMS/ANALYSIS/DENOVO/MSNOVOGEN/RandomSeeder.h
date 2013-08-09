@@ -44,17 +44,24 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The RandomSeeder calls one of the classes derived from Seeder
+	* and uses it to perform seeding of news individuals.
+	* Which implementation is randomly chosen but can be influenced by
+	* setting the weights. The number of weights must equal the number
+	* of available maters (currently 3). 
+	*/
   class OPENMS_DLLAPI RandomSeeder : public Seeder
   {
 private:
 	/// The vector holds the weights for the random decision of which Mutater to use.
 	/// The weights are increasing with the size of the vector and the last double must be 1.0.
-	std::vector<double> weights;
-
+	std::vector<double> weights_;
+	/// The RandomSequenceSeeder is a contained object so it doesn't need to be instantiated more than once.
 	RandomSequenceSeeder rss;
-
+	/// The SequenceTagSeeder is a contained object so it doesn't need to be instantiated more than once.
 	SequenceTagSeeder sts;
-
+	/// The DefaultSeeder is a contained object so it doesn't need to be instantiated more than once.
 	DefaultSeeder ds;
 
 public:
@@ -62,23 +69,29 @@ public:
 	const static int randomSequenceSeeder = 0;
 	/// identifier for SwappingMutater
 	const static int sequenceTagSeeder = 1;
+	/// identifier for DefaultSeeder
+	const static int defaultSeeder = 2;
 
     /// Default c'tor
     RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+	/// Implementation of the virtual method Seeder::createIndividual.
     boost::shared_ptr<Chromosome> createIndividual() const;
+
+	/// Ovrridden to forward the seed to the contained objects.
+	void seed(const unsigned int seed);
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const
 	{
-		if(weights.size() < 1)
+		if(weights_.size() < 1)
 			throw OpenMS::Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		std::vector<double> ret;
-		double val = weights[0];
+		double val = weights_[0];
 		ret.push_back(val);
-		for(Size i = 1; i < weights.size(); i++)
+		for(Size i = 1; i < weights_.size(); i++)
 		{
-	      val = weights[i] - weights[i-1];
+	      val = weights_[i] - weights_[i-1];
 		  ret.push_back(val);
 		}
 		return ret;
@@ -88,13 +101,15 @@ public:
 	/// Only accepts as many weights as exist Mutater implementations and forces the last element to be 1.
 	/// Weights must be given such that they sum up to 1 e.g.: {0.3,0.4,0.3}.
 	void setWeights(const std::vector<double>& weights) {
-		this->weights[0] = weights[0];
-		for(unsigned int i=1; i<this->weights.size(); i++)
+		this->weights_.clear();
+		this->weights_.resize(weights.size());
+		this->weights_[0] = weights[0];
+		for(unsigned int i=1; i<weights.size(); i++)
 		{
-		  this->weights[i] = weights[i]+this->weights[i-1];
+		  this->weights_[i] = weights[i]+this->weights_[i-1];
 		}
-		if(this->weights[this->weights.size()-1] < 1 || this->weights[this->weights.size()-1] > 1)
-			this->weights[this->weights.size()-1] = 1.0;
+		if(this->weights_[weights.size()-1] < 1 || this->weights_[weights.size()-1] > 1)
+			this->weights_[weights.size()-1] = 1.0;
 	}
   };
 } // namespace

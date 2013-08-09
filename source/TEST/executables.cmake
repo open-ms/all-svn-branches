@@ -438,6 +438,7 @@ set(analysis_executables_list
 	NormShrAbuScorer_test
 	RandomMater_test
 	RandomMutater_test
+	RandomSeeder_test
 	RandomSequenceSeeder_test
 	Scorer_test
 	Seeder_test

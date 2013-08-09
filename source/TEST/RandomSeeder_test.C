@@ -35,16 +35,17 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h>
-#include <OpenMS/CHEMISTRY/AASequence.h>
-#include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSeeder.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <stdlib.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(RandomSequenceSeeder, "$Id$")
+START_TEST(RandomSeeder, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -74,38 +75,71 @@ aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-RandomSequenceSeeder* ptr = 0;
-RandomSequenceSeeder* null_ptr = 0;
-
-START_SECTION(RandomSequenceSeeder())
+RandomSeeder* ptr = 0;
+RandomSeeder* null_ptr = 0;
+START_SECTION((RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
-	ptr = new RandomSequenceSeeder(precursorMass, precursorMassTolerance, aaList);
+	ptr = new RandomSeeder(precursorMass, precursorMassTolerance, aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
-START_SECTION(Chromosome RandomSequenceSeeder::createIndividual())
+START_SECTION((boost::shared_ptr<Chromosome> createIndividual() const))
 {
-	int test[] = {0,3000,6000,10000,14000,15000,16000};
-	String expSeq[] = {"NRPAQF","GAMTTHD","ALCLTPD","VSLCGPR","IFNEPL","IAIMTGGA","KTWWI"};
-	bool expRes[] = {true, true, true, true, true, true, true};
+	int test[] = {0,3000,6000,10000,14000,15000};
+	String expSeq[] = {"ESPGVLM","KGDAWR","AVINAMN","CVYEAF","GWLIGW","GHWSMD"};
+	bool expRes[]  = {true, true, true, true, true, true};
 	double pm = seq.getMonoWeight(Residue::Full);
-	for(int i=0; i<7; i++) {
+	for(int i=0; i<6; i++) {
 		ptr->seed(test[i]);
 		boost::shared_ptr<Chromosome> rand = ptr->createIndividual();
 		double diff = abs(rand->getSequence().getMonoWeight(Residue::Full) - pm);
 		TEST_EQUAL(diff <= 1.5, expRes[i]);
 		TEST_STRING_EQUAL(rand->getSequence().toString(),expSeq[i]);
 	}
-
 }
 END_SECTION
 
-START_SECTION(~RandomSequenceSeeder())
+START_SECTION((const std::vector<double> getWeights() const ))
+{
+	std::vector<const Residue*> aaList;
+    AASequence aas("WLQSEVIHAR");
+    RandomSeeder rm(aas.getMonoWeight(),0.3,aaList);
+    vector<double> res = rm.getWeights();
+    TEST_REAL_SIMILAR(res[0],0.4);
+    TEST_REAL_SIMILAR(res[1],0.3);
+    TEST_REAL_SIMILAR(res[2],0.3);
+}
+END_SECTION
+
+START_SECTION((void setWeights(const std::vector< double > &weights)))
+{
+	std::vector<const Residue*> aaList;
+    AASequence aas("WLQSEVIHAR");
+    RandomSeeder rm(aas.getMonoWeight(),0.3,aaList);
+    vector<double> res = rm.getWeights();
+    res[0] = 0.1;
+    res[1] = 0.5;
+    res[2] = 0.4;
+    RandomSeeder rm1(aas.getMonoWeight(),0.3,aaList);
+    rm1.setWeights(res);
+    res = rm1.getWeights();
+    TEST_REAL_SIMILAR(res[0],0.1);
+    TEST_REAL_SIMILAR(res[1],0.5);
+    TEST_REAL_SIMILAR(res[2],0.4);
+	res = rm.getWeights();
+    TEST_REAL_SIMILAR(res[0],0.4);
+    TEST_REAL_SIMILAR(res[1],0.3);
+    TEST_REAL_SIMILAR(res[2],0.3);
+}
+END_SECTION
+	
+START_SECTION(~RandomSeeder())
 {
 	delete ptr;
 }
 END_SECTION
+
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

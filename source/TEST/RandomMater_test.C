@@ -52,7 +52,7 @@ START_TEST(RandomMater, "$Id$")
 
 RandomMater* ptr = 0;
 RandomMater* null_ptr = 0;
-START_SECTION(RandomMater())
+START_SECTION((RandomMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
 	std::vector<const Residue*> aaList;
 	ptr = new RandomMater(100.0,0.3,aaList);
@@ -63,12 +63,6 @@ END_SECTION
 START_SECTION(~RandomMater())
 {
 	delete ptr;
-}
-END_SECTION
-
-START_SECTION((RandomMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
-{
-  // TODO
 }
 END_SECTION
 
@@ -103,8 +97,8 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
 	TEST_EQUAL(2,res.size());
-	TEST_STRING_EQUAL("GGAGGGLAGL",res[0]->getSequence().toString());
-	TEST_STRING_EQUAL("GGGIAAAAAA",res[1]->getSequence().toString());
+	TEST_STRING_EQUAL("AAAAGGAAGL",res[0]->getSequence().toString());
+	TEST_STRING_EQUAL("GGGGGALLGA",res[1]->getSequence().toString());
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[1]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 
@@ -133,15 +127,16 @@ START_SECTION((void setWeights(const std::vector< double > &weights)))
     AASequence aas("WLQSEVIHAR");
     RandomMater rm(aas.getMonoWeight(),0.3,aaList);
     vector<double> res = rm.getWeights();
-    TEST_REAL_SIMILAR(res[0],0.4);
-    TEST_REAL_SIMILAR(res[1],0.3);
-    TEST_REAL_SIMILAR(res[2],0.3);
     res[0] = 0.1;
     res[1] = 0.5;
     res[2] = 0.4;
     RandomMater rm1(aas.getMonoWeight(),0.3,aaList);
     rm1.setWeights(res);
-    res = rm.getWeights();
+    res = rm1.getWeights();
+    TEST_REAL_SIMILAR(res[0],0.1);
+    TEST_REAL_SIMILAR(res[1],0.5);
+    TEST_REAL_SIMILAR(res[2],0.4);
+	res = rm.getWeights();
     TEST_REAL_SIMILAR(res[0],0.4);
     TEST_REAL_SIMILAR(res[1],0.3);
     TEST_REAL_SIMILAR(res[2],0.3);

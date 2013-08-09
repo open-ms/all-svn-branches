@@ -36,6 +36,9 @@
 
 ///////////////////////////
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <boost/shared_ptr.hpp>
 ///////////////////////////
 
@@ -49,9 +52,11 @@ struct TestMutater :
 			Mutater(precursorMass, precursorMassTolerance, aaList)
 		{}
 
-		void mutate(boost::shared_ptr<Chromosome> chromosome)
+		void mutate(boost::shared_ptr<Chromosome> chromosome) const
 	    {
-
+			AASequence seq(chromosome->getSequence());
+			seq.setResidue(0,ResidueDB::getInstance()->getResidue("A"));
+			chromosome->setSequence(seq);
 	    }
 };
 
@@ -59,20 +64,91 @@ START_TEST(Mutater, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+	GenPool gp(500,1000,1000,1);
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),1,0.1)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),1,0.15)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),1,0.17)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),1,0.2)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),1,0.25)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("RANDO"),1,0.27)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("AAAAA"),1,0.3)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLME"),1,0.35)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("WWGGG"),1,0.37)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),1,0.4)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),1,0.45)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),1,0.47)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTK"),1,0.5)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTM"),1,0.55)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTF"),1,0.57)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTP"),1,0.6)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTU"),1,0.65)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTS"),1,0.67)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTT"),1,0.7)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTW"),1,0.75)));
 
 Mutater* ptr = 0;
 Mutater* null_ptr = 0;
-START_SECTION(Mutater())
-{
-
-}
-END_SECTION
 
 START_SECTION((Mutater(double precursorMass, double precursorMassTolerance, std::vector< Residue & > aaList)))
 {
 	std::vector< const Residue * > aaList;
-	ptr = new TestMutater(0.1, 0.2, aaList);
+	ptr = new TestMutater(1000, 1000, aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr);
+}
+END_SECTION
+	
+START_SECTION((void seed(unsigned int seed)))
+{
+	ptr->seed(10000);
+	TEST_EQUAL(ptr->getSeed(),10000);
+}
+END_SECTION
+
+START_SECTION((double getMutationRate() const ))
+{
+	TEST_REAL_SIMILAR(ptr->getMutationRate(),0.2);
+}
+END_SECTION
+
+START_SECTION((void setMutationRate(double mutationRate=0.2)))
+{
+  ptr->setMutationRate(1.0);
+  TEST_REAL_SIMILAR(ptr->getMutationRate(),1.0);
+}
+END_SECTION
+
+START_SECTION((void mutatePool(GenPool & pool) const))
+{
+	ptr->mutatePool(gp);
+	TEST_EQUAL(gp.getPopulationSize(),20);
+	for(Size i=0; i < gp.getPopulationSize(); i++)
+	{
+		TEST_EQUAL(gp.getIndividual(i)->getSequence().toString()[0],'A');
+	}
+}
+END_SECTION
+
+START_SECTION((void mutateAndAddToPool(GenPool & pool) const))
+{
+	ptr->mutateAndAddToPool(gp);
+	TEST_EQUAL(gp.getPopulationSize(),38);
+}
+END_SECTION
+
+START_SECTION((virtual void mutate(boost::shared_ptr<Chromosome> chromosome) const = 0))
+{
+	boost::shared_ptr<Chromosome> chromosome(new Chromosome(AASequence("ELLMER"),1,1.0));
+	ptr->mutate(chromosome);
+	TEST_STRING_EQUAL(chromosome->getSequence().toString(),"ALLMER");
+}
+END_SECTION
+
+START_SECTION((boost::shared_ptr<Chromosome> mutateCpy(const boost::shared_ptr<Chromosome> chromosome) const))
+{
+	boost::shared_ptr<Chromosome> chromosome(new Chromosome(AASequence("ELLMER"),1,1.0));
+	boost::shared_ptr<Chromosome> res(ptr->mutateCpy(chromosome));
+	TEST_STRING_EQUAL(res->getSequence().toString(),"ALLMER");
+	TEST_STRING_EQUAL(chromosome->getSequence().toString(),"ELLMER");
 }
 END_SECTION
 
@@ -81,43 +157,6 @@ START_SECTION(~Mutater())
 	delete ptr;
 }
 END_SECTION
-
-START_SECTION((Mutater(const Mutater &other)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((Mutater& operator=(const Mutater &rhs)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((double getMutationRate() const ))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((void setMutationRate(double mutationRate=0.2)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((GenPool& mutate(GenPool &genPool)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((Chromosome& mutate(Chromosome &chromosome)=0))
-{
-  // TODO
-}
-END_SECTION
-
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

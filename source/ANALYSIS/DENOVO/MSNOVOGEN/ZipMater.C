@@ -42,7 +42,7 @@ namespace OpenMS
     Mater(precursorMass,precursorMassTolerance, aaList)
   {}
 
-  std::vector<boost::shared_ptr<Chromosome> > ZipMater::mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const
+  std::vector<boost::shared_ptr<Chromosome> > ZipMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
   {
     String uc("");
     String lc("");

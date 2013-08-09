@@ -45,8 +45,7 @@ namespace OpenMS
   {
   }
 
-  std::vector<boost::shared_ptr<Chromosome> > SimpleMater::mate(boost::shared_ptr<Chromosome> lhs,
-		  boost::shared_ptr<Chromosome> rhs) const
+  std::vector<boost::shared_ptr<Chromosome> > SimpleMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
   {
 	Size min = std::min(lhs->getSequence().size(), rhs->getSequence().size());
 	std::vector<boost::shared_ptr<Chromosome> > ret;

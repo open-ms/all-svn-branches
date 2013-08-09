@@ -108,7 +108,7 @@ namespace OpenMS
 
   void GenPool::replenish(const int targetSize)
   {
-	int ts = targetSize;
+	unsigned int ts = targetSize;
 	if(ts > previousPoolSize_)
 		ts = previousPoolSize_;
     int toAdd = ts - getPopulationSize();

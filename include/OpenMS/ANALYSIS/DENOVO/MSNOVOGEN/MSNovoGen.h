@@ -53,20 +53,18 @@ private:
 	  GenPool genPool;
 	  std::vector<Residue> aminoAcids;
 */
-public:
-    /// Default c'tor
-    MSNovoGen();
-
+	
     /// Copy c'tor
     MSNovoGen(const MSNovoGen& other);
 
     /// Assignment operator
     MSNovoGen & operator=(const MSNovoGen& rhs);
 
+public:
+    /// Default c'tor
+    MSNovoGen();
     bool isTerminated();
     void run();
-
-
   };
 } // namespace
 

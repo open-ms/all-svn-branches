@@ -70,6 +70,7 @@ private:
 	Mater & operator=(const Mater& rhs);
 
 	/// Randomly selects a mating partner, not using exclude, with an edit distance of at least 2.
+	/// if no mating partner can be found returns a null pointer (can be tested by: if(!getPartner(..))).
 	boost::shared_ptr<Chromosome> getPartner(GenPool & genPool, boost::shared_ptr<Chromosome> exclude) const;
 
 public:
@@ -81,7 +82,7 @@ public:
 
     /// virtual mate method needs to be implemented in all deriving classes.
     /// This differentiates between differnet possibilities to perform crossover.
-    virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const = 0;
+    virtual std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const = 0;
 
     /// This method performs mating for all individuals in a GenPool.
     /// It calls the deriving classes mate method and is implemented in this base class.

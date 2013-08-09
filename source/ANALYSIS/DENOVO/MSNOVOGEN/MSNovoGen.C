@@ -45,13 +45,6 @@ namespace OpenMS
     //maxGenNum(500), maxPopulation(500), genPool(500,2.0,0.5)
   {}
 
-  MSNovoGen::MSNovoGen(const MSNovoGen& other) //:
-    	    //maxGenNum(500), maxPopulation(500), genPool(500,2.0,0.5)
-  {}
-
-  MSNovoGen & MSNovoGen::operator=(const MSNovoGen& rhs)
-  {return *this;}
-
 bool MSNovoGen::isTerminated()
 {
   return(true);

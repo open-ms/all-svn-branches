@@ -69,10 +69,10 @@ START_TEST(Mater, "$Id$")
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTN"),1,0.17)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTD"),1,0.2)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTC"),1,0.25)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTE"),1,0.27)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTQ"),1,0.3)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTG"),1,0.35)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTH"),1,0.37)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("RANDO"),1,0.27)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("AAAAA"),1,0.3)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLME"),1,0.35)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("WWGGG"),1,0.37)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTO"),1,0.4)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTI"),1,0.45)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTL"),1,0.47)));
@@ -129,14 +129,13 @@ START_SECTION((std::vector<boost::shared_ptr<Chromosome> > tournament(GenPool &g
 	ptr->seed(10000);
 	std::vector<boost::shared_ptr<Chromosome> > res = ptr->tournament(gp);
 	TEST_EQUAL(res.size(),40);
-	for(int i=0; i<res.size(); i++)
-		cerr << res[i]->getSequence().toString() << endl;
 }
 END_SECTION
 
 START_SECTION((void tournamentAndAddToPool(GenPool &genPool) const ))
 {
-  ptr->tournamentAndAddToPool(gp);
+	ptr->tournamentAndAddToPool(gp);
+	TEST_EQUAL(gp.getPopulationSize(),56);
 }
 END_SECTION
 

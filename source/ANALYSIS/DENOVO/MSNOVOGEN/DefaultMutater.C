@@ -40,7 +40,7 @@ namespace OpenMS
 	DefaultMutater::DefaultMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
 		Mutater(precursorMass, precursorMassTolerance, aaList), dm_(precursorMass, precursorMassTolerance, aaList)
 	{
-		dm_.seed(time(0));
+		dm_.seed((unsigned int)time(0));
 	}
 
 	DefaultMutater::~DefaultMutater()

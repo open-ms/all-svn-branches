@@ -41,15 +41,17 @@ namespace OpenMS
 {
   class OPENMS_DLLAPI MSNOVOGEN
   {
-public:
-    /// Default c'tor
-    MSNOVOGEN();
-
+private:
     /// Copy c'tor
     MSNOVOGEN(const MSNOVOGEN& other);
 
     /// Assignment operator
     MSNOVOGEN & operator=(const MSNOVOGEN& rhs);
+
+public:
+    /// Default c'tor
+    MSNOVOGEN();
+
   };
 } // namespace
 

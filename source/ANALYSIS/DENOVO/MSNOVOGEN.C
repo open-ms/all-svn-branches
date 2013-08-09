@@ -40,10 +40,4 @@ namespace OpenMS
   MSNOVOGEN::MSNOVOGEN()
   {}
 
-  MSNOVOGEN::MSNOVOGEN(const MSNOVOGEN& other)
-  {}
-
-  MSNOVOGEN & MSNOVOGEN::operator=(const MSNOVOGEN& rhs)
-  {}
-
 } // namespace

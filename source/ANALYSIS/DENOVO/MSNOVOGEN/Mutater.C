@@ -49,7 +49,7 @@ namespace  OpenMS
     //this->aaList = aaList;
 
     // make sure random is initialized
-	  seed(time(0));
+	  seed((unsigned int)time(0));
   }
 
   Mutater::~Mutater()
@@ -69,17 +69,20 @@ namespace  OpenMS
 
 	void Mutater::mutateAndAddToPool(GenPool& pool) const
 	{
+		std::vector<boost::shared_ptr<Chromosome> > add;
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
 		{
 		  double rv = (rand() % 101)/100.0;
 		  if(rv > getMutationRate())
 			continue;
 		  boost::shared_ptr<Chromosome> ni(new Chromosome((*iter)->getSequence(),(*iter)->getCharge()));
-		  pool.addIndividual(ni);
+		  this->mutate(ni);
+		  add.push_back(ni);
 		}
+		pool.addIndividuals(add);
 	}
 
-	boost::shared_ptr<Chromosome> Mutater::mutateCpy(boost::shared_ptr<Chromosome> chromosome) const
+	boost::shared_ptr<Chromosome> Mutater::mutateCpy(const boost::shared_ptr<Chromosome> chromosome) const
 	{
 		boost::shared_ptr<Chromosome> cpy(new Chromosome(AASequence(chromosome->getSequence()),chromosome->getScore()));
 		this->mutate(cpy);

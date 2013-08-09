@@ -41,11 +41,10 @@ namespace OpenMS
 	DefaultMater::DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
 	Mater(precursorMass, precursorMassTolerance, aaList), dm_(precursorMass, precursorMassTolerance, aaList)
 	{
-		dm_.seed(time(0));
+		dm_.seed((unsigned int)time(0));
 	}
 
-	std::vector<boost::shared_ptr<Chromosome> > DefaultMater::mate(boost::shared_ptr<Chromosome> lhs,
-			boost::shared_ptr<Chromosome> rhs) const
+	std::vector<boost::shared_ptr<Chromosome> > DefaultMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
 	{
 		return dm_.mate(lhs, rhs);
 	}

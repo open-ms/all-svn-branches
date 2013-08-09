@@ -43,6 +43,11 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The Mutater base class provides a framework for
+	* derived classes to implement the mutation differently.
+	* Mutater may not be instantiated and mutate must be implemented in derived classes.
+	*/
   class GenPool;
 
   class OPENMS_DLLAPI Mutater
@@ -66,58 +71,61 @@ private:
     Mutater & operator=(const Mutater & rhs);
 
 public:
-    /// Default c'tor
+    /// Default c'tor providing all necessary information.
     Mutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+	/// d'tor
     virtual ~Mutater();
 
+	/// Implemented in the base class to iterate over the GenPool and call
+	/// mutate on each individual.
+	/// Mutated members will be changed in the GenPool.
     void mutatePool(GenPool & pool) const;
 
+	/// Implemented in the base class.
+	/// Different from mutatePool all individuals remain in the pool and 
+	/// their mutated versions are added to the pool (increasing the pool size).
     void mutateAndAddToPool(GenPool & pool) const;
 
-    boost::shared_ptr<Chromosome> mutateCpy(boost::shared_ptr<Chromosome> chromosome) const;
+	/// Implemented in the base class.
+	/// Makes a copy of the chromosome, calls mutate in the derived class
+	/// returns the mutated copy.
+    boost::shared_ptr<Chromosome> mutateCpy(const boost::shared_ptr<Chromosome> chromosome) const;
 
     /// The Chromosome that is submitted to this function will be mutated and changed.
     virtual void mutate(boost::shared_ptr<Chromosome> chromosome) const = 0;
 
+	/// Allows the retrieval of the currently set muatation rate (def: 0.2).
 	double getMutationRate() const {
 		return mutationRate_;
 	}
 
-	/// Adjusts the mutation rate (def: 0.2)
+	/// Allows the adjustment of the mutation rate (def: 0.2)
 	void setMutationRate(double mutationRate = 0.2)
 	{
-		OPENMS_PRECONDITION(mutationRate_ <=0 || mutationRate_ > 1, "Value must be between 0 (exclusive) and 1 (inclusive)")
+		OPENMS_PRECONDITION(mutationRate_ >= 0 || mutationRate_ <= 1, "Value must be between 0 (exclusive) and 1 (inclusive)")
 		this->mutationRate_ = mutationRate;
 	}
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(unsigned int seed);
 
+	/// Allows to retrieve the amino acid list (needed in derived classes).
 	const std::vector<const Residue*>& getAaList() const {
 		return aaList_;
 	}
 
-	void setAaList(const std::vector<const Residue*>& aaList) {
-		aaList_ = aaList;
-	}
-
+	/// Allows to retrieve the set precursor mass (needed in derived classes).
 	double getPrecursorMass() const {
 		return precursorMass_;
 	}
 
-	void setPrecursorMass(double precursorMass) {
-		precursorMass_ = precursorMass;
-	}
-
+	/// Allows to retrieve the set precursor mass tolerance (needed in derived classes).
 	double getPrecursorMassTolerance() const {
 		return precursorMassTolerance_;
 	}
 
-	void setPrecursorMassTolerance(double precursorMassTolerance) {
-		precursorMassTolerance_ = precursorMassTolerance;
-	}
-
+	/// Allows to retrieve the current value for random seed.
 	unsigned int getSeed() {
 		return randomSeed_;
 	}

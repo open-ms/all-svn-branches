@@ -80,6 +80,8 @@ namespace OpenMS
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
 		{
 		  boost::shared_ptr<Chromosome> p1 = this->getPartner(pool,*iter);
+		  if(!p1)
+			  continue;
 		  boost::shared_ptr<Chromosome> p2 = *iter;
 		  std::vector<boost::shared_ptr<Chromosome> > children = this->mate(p1, p2);
 		  for(std::vector<boost::shared_ptr<Chromosome> >::iterator c = children.begin(); c != children.end(); ++c)

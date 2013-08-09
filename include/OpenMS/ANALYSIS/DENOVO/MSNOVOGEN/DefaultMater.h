@@ -65,7 +65,7 @@ public:
     DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
     /// The implementation of mate from Mater.
-    std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
+    std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
 
     /// Overriding seed since it must be forwarded to the contained mating implementation (dm_).
     void seed(const unsigned int seed);

@@ -51,50 +51,43 @@ START_TEST(Chromosome, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-Chromosome* ptr = new Chromosome(AASequence("TESTER"),1,0.5);;
+Chromosome* ptr = 0;
 Chromosome* null_ptr = 0;
 Chromosome* ptt = 0;
 START_SECTION(Chromosome())
 {
+	ptr = new Chromosome(AASequence("TESTER"),1,0.5);
 	ptt = new Chromosome();
 	TEST_NOT_EQUAL(ptt, null_ptr)
 }
 END_SECTION
-
-START_SECTION((Chromosome(const AASequence &seq, const double val)))
+	
+START_SECTION((int getCharge() const ))
 {
-  AASequence aas("TESTER");
-  double val = 1.0;
-  Chromosome chr(aas,val);
-  TEST_EQUAL(chr.getSequence().toString(),"TESTER");
+  TEST_EQUAL(ptr->getCharge(),1);
 }
 END_SECTION
 
-START_SECTION((Chromosome(const Chromosome &other)))
+START_SECTION((void setCharge(int charge)))
 {
-  Chromosome chrT(AASequence("TESTER"),1,0.5);
-  Chromosome chrA(chrT);
-  TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
-  TEST_EQUAL(chrA.getCharge(),1);
-  TEST_REAL_SIMILAR(chrA.getScore(),0.5);
-  TEST_EQUAL(chrA.isScored(),true);
+  ptr->setCharge(2);
+  TEST_EQUAL(ptr->getCharge(),2);
 }
 END_SECTION
 
-START_SECTION((Chromosome& operator=(const Chromosome &rhs)))
+START_SECTION((void setScored(bool isScored)))
 {
-  Chromosome chrT(AASequence("TESTER"),1,0.5);
-  Chromosome chrA = chrT;
-  TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
-  TEST_EQUAL(chrA.getCharge(),1);
-  TEST_REAL_SIMILAR(chrA.getScore(),0.5);
-  TEST_EQUAL(chrA.isScored(),true);
+  TEST_EQUAL(ptr->isScored(),true);
+  TEST_REAL_SIMILAR(ptr->getScore(),0.5);
+  ptr->setScored(false);
+  TEST_EQUAL(ptr->isScored(),false);
+  TEST_REAL_SIMILAR(ptr->getScore(),-1.0);
 }
 END_SECTION
 
 START_SECTION((double getScore() const ))
 {
-  TEST_REAL_SIMILAR(ptr->getScore(),0.5);
+  TEST_REAL_SIMILAR(ptr->getScore(),-1.0);
 }
 END_SECTION
 
@@ -117,18 +110,25 @@ START_SECTION((void setSequence(const AASequence &sequence)))
   TEST_STRING_EQUAL(ptr->getSequence().toString(),"ALLMER");
 }
 END_SECTION
+	
+START_SECTION((bool isScored() const ))
+{
+	TEST_EQUAL(ptr->isScored(),true);
+}
+END_SECTION
 
+START_SECTION(~Chromosome())
+{
+	delete ptr;
+	delete ptt;
+}
+END_SECTION
 START_SECTION((static bool sortScoreDesc(boost::shared_ptr<Chromosome> lhs, cboost::shared_ptr<Chromosome> rhs)))
 {
   boost::shared_ptr<Chromosome> chrT(new Chromosome(AASequence("TESTER"),1,0.5));
   boost::shared_ptr<Chromosome> chrA(new Chromosome(AASequence("ALLMER"),1,1.0));
   TEST_EQUAL(Chromosome::sortScoreDesc(chrT, chrA),false);
 }
-START_SECTION(~Chromosome())
-{
-	delete ptr;
-}
-END_SECTION
 END_SECTION
 
 START_SECTION((static bool sortScoreAsc(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs)))
@@ -175,39 +175,34 @@ START_SECTION((Chromosome(AASequence seq, const int charge, const double val)))
 }
 END_SECTION
 
-START_SECTION((int getCharge() const ))
+START_SECTION((Chromosome(const AASequence &seq, const double val)))
 {
-  TEST_EQUAL(ptr->getCharge(),1);
+  AASequence aas("TESTER");
+  double val = 1.0;
+  Chromosome chr(aas,val);
+  TEST_EQUAL(chr.getSequence().toString(),"TESTER");
 }
 END_SECTION
 
-START_SECTION((void setCharge(int charge)))
+START_SECTION((Chromosome(const Chromosome &other)))
 {
-  ptr->setCharge(2);
-  TEST_EQUAL(ptr->getCharge(),2);
+  Chromosome chrT(AASequence("TESTER"),1,0.5);
+  Chromosome chrA(chrT);
+  TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
+  TEST_EQUAL(chrA.getCharge(),1);
+  TEST_REAL_SIMILAR(chrA.getScore(),0.5);
+  TEST_EQUAL(chrA.isScored(),true);
 }
 END_SECTION
 
-START_SECTION((void setScored(bool isScored)))
+START_SECTION((Chromosome& operator=(const Chromosome &rhs)))
 {
-  TEST_EQUAL(ptr->isScored(),true);
-  TEST_REAL_SIMILAR(ptr->getScore(),0.5);
-  ptr->setScored(false);
-  TEST_EQUAL(ptr->isScored(),false);
-  TEST_REAL_SIMILAR(ptr->getScore(),-1);
-}
-END_SECTION
-
-START_SECTION((bool isScored() const ))
-{
-	TEST_EQUAL(ptr->isScored(),false);
-}
-END_SECTION
-
-START_SECTION(~Chromosome())
-{
-	delete ptr;
-	delete ptt;
+  Chromosome chrT(AASequence("TESTER"),1,0.5);
+  Chromosome chrA = chrT;
+  TEST_EQUAL(chrA.getSequence().toString(),"TESTER");
+  TEST_EQUAL(chrA.getCharge(),1);
+  TEST_REAL_SIMILAR(chrA.getScore(),0.5);
+  TEST_EQUAL(chrA.isScored(),true);
 }
 END_SECTION
 /////////////////////////////////////////////////////////////

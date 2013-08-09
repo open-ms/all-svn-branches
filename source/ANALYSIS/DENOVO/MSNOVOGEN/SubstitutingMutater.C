@@ -57,7 +57,7 @@ namespace OpenMS
     {
     	if(i == rp)
     	  continue;
-    	for(int p = 0; p < getAaList().size(); p++)
+    	for(Size p = 0; p < getAaList().size(); p++)
     	{
     	  const Residue& cu = as.getResidue(i);
 		  const Residue* pr = getAaList()[p];

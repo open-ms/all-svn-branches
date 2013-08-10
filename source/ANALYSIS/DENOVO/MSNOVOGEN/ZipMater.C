@@ -34,13 +34,16 @@
 
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/ZipMater.h>
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
+#include <time.h>
 
 namespace OpenMS
 {
 
   ZipMater::ZipMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
     Mater(precursorMass,precursorMassTolerance, aaList)
-  {}
+  {
+	 seed(time(0));
+  }
 
   std::vector<boost::shared_ptr<Chromosome> > ZipMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
   {

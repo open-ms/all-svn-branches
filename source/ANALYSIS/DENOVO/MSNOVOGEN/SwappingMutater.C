@@ -41,7 +41,8 @@ namespace OpenMS
   SwappingMutater::SwappingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
     Mutater(precursorMass,precursorMassTolerance,aaList)
   {
-  };
+	  seed((unsigned int)time(0));
+  }
 
   void SwappingMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {

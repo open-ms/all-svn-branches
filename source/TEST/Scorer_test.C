@@ -55,7 +55,7 @@ struct TestScorer :
 
 	    void score(const MSSpectrum<> * msms, boost::shared_ptr<Chromosome> & chromosome) const
 	    {
-	    	chromosome->setScore(-1);
+	    	chromosome->setScore(1);
 	    }
 };
 struct NullScorer :
@@ -80,31 +80,13 @@ START_TEST(Scorer, "$Id$")
 
 Scorer* ptr = 0;
 Scorer* null_ptr = 0;
-START_SECTION(Scorer())
-{
-	ptr = new TestScorer(0.5);
-	TEST_NOT_EQUAL(ptr, null_ptr)
-}
-END_SECTION
-
-START_SECTION(~Scorer())
-{
-	delete ptr;
-	ptr = new TestScorer(0.5);
-}
-END_SECTION
+Scorer* zer = 0;
 
 START_SECTION((Scorer(const double fragmentMassTolerance=0.5)))
 {
 	ptr = new TestScorer(0.5);
+	zer = new NullScorer(0.5);
 	TEST_NOT_EQUAL(ptr, null_ptr)
-}
-END_SECTION
-
-START_SECTION((virtual ~Scorer()))
-{
-	delete ptr;
-	ptr = new TestScorer(0.5);
 }
 END_SECTION
 
@@ -112,7 +94,7 @@ START_SECTION((void scorePool(const MSSpectrum<> *msms, GenPool &pool) const ))
 {
 	double pm = 1500.5;
 	double pmt = 2;
-	GenPool gp(15,pmt);
+	GenPool gp(15,pmt,pm,1);
 	MSSpectrum<> msms;
 	Precursor prec;
 	prec.setMZ(pm);
@@ -121,36 +103,33 @@ START_SECTION((void scorePool(const MSSpectrum<> *msms, GenPool &pool) const ))
 	vector<Precursor> precursors;
 	precursors.push_back(prec);
 	msms.setPrecursors(precursors);
-	NullScorer s0(0.5);
-	gp.setScorer(&s0);
-	gp.setMSMSSpectrum(&msms);
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("LNSFCGHWKPNAAG"),0.3)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("YIQGQTSSIGGGSMD"),0.4)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("WSVQMNKFTDMI"),0.2)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("QQPEHRGEIIPVV"),0.5)));
-	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("CNGTQQFETMIND"),0.1)));
-	gp.sort();
-	TEST_REAL_SIMILAR(gp.getIndividual(0)->getScore(),0);
-	TEST_REAL_SIMILAR(gp.getIndividual(1)->getScore(),0);
-	TEST_REAL_SIMILAR(gp.getIndividual(2)->getScore(),0);
-	TEST_REAL_SIMILAR(gp.getIndividual(3)->getScore(),0);
-	TEST_REAL_SIMILAR(gp.getIndividual(4)->getScore(),0);
-	ptr->scorePool(&msms,gp);
-	TEST_REAL_SIMILAR(gp.getIndividual(0)->getScore(),-1);
-	TEST_REAL_SIMILAR(gp.getIndividual(1)->getScore(),-1);
-	TEST_REAL_SIMILAR(gp.getIndividual(2)->getScore(),-1);
-	TEST_REAL_SIMILAR(gp.getIndividual(3)->getScore(),-1);
-	TEST_REAL_SIMILAR(gp.getIndividual(4)->getScore(),-1);
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("LNSFCGHWKPNAAG"),1)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("YIQGQTSSIGGGSMD"),1)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("WSVQMNKFTDMI"),1)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("QQPEHRGEIIPVV"),1)));
+	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("CNGTQQFETMIND"),1)));
+	ptr->scorePool(&msms, gp);
+	TEST_REAL_SIMILAR(gp.getIndividual(0)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(1)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(2)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(3)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(4)->getScore(),1);
+	zer->scorePool(&msms,gp);
+	TEST_REAL_SIMILAR(gp.getIndividual(0)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(1)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(2)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(3)->getScore(),1);
+	TEST_REAL_SIMILAR(gp.getIndividual(4)->getScore(),1);
 
 }
 END_SECTION
 
 START_SECTION((virtual void score(const MSSpectrum<> *msms, boost::shared_ptr< Chromosome > &chromosome) const =0))
 {
-	boost::shared_ptr< Chromosome > chr(new Chromosome(AASequence("TESTER"),0,1));
+	boost::shared_ptr< Chromosome > chr(new Chromosome(AASequence("TESTER"),1));
 	MSSpectrum<> ts;
 	ptr->score(&ts,chr);
-	TEST_REAL_SIMILAR(chr->getScore(),-1);
+	TEST_REAL_SIMILAR(chr->getScore(),1);
 }
 END_SECTION
 
@@ -159,15 +138,13 @@ START_SECTION((double getFragmentMassTolerance() const ))
   TEST_REAL_SIMILAR(ptr->getFragmentMassTolerance(),0.5);
 }
 END_SECTION
-
-START_SECTION((void setFragmentMassTolerance(double fragmentMassTolerance)))
+	
+START_SECTION(~Scorer())
 {
-	TEST_REAL_SIMILAR(ptr->getFragmentMassTolerance(),0.5);
-	ptr->setFragmentMassTolerance(0.4);
-	TEST_REAL_SIMILAR(ptr->getFragmentMassTolerance(),0.4);
+	delete ptr;
+
 }
 END_SECTION
-
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

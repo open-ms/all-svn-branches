@@ -51,7 +51,7 @@ struct TestMater :
 			Mater(precursorMass, precursorMassTolerance, aaList)
 		{}
 
-		std::vector<boost::shared_ptr<Chromosome> > mate(boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
+		std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
 	    {
 	    	std::vector<boost::shared_ptr<Chromosome> > ret;
 	    	ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(AASequence(lhs->getSequence().toString() + rhs->getSequence().toString()),1,0.1)));

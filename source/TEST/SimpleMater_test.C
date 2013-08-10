@@ -77,7 +77,6 @@ aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
 START_SECTION(SimpleMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList))
 {
-
 	std::vector<const Residue*> aaList;
 	ptr = new SimpleMater(100.0,0.3,aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
@@ -89,13 +88,14 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	AASequence m("AAAAAAAAAA");
 	AASequence f("GGGGGLLLLL");
 	SimpleMater sm(m.getMonoWeight(Residue::Full),1.5,aaList);
-	sm.seed(50);
+	sm.seed(5000);
 	vector<boost::shared_ptr<Chromosome> > res = sm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
-	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
-	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
-	TEST_STRING_EQUAL("GGVAAAAAAA",res[0]->getSequence().toString());
+ 	TEST_STRING_EQUAL(m.toString(),"AAAAAAAAAA");
+	TEST_STRING_EQUAL(f.toString(),"GGGGGLLLLL");
+	TEST_EQUAL(2,res.size()); //a different seed may lead to 2 valid children of m and f.
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
-	TEST_EQUAL(1,res.size()); //a different seed may lead to 2 valid children of m and f.
+	TEST_STRING_EQUAL(res[0]->getSequence().toString(),"GGAAGGGGLL");
+	TEST_STRING_EQUAL(res[1]->getSequence().toString(),"GGGGGLVAAA");
 	AASequence bt("AAAAAA");
 	AASequence bc("WWWWW");
 	res = sm.mate(boost::shared_ptr<Chromosome>(new Chromosome(bt,0)), boost::shared_ptr<Chromosome>(new Chromosome(bc,0)));

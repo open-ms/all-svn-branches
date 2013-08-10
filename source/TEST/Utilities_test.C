@@ -55,6 +55,29 @@ START_TEST(Utilities, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
+    AASequence seq("ALLMER");
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
 Utilities* ptr = 0;
 Utilities* null_ptr = 0;
 START_SECTION(Utilities())
@@ -72,33 +95,11 @@ END_SECTION
 
 START_SECTION((static const AASequence getRandomSequence(const int seed, const int len, const double weight, const double tolerance, const std::vector< const Residue * > aaList)))
 {
-    AASequence seq("ALLMER");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-	int test[]{0,3000,10000,12000,14000,15500};
-	String 	expSeq[]{"GGQGIWD","KNHGYGG","WGGAWGV","","GCAVVRK","RGMEGAI"};
-	int		expLen[]{7,7,7,0,7,7};
-	bool	expRes[]{true,true,true,false,true,true};
+	int test[] = {0,3000,10000,12000,14000,15500};
+	String 	expSeq[] = {"GGQGIWD","KNHGYGG","WGGAWGV","","GCAVVRK","RGMEGAI"};
+	int		expLen[] = {7,7,7,0,7,7};
+	bool	expRes[] = {true,true,true,false,true,true};
 	for(int i=0; i<6; i++) {
 		AASequence rand = Utilities::getRandomSequence(test[i],7,seq.getMonoWeight(Residue::Full),1.5,aaList);
 		TEST_STRING_EQUAL(rand.toString(), expSeq[i]);
@@ -111,31 +112,9 @@ END_SECTION
 
 START_SECTION((static const String getRandomAA(const int seed, const std::vector< const Residue * > aaList)))
 {
-    AASequence seq("ALLMER");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-	int test[]{0,6000,10000,14000,15000};
-	String res[]  {"D","A","V","C","D"};
+	int test[] = {0,6000,10000,14000,15000};
+	String res[] = {"D","A","V","C","D"};
 	for(int i=0; i<5; i++)
 	{
 		TEST_EQUAL(Utilities::getRandomAA(test[i],aaList),res[i]);
@@ -145,33 +124,11 @@ END_SECTION
 
 START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence, const double weight, const double tolerance, const std::vector< const Residue * > aaList)))
 {
-    AASequence seq("ALLMER");
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-
-	int test[]{0,6000,10000,14000,15000};
-	String 	inSeq[]{"DPPAFGC","GEPIVFG","VGASNFK","VQQAASR","DDNIALR"};
-	String 	exSeq[]{"DQPAFGC","GEPQVFG","VGASNRK","VQMAAGR","DDNIALA"};
-	bool 	expRes[] {false,true,true,true,true,true};
+    
+	int test[] = {0,6000,10000,14000,15000};
+	String 	inSeq[] = {"DPPAFGC","GEPIVFG","VGASNFK","VQQAASR","DDNIALR"};
+	String 	exSeq[] = {"DQPAFGC","GEPQVFG","VGASNRK","VQMAAGR","DDNIALA"};
+	bool 	expRes[] = {false,true,true,true,true,true};
 	for(int i=0; i<5; i++) {
 		AASequence rand(inSeq[i]);
 		Utilities::adjustToFitMass(test[i],rand,seq.getMonoWeight(Residue::Full),1.5,aaList);

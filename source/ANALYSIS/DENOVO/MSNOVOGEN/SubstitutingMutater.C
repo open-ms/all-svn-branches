@@ -34,21 +34,24 @@
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
 #include <stdlib.h>
+#include <time.h>
 
 namespace OpenMS
 {
 
   SubstitutingMutater::SubstitutingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
     : Mutater(precursorMass, precursorMassTolerance, aaList)
-  {}
+  {
+	seed((unsigned int)time(0));
+  }
 
   void SubstitutingMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
 	AASequence as = chromosome->getSequence();
 	double seqMass = as.getMonoWeight();
     Size rp = rand() % as.size();
-    int sa = rand() % getAaList().size();
-    const Residue * nr = getAaList()[sa];
+    int sa = rand() % getAAList().size();
+    const Residue * nr = getAAList()[sa];
     const Residue & replaced = as.setResidue(rp, nr);
 
     std::vector<std::pair<Size,const Residue*> > possRep;
@@ -57,10 +60,12 @@ namespace OpenMS
     {
     	if(i == rp)
     	  continue;
-    	for(Size p = 0; p < getAaList().size(); p++)
+    	for(Size p = 0; p < getAAList().size(); p++)
     	{
+		  if(p == rp)
+		    continue;
     	  const Residue& cu = as.getResidue(i);
-		  const Residue* pr = getAaList()[p];
+		  const Residue* pr = getAAList()[p];
 		  if(pr->getOneLetterCode() == replaced.getOneLetterCode())
 			  continue;
     	  double pdiff = cu.getMonoWeight(Residue::Full) - pr->getMonoWeight(Residue::Full);

@@ -82,11 +82,6 @@ START_SECTION(SimpleDecreasingKiller())
 }
 END_SECTION
 
-START_SECTION((~SimpleDecreasingKiller()))
-{
-  // TODO
-}
-END_SECTION
 
 START_SECTION((virtual void kill(GenPool &genPool)))
 {

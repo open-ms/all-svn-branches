@@ -82,6 +82,7 @@ public:
 
     /// virtual mate method needs to be implemented in all deriving classes.
     /// This differentiates between differnet possibilities to perform crossover.
+	/// May return an empty vector if mating was not possible or if no suitable child could be created.
     virtual std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const = 0;
 
     /// This method performs mating for all individuals in a GenPool.

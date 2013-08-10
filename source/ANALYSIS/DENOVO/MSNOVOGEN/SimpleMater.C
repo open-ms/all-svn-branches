@@ -43,6 +43,7 @@ namespace OpenMS
   SimpleMater::SimpleMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
     Mater(precursorMass, precursorMassTolerance, aaList)
   {
+	  seed((unsigned int)time(0));
   }
 
   std::vector<boost::shared_ptr<Chromosome> > SimpleMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const

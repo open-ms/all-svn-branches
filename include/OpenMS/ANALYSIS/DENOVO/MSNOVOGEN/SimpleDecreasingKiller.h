@@ -51,6 +51,12 @@ namespace OpenMS
 private:
 	  /// By how many absolute members a population (genPool) should shrink per generation (default: 5).
 	  unsigned int decreasePerGeneration;
+	  
+private:
+	/// To prevent copy construction; Copy c'tor
+	SimpleDecreasingKiller(const SimpleDecreasingKiller& other);
+	/// To prevent assignment; Assignment operator
+	SimpleDecreasingKiller & operator=(const SimpleDecreasingKiller& rhs);
 
 public:
     /// Default c'tor
@@ -68,7 +74,7 @@ public:
 		return decreasePerGeneration;
 	}
 
-	/// Allows setting of how many individuals should be killed per generation.
+	/// Allows setting of how many individuals should be killed per generation (default: 5).
 	void setDecreasePerGeneration(unsigned int decreasePerGeneration)
 	{
 		this->decreasePerGeneration = decreasePerGeneration;

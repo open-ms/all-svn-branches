@@ -42,16 +42,30 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The SwappingMutater selects an amino acid
+	* from the first part of the sequence and another
+	* one from the second part of the sequence.
+	* It then swaps the two amino acids.
+	*/
   class OPENMS_DLLAPI SwappingMutater : public Mutater
   {
+	  
+private:
+    /// To forbid copy construction
+    SwappingMutater(const SwappingMutater & rhs);
+    /// To forbid assignment
+    SwappingMutater & operator=(const SwappingMutater & rhs);
+
 public:
-
+	/// constructor providing all neccessary information.
 	SwappingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-
-	void mutate(boost::shared_ptr<Chromosome> chromosome) const;
-
+	
+	///d'tor
 	virtual ~SwappingMutater();
 
+	/// Implementation of virtual method Mutater::mutate.
+	void mutate(boost::shared_ptr<Chromosome> chromosome) const;
   };
 } // namespace
 

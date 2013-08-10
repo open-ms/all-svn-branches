@@ -43,10 +43,15 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The Seeder base class provides a framework for
+	* derived classes to implement the seeding differently.
+	* Seeder may not be instantiated and createIndividual must be implemented.
+	*/
   class OPENMS_DLLAPI Seeder
   {
 private:
-	/// Seed to initialize rand
+	/// Seed to initialize random processes.
 	unsigned int randomSeed_;
 	/// A list of amino acids that can form a sequence is needed for some mutation processes.
 	std::vector<const Residue*> aaList_;
@@ -62,44 +67,37 @@ private:
 	Seeder & operator=(const Seeder& rhs);
 
 public:
-    /// Default c'tor
+    /// Default c'tor accepting all necessary input
     Seeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
 
+	/// d'tor
     virtual ~Seeder();
 
-    /// Creates a new individual.
+    /// Creates a new individual and must be implemented in derived classes.
     virtual boost::shared_ptr<Chromosome> createIndividual() const = 0;
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
 
+	/// Allows the retrieval of the currently set seed (needed in some derived classes).
 	unsigned int getSeed() const
 	{
 		return randomSeed_;
 	}
-
-	const std::vector<const Residue*>& getAaList() const {
+	
+	/// Allows to retrieve the amino acid list (needed in derived classes).
+	const std::vector<const Residue*>& getAAList() const {
 		return aaList_;
 	}
-
-	void setAaList(const std::vector<const Residue*>& aaList) {
-		aaList_ = aaList;
-	}
-
+	
+	/// Allows to retrieve the set precursor mass (needed in derived classes).
 	double getPrecursorMass() const {
 		return precursorMass_;
 	}
-
-	void setPrecursorMass(double precursorMass) {
-		precursorMass_ = precursorMass;
-	}
-
+	
+	/// Allows to retrieve the set precursor mass tolerance (needed in derived classes)
 	double getPrecursorMassTolerance() const {
 		return precursorMassTolerance_;
-	}
-
-	void setPrecursorMassTolerance(double precursorMassTolerance) {
-		precursorMassTolerance_ = precursorMassTolerance;
 	}
 };
 } // namespace

@@ -44,13 +44,18 @@
 
 namespace OpenMS
 {
+  /**
+  * @brief The Utilities are a collection of methods which are 
+  * used in several classes of the MSNovoGen algorithm.
+  * They could in the future become part of other classes within OpenMS.
+  */
   class OPENMS_DLLAPI Utilities
   {
 private:
-	/// Copy c'tor
+	/// Copy c'tor shouldn't be used.
 	Utilities(const Utilities& other);
 
-	/// Assignment operator
+	/// Assignment operator shouldn't be used.
 	Utilities & operator=(const Utilities& rhs);
 
   public:
@@ -68,8 +73,11 @@ private:
     /// The passed in sequence is directly modified.
     static bool adjustToFitMass(const int seed, AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
 
+	/// Uses the Seqan Needleman-Wunsch implementation to calculated the edit distance
+	/// of the two amino acid sequences.
     static unsigned int editDistance(const AASequence & lhs, const AASequence & rhs);
 
+	/// Iterates over the provided spectrum and returns the sum of all intensities.
     static double getSummedIntensity(const MSSpectrum<> * ms);
 
   };

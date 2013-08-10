@@ -49,9 +49,7 @@ START_TEST(SwappingMutater, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
-
-START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
-{
+double precursorMassTolerance = 0.3;
 	std::vector<const Residue*> aaList;
 	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
@@ -76,15 +74,31 @@ START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 	AASequence aas("WLQSEVIHAR");
+SwappingMutater* ptr = 0;
+SwappingMutater* null_ptr = 0;
+
+START_SECTION(SwappingMutater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList))
+{
+	ptr = new SwappingMutater(aas.getMonoWeight(),precursorMassTolerance,aaList);
+	TEST_NOT_EQUAL(ptr, null_ptr)
+}
+END_SECTION
+
+START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
+{
 	boost::shared_ptr<Chromosome> chr(new Chromosome());
 	chr->setSequence(aas);
-	SwappingMutater swm(aas.getMonoWeight(),0.3,aaList);
-	swm.mutate(chr);
+	ptr->mutate(chr);
 	TEST_EQUAL((double)chr->getSequence().getMonoWeight(), aas.getMonoWeight());
 	TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());
 }
 END_SECTION
-
+	
+START_SECTION(~SwappingMutater())
+{
+	delete ptr;
+}
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

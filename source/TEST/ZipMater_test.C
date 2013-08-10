@@ -53,7 +53,7 @@ START_TEST(ZipMater, "$Id$")
 
 ZipMater* ptr = 0;
 ZipMater* null_ptr = 0;
-START_SECTION(ZipMater())
+START_SECTION((ZipMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
 	std::vector<const Residue*> aaList;
 	ptr = new ZipMater(100.0,0.3,aaList);
@@ -64,12 +64,6 @@ END_SECTION
 START_SECTION(~ZipMater())
 {
 	delete ptr;
-}
-END_SECTION
-
-START_SECTION((ZipMater(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
-{
-  // TODO
 }
 END_SECTION
 
@@ -99,7 +93,7 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 	ZipMater zm(m.getMonoWeight(Residue::Full),1.5,aaList);
-	zm.seed(50);
+	zm.seed(5550);
 	vector<boost::shared_ptr<Chromosome> > res = zm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());

@@ -57,7 +57,7 @@ struct TestSeeder :
 
 	    boost::shared_ptr<Chromosome> createIndividual() const
 	    {
-	    	return(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLMER"), 1.0)));
+	    	return(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLMER"),1,1.0)));
 	    }
 };
 START_TEST(Seeder, "$Id$")
@@ -65,16 +65,57 @@ START_TEST(Seeder, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
+double precursorMass=1500.5;
+double precursorMassTolerance=2;
+std::vector<const Residue*> aaList;
+
 Seeder* ptr = 0;
 Seeder* null_ptr = 0;
-START_SECTION(Seeder())
+
+START_SECTION((Seeder(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
-	double precursorMass=10;
-	double precursorMassTolerance=2;
-	std::vector<const Residue*> aaList;
 
 	ptr = new TestSeeder(precursorMass,precursorMassTolerance,aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
+}
+END_SECTION
+
+START_SECTION((virtual boost::shared_ptr<Chromosome> createIndividual() const = 0))
+{
+	boost::shared_ptr<Chromosome> chr(ptr->createIndividual());
+	TEST_STRING_EQUAL(chr->getSequence().toString(),"ALLMER");
+}
+END_SECTION
+
+START_SECTION((void seed(const unsigned int seed)))
+{
+  TEST_NOT_EQUAL(ptr->getSeed(),50);
+  ptr->seed(50);
+  TEST_EQUAL(ptr->getSeed(),50);
+}
+END_SECTION
+	
+START_SECTION((const std::vector<const Residue*>& getAAList() const))
+{
+  TEST_EQUAL(ptr->getAAList().size(),0);
+}
+END_SECTION
+	
+START_SECTION((double getPrecursorMass() const))
+{
+  TEST_REAL_SIMILAR(ptr->getPrecursorMass(),1500.5);
+}
+END_SECTION
+
+START_SECTION((double getPrecursorMassTolerance() const))
+{
+  TEST_REAL_SIMILAR(ptr->getPrecursorMassTolerance(),2);
+}
+END_SECTION
+
+START_SECTION((unsigned int getSeed() const))
+{
+  TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 
@@ -83,31 +124,6 @@ START_SECTION(~Seeder())
 	delete ptr;
 }
 END_SECTION
-
-START_SECTION((Seeder(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((virtual ~Seeder()))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((virtual Chromosome createIndividual()=0))
-{
-  // TODO
-}
-END_SECTION
-
-START_SECTION((void seed(const unsigned int seed)))
-{
-  // TODO
-}
-END_SECTION
-
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

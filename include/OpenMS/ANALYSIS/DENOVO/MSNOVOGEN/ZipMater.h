@@ -41,18 +41,29 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The ZipMater takes two Chromosomes and swaps every second amino acid.
+	* Leaves overhangs unmodified.
+	* The mass of the resulting Chromosomes may not confirm to the
+	* required precursor MH+ +/- tolerance so Utilities::adjustToFitMass is called
+	* on both children in order to try to change the sequence such that it suits the mass constraint.
+	* May return an empty vector.
+	*/
   class OPENMS_DLLAPI ZipMater : public Mater
   {
 private:
-	/// Copy c'tor
+	/// Copy c'tor shouln't be used.
 	ZipMater(const ZipMater& other);
 
-	/// Assignment operator
+	/// Assignment operator shouldn't be sued.
 	ZipMater & operator=(const ZipMater& rhs);
+
 public:
-    /// Default c'tor
+    /// Default c'tor providing all necessary information.
     ZipMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
-    virtual std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
+
+	/// Implementation of the virtual method Mater::mate.
+    std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
 
   };
 } // namespace

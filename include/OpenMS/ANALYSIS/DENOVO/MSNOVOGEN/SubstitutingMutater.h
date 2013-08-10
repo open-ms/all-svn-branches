@@ -50,6 +50,12 @@ namespace OpenMS
 	*/
   class OPENMS_DLLAPI SubstitutingMutater : public Mutater
   {
+	  
+private:
+    /// To forbid copy construction
+    SubstitutingMutater(const SubstitutingMutater & rhs);
+    /// To forbid assignment
+    SubstitutingMutater & operator=(const SubstitutingMutater & rhs);
 
 public:
 	/// constructor providing all neccessary information.

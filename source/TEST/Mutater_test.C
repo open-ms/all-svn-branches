@@ -151,7 +151,30 @@ START_SECTION((boost::shared_ptr<Chromosome> mutateCpy(const boost::shared_ptr<C
 	TEST_STRING_EQUAL(chromosome->getSequence().toString(),"ELLMER");
 }
 END_SECTION
+	
+START_SECTION((const std::vector<const Residue*>& getAAList() const))
+{
+  TEST_EQUAL(ptr->getAAList().size(),0);
+}
+END_SECTION
+	
+START_SECTION((double getPrecursorMass() const))
+{
+  TEST_REAL_SIMILAR(ptr->getPrecursorMass(),1000);
+}
+END_SECTION
 
+START_SECTION((double getPrecursorMassTolerance() const))
+{
+  TEST_REAL_SIMILAR(ptr->getPrecursorMassTolerance(),1000);
+}
+END_SECTION
+
+START_SECTION((unsigned int getSeed() const))
+{
+  TEST_EQUAL(ptr->getSeed(),10000);
+}
+END_SECTION
 START_SECTION(~Mutater())
 {
 	delete ptr;

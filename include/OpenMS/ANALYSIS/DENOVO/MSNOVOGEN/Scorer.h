@@ -42,35 +42,42 @@
 
 namespace OpenMS
 {
+	/**
+	* @brief The Scorer base class provides a framework for
+	* derived classes to implement the scoring differently.
+	* Scorer may not be instantiated and kill must be implemented.
+	*/
   class GenPool;
 
   class OPENMS_DLLAPI Scorer
   {
 private:
+	/// the fragment mass tolerance to use when searching for agreement among spectra.
 	double fragmentMassTolerance;
 
-	/// Copy c'tor
+	/// Copy c'tor shouldn't be used.
 	Scorer(const Scorer& other);
 
-	/// Assignment operator
+	/// Assignment operator shouldn't be used.
 	Scorer & operator=(const Scorer& rhs);
 
 public:
-    /// Default c'tor
+    /// Default c'tor accepting all necessary parameters.
     Scorer(const double fragmentMassTolerance = 0.5);
 
+	/// d'tor.
     virtual ~Scorer();
 
+	/// Implemented in the base class.
+	/// Calls score for each individual in the pool that hasn't been scored.
     void scorePool(const MSSpectrum<> * msms, GenPool & pool) const;
 
+	/// scoring method must be implemented in deriving classes.
     virtual void score(const MSSpectrum<> * msms, boost::shared_ptr<Chromosome> & chromosome) const = 0;
 
+	/// Allows to get the currently set fragment mass tolerance (needed in derived classes).
 	double getFragmentMassTolerance() const {
 		return fragmentMassTolerance;
-	}
-
-	void setFragmentMassTolerance(double fragmentMassTolerance) {
-		this->fragmentMassTolerance = fragmentMassTolerance;
 	}
 };
 } // namespace

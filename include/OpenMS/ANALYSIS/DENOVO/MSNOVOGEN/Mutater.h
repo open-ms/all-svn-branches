@@ -111,7 +111,7 @@ public:
 	void seed(unsigned int seed);
 
 	/// Allows to retrieve the amino acid list (needed in derived classes).
-	const std::vector<const Residue*>& getAaList() const {
+	const std::vector<const Residue*>& getAAList() const {
 		return aaList_;
 	}
 

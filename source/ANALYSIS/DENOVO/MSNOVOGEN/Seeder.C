@@ -40,8 +40,8 @@
 namespace OpenMS
 {
 
-  Seeder::Seeder(double pm, double pmt, std::vector<const Residue*> al) :
-    aaList_(al), precursorMass_(pm), precursorMassTolerance_(pmt)
+  Seeder::Seeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
+    aaList_(al), precursorMass_(pm), precursorMassTolerance_(pmt), fragmentMassTolerance_(fmt), msms_(ms)
   {
 	seed(time(0));
   }
@@ -54,5 +54,21 @@ namespace OpenMS
   {
 	randomSeed_ = seed;
 	srand(randomSeed_);
+  }
+
+  std::vector<boost::shared_ptr<Chromosome> > Seeder::createIndividuals(const Size num) const
+  {
+	  std::vector<boost::shared_ptr<Chromosome> > ret;
+	  Size maxTries = 20 * num;
+	  Size curIter = 0;
+	  while(curIter++ < maxTries) 
+	  {
+		  boost::shared_ptr<Chromosome> ni = this->createIndividual();
+		  if(ni)
+			  ret.push_back(ni);
+		  if(ret.size() >= num)
+			  break;
+	  }
+	  return(ret);
   }
 } // namespace

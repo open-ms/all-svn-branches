@@ -60,7 +60,7 @@ private:
 
 public:
 	/// Default c'tor providing all necessary input.
-	DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+	DefaultSeeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, const std::vector<const Residue*> aaList);
 
 	/// Implementation of the virtual method Seeder::createIndividual.
 	boost::shared_ptr<Chromosome> createIndividual() const;

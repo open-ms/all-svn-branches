@@ -37,8 +37,8 @@
 
 namespace OpenMS
 {
-	DefaultSeeder::DefaultSeeder(double pm, double pmt, std::vector<const Residue*> al) :
-	Seeder(pm,pmt,al), ds_(pm, pmt, al)
+	DefaultSeeder::DefaultSeeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
+	Seeder(ms, pm, pmt,fmt, al), ds_(ms, pm, pmt,fmt, al)
 	{
 		ds_.seed((unsigned int)time(0));
 	}

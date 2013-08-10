@@ -52,33 +52,7 @@ bool MSNovoGen::isTerminated()
 
 void MSNovoGen::run()
 {
-	double precursorMass = 100.0;
-	double precursorMassTolerance = 1.5;
-	std::vector<const Residue*> aaList;
-	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
-	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-	//GenPool genPool(500,2.0,0.5);
-	const RandomSequenceSeeder rss(precursorMass, precursorMassTolerance, aaList);
-	//genPool.setSeeder(&rss);
 }
 
 } // namespace

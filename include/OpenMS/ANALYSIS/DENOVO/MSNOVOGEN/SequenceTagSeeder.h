@@ -37,16 +37,43 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
+#include <vector>
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI SequenceTagSeeder : public Seeder
   {
 public:
-	/// Default c'tor
-	  SequenceTagSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+	class SeqTag 
+	{
+	  public: 
+		double before_;
+		double after_;
+		String seq_;
+	    SeqTag(const double before, const String seq, const double after) : before_(before), after_(after), seq_(seq) {}
+	};
 
+private:
+	/// given a peak and an amino acid returns all peaks that are p1 + aa1 mass +/- fragment mass tolerance 
+	/// distance from the given peak.
+	std::vector<Peak1D> getMatchingPeaks(const MSSpectrum<>* msms, const Peak1D * p1, const Residue * aa1) const;
+
+	/// This method extracts all sequence tags from an msms spectrum in brute force fashion.
+	std::vector<OpenMS::SequenceTagSeeder::SeqTag> createSequenceTags() const;
+
+	/// Allows to remove code duplication.
+	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual(std::vector<OpenMS::SequenceTagSeeder::SeqTag> tags) const;
+
+public:
+	/// Default c'tor taking all necessary information
+	SequenceTagSeeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, const std::vector<const Residue*> aaList);
+
+	/// Implementation of the virtual method Seeder::createIndividual.
 	boost::shared_ptr<Chromosome> createIndividual() const;
+
+	/// Overriding creation of multiple individuals since many tags are created initially and it is a waste to return just one individual.
+	std::vector<boost::shared_ptr<Chromosome> > createIndividuals(const Size num) const;
+
   };
 } // namespace
 

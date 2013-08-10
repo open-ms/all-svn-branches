@@ -42,8 +42,8 @@
 namespace OpenMS
 {
 
-  RandomSequenceSeeder::RandomSequenceSeeder(double pm, double pmt, std::vector<const Residue*> al) :
-    Seeder(pm,pmt,al)
+  RandomSequenceSeeder::RandomSequenceSeeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
+	  Seeder(ms, pm, pmt,fmt, al)
   {
   }
 

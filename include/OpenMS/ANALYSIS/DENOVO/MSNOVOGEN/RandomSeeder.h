@@ -63,6 +63,13 @@ private:
 	SequenceTagSeeder sts;
 	/// The DefaultSeeder is a contained object so it doesn't need to be instantiated more than once.
 	DefaultSeeder ds;
+	
+private:
+	/// To forbid copy construction
+	  RandomSeeder(const RandomSeeder& other);
+
+	/// To forbid assignment
+	  RandomSeeder & operator=(const RandomSeeder& rhs);
 
 public:
 	/// identifier for SubstitutingMutater
@@ -73,7 +80,7 @@ public:
 	const static int defaultSeeder = 2;
 
     /// Default c'tor
-    RandomSeeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+    RandomSeeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, const std::vector<const Residue*> aaList);
 
 	/// Implementation of the virtual method Seeder::createIndividual.
     boost::shared_ptr<Chromosome> createIndividual() const;

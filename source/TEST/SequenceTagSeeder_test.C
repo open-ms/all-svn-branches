@@ -36,7 +36,7 @@
 
 ///////////////////////////
 
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
@@ -45,38 +45,69 @@
 
 using namespace OpenMS;
 using namespace std;
-struct TestSeeder :
-	public Seeder
-{
-		TestSeeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, std::vector< const Residue * > aaList) :
-			Seeder(spec, precursorMass, precursorMassTolerance, fagmentMassTolerance, aaList)
-		{}
-
-	    ~TestSeeder()
-	    {}
-
-	    boost::shared_ptr<Chromosome> createIndividual() const
-	    {
-	    	return(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("ALLMER"),1,1.0)));
-	    }
-};
-START_TEST(Seeder, "$Id$")
+START_TEST(SequenceTagSeeder, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+
+std::vector<const Residue*> aaList;
+aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
 double precursorMass = 1500.5;
 double precursorMassTolerance = 2;
 double fragmentMassTolerance = 0.5;
-const MSSpectrum<>* msms = 0;
-std::vector<const Residue*> aaList;
+MSSpectrum<>* msms = new MSSpectrum<>();
+//pm: 732.4073
+//b: 185.1285	 298.2125	 429.2530	 558.2956
+//y: 661.3702	 548.2861	 435.2020	 304.1615	 175.1190
+Peak1D p1; p1.setMZ(185.1285); p1.setIntensity(3);
+Peak1D p2; p2.setMZ(298.2125); p2.setIntensity(3);
+Peak1D p3; p3.setMZ(429.2530); p3.setIntensity(3);
+Peak1D p4; p4.setMZ(558.2956); p4.setIntensity(3);
+Peak1D p5; p5.setMZ(661.3702); p5.setIntensity(5);
+Peak1D p6; p6.setMZ(548.2861); p6.setIntensity(5);
+Peak1D p7; p7.setMZ(435.2020); p7.setIntensity(5);
+Peak1D p8; p8.setMZ(304.1615); p8.setIntensity(5);
+Peak1D p9; p9.setMZ(175.1190); p9.setIntensity(5);
+Peak1D p10; p10.setMZ(100.5000); p10.setIntensity(20);
+msms->push_back(Peak1D(p1));
+msms->push_back(Peak1D(p2));
+msms->push_back(Peak1D(p3));
+msms->push_back(Peak1D(p4));
+msms->push_back(Peak1D(p5));
+msms->push_back(Peak1D(p6));
+msms->push_back(Peak1D(p7));
+msms->push_back(Peak1D(p8));
+msms->push_back(Peak1D(p9));
+msms->push_back(Peak1D(p10));
+msms->sortByPosition();
 
-Seeder* ptr = 0;
-Seeder* null_ptr = 0;
+SequenceTagSeeder* ptr = 0;
+SequenceTagSeeder* null_ptr = 0;
 
-START_SECTION((Seeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, std::vector< const Residue * > aaList)))
+START_SECTION((SequenceTagSeeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, std::vector< const Residue * > aaList)))
 {
-	ptr = new TestSeeder(msms,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList);
+	ptr = new SequenceTagSeeder(msms,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList);
+	ptr->seed(1000);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
@@ -91,58 +122,16 @@ END_SECTION
 START_SECTION((virtual std::vector<boost::shared_ptr<Chromosome> > createIndividuals(const Size num) const))
 {
 	vector<boost::shared_ptr<Chromosome> > chrs(ptr->createIndividuals(10));
-	TEST_STRING_EQUAL(chrs[0]->getSequence().toString(),"ALLMER");
 	TEST_EQUAL(chrs.size(),10);
+	for(int i=0; i<10; i++)
+		TEST_STRING_EQUAL(chrs[1]->getSequence().toString(),"ALLMER");
 }
 END_SECTION
 
-START_SECTION((void seed(const unsigned int seed)))
-{
-  TEST_NOT_EQUAL(ptr->getSeed(),50);
-  ptr->seed(50);
-  TEST_EQUAL(ptr->getSeed(),50);
-}
-END_SECTION
-	
-START_SECTION((const std::vector<const Residue*>& getAAList() const))
-{
-  TEST_EQUAL(ptr->getAAList().size(),0);
-}
-END_SECTION
-	
-START_SECTION((double getPrecursorMass() const))
-{
-  TEST_REAL_SIMILAR(ptr->getPrecursorMass(),1500.5);
-}
-END_SECTION
-
-START_SECTION((double getPrecursorMassTolerance() const))
-{
-  TEST_REAL_SIMILAR(ptr->getPrecursorMassTolerance(),2);
-}
-END_SECTION
-
-START_SECTION((unsigned int getSeed() const))
-{
-  TEST_EQUAL(ptr->getSeed(),50);
-}
-END_SECTION
-
-START_SECTION((const MSSpectrum<> * getMassSpectrum() const))
-{
-	TEST_EQUAL(ptr->getMassSpectrum(), null_ptr);
-}
-END_SECTION
-
-START_SECTION((double getFragmentMassTolerance() const))
-{
-  TEST_REAL_SIMILAR(ptr->getFragmentMassTolerance(),0.5);
-}
-END_SECTION
-
-START_SECTION(~Seeder())
+START_SECTION(~SequenceTagSeeder())
 {
 	delete ptr;
+	delete msms;
 }
 END_SECTION
 

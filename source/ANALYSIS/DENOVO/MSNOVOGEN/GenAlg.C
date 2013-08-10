@@ -61,7 +61,7 @@ namespace OpenMS
 		mutater_ = boost::shared_ptr<const Mutater>(new DefaultMutater(getPrecursorMH(),precursorMassTolerance_,aaList_));
 		mater_= boost::shared_ptr<const Mater>(new DefaultMater(getPrecursorMH(),precursorMassTolerance_,aaList_));
 		killer_= boost::shared_ptr<const Killer>(new DefaultKiller());
-		seeder_= boost::shared_ptr<const Seeder>(new DefaultSeeder(getPrecursorMH(),precursorMassTolerance_,aaList_));
+		seeder_= boost::shared_ptr<const Seeder>(new DefaultSeeder(msms_,getPrecursorMH(),precursorMassTolerance_,fragmentMassTolerance_,aaList_));
 		scorer_= boost::shared_ptr<const Scorer>(new NormShrAbuScorer(getPrecursorMH()));
 		homologyKiller_ = boost::shared_ptr<const HomologyKiller>(new HomologyKiller());
 	}

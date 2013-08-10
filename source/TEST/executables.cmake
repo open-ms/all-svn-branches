@@ -442,6 +442,7 @@ set(analysis_executables_list
 	RandomSequenceSeeder_test
 	Scorer_test
 	Seeder_test
+	SequenceTagSeeder_test
 	SimpleDecreasingKiller_test
 	SimpleMater_test
 	SubstitutingMutater_test

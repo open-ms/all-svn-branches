@@ -39,8 +39,11 @@
 namespace OpenMS
 {
 
-  RandomSeeder::RandomSeeder(double pm, double pmt, std::vector<const Residue*> al) :
-	Seeder(pm,pmt,al), rss(pm, pmt, al), sts(pm, pmt, al), ds(pm, pmt, al)
+  RandomSeeder::RandomSeeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
+	  Seeder(ms, pm, pmt,fmt, al),
+	  rss(ms, pm, pmt,fmt, al), 
+	  sts(ms, pm, pmt,fmt, al), 
+	  ds(ms, pm, pmt,fmt, al)
   {
 	weights_.push_back(0.4);
 	weights_.push_back(0.7);

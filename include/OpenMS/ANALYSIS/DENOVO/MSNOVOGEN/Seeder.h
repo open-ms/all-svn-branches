@@ -40,6 +40,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <OpenMS/KERNEL/MSSpectrum.h>
 
 namespace OpenMS
 {
@@ -59,6 +60,10 @@ private:
     double precursorMass_;
     /// it is necessary to know the precursor mass to propose suitable sequences
     double precursorMassTolerance_;
+	/// it is necessary to know the fragment mass tolerance for some derived classes.
+	double fragmentMassTolerance_;
+	/// Mass spectrum which may be used in some deriving classes.
+	const MSSpectrum<> * msms_;
 
 private:
 	/// To forbid copy construction
@@ -68,13 +73,17 @@ private:
 
 public:
     /// Default c'tor accepting all necessary input
-    Seeder(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList);
+    Seeder(const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fagmentMassTolerance, const std::vector<const Residue*> aaList);
 
 	/// d'tor
     virtual ~Seeder();
 
     /// Creates a new individual and must be implemented in derived classes.
     virtual boost::shared_ptr<Chromosome> createIndividual() const = 0;
+	
+    /// Creates new individuals and can be overridden in derived classes.
+	/// tries to create as many as num elements but gives up after 20 * num tries and returns what it was able to create.
+    virtual std::vector<boost::shared_ptr<Chromosome> > createIndividuals(const Size num) const;
 
 	/// to change the seed or to fix it for unit tests.
 	void seed(const unsigned int seed);
@@ -98,6 +107,16 @@ public:
 	/// Allows to retrieve the set precursor mass tolerance (needed in derived classes)
 	double getPrecursorMassTolerance() const {
 		return precursorMassTolerance_;
+	}
+
+	/// Allows to retrieve the set precursor mass tolerance (needed in derived classes)
+	double getFragmentMassTolerance() const {
+		return fragmentMassTolerance_;
+	}
+
+	/// Allows to retrieve the spectrum (needed in derived classes)
+	const MSSpectrum<> * getMassSpectrum() const {
+		return msms_;
 	}
 };
 } // namespace

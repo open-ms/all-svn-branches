@@ -48,34 +48,28 @@ namespace OpenMS
   Utilities::Utilities()
   {}
 
-	const AASequence Utilities::getRandomSequence(const int seed, const int len,
-		const double weight, const double tolerance,
-		const std::vector<const Residue*> aaList)
+	const AASequence Utilities::getRandomSequence(const int len,const double weight, const double tolerance,const std::vector<const Residue*> aaList)
 	{
-		srand(seed);
 	    String str;
 	    for(int i=0; i<len; i++)
-	      str += Utilities::getRandomAA(rand() % 1000000, aaList);
+	      str += Utilities::getRandomAA(aaList);
 	    AASequence seq(str);
-	    if(Utilities::adjustToFitMass(rand() % 1000000, seq, weight, tolerance, aaList))
+	    if(Utilities::adjustToFitMass(seq, weight, tolerance, aaList))
 	    	return(seq);
 	    else
 	    	return(AASequence(""));
 	}
 
-	const String Utilities::getRandomAA(const int seed,
-		const std::vector<const Residue*> aaList)
+	const String Utilities::getRandomAA(const std::vector<const Residue*> aaList)
 	{
-		srand(seed);
 	    Size i = rand() % aaList.size();
 	    return(aaList[i]->getModifiedOneLetterCode());
 	}
 
-	bool Utilities::adjustToFitMass(const int seed, AASequence& sequence,
+	bool Utilities::adjustToFitMass(AASequence& sequence,
 		const double weight, const double tolerance,
 		const std::vector<const Residue*> aaList)
 	{
-		srand(seed);
 		double curWeight = sequence.getMonoWeight();
 		double diff = std::abs(curWeight-weight);
 		double nDiff;

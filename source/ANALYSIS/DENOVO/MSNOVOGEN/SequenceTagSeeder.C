@@ -58,12 +58,12 @@ namespace OpenMS
 		Size rs = rand() % tags.size();
 		OpenMS::SequenceTagSeeder::SeqTag rst = tags[rs];
 		int len = rst.before_ / 110;
-		AASequence beg = Utilities::getRandomSequence(getSeed(), len, rst.before_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
+		AASequence beg = Utilities::getRandomSequence(len, rst.before_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
 		len = rst.after_ / 110;
-		AASequence end = Utilities::getRandomSequence(getSeed(), len, rst.after_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
+		AASequence end = Utilities::getRandomSequence(len, rst.after_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
 		String fullSeq = beg.toString() + rst.seq_ + end.toString();
 		AASequence seq(fullSeq);
-		if(Utilities::adjustToFitMass(getSeed(),seq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+		if(Utilities::adjustToFitMass(seq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 			return boost::shared_ptr<Chromosome>(new Chromosome(seq,1));
 		return boost::shared_ptr<Chromosome>(new Chromosome());
 	}

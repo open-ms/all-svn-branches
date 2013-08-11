@@ -80,10 +80,10 @@ namespace OpenMS
 	}
     std::vector<boost::shared_ptr<Chromosome> > ret;
     AASequence ucaa(uc);
-    if(Utilities::adjustToFitMass(getSeed(),ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+    if(Utilities::adjustToFitMass(ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
     	ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(ucaa,lhs->getCharge())));
     AASequence lcaa(lc);
-    if(Utilities::adjustToFitMass(getSeed(),lcaa,getPrecursorMass(), getPrecursorMassTolerance(), getAAList()))
+    if(Utilities::adjustToFitMass(lcaa,getPrecursorMass(), getPrecursorMassTolerance(), getAAList()))
 		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(lcaa,lhs->getCharge())));
     return ret;
   }

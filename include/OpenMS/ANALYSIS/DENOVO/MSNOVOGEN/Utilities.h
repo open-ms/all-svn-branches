@@ -64,14 +64,17 @@ private:
 
 	/// Generates a random sequence of the desired length and then adjusts the
 	/// amino acids until the weight matches the desired criteria.
-	static const AASequence getRandomSequence(const int seed, const int len, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
+	/// srand must have been called before.
+	static const AASequence getRandomSequence(const int len, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
 
     /// from the list of available amino acids selects a random one.
-    static const String getRandomAA(const int seed, const std::vector<const Residue *> aaList);
+	/// srand must have been called before.
+    static const String getRandomAA(const std::vector<const Residue *> aaList);
 
     /// The random string may not fit to the expected precursor mass and is then adjusted to fit (if possible with a maximum of 3 changes).
     /// The passed in sequence is directly modified.
-    static bool adjustToFitMass(const int seed, AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
+	/// srand must have been called before.
+    static bool adjustToFitMass(AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
 
 	/// Uses the Seqan Needleman-Wunsch implementation to calculated the edit distance
 	/// of the two amino acid sequences.

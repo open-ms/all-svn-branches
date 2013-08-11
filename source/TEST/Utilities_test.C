@@ -101,7 +101,8 @@ START_SECTION((static const AASequence getRandomSequence(const int seed, const i
 	int		expLen[] = {7,7,7,0,7,7};
 	bool	expRes[] = {true,true,true,false,true,true};
 	for(int i=0; i<6; i++) {
-		AASequence rand = Utilities::getRandomSequence(test[i],7,seq.getMonoWeight(Residue::Full),1.5,aaList);
+		srand(test[i]);
+		AASequence rand = Utilities::getRandomSequence(7,seq.getMonoWeight(Residue::Full),1.5,aaList);
 		TEST_STRING_EQUAL(rand.toString(), expSeq[i]);
 		TEST_NOT_EQUAL(rand.toString(), seq.toString());
 		TEST_EQUAL(expLen[i],rand.size());
@@ -117,7 +118,8 @@ START_SECTION((static const String getRandomAA(const int seed, const std::vector
 	String res[] = {"D","A","V","C","D"};
 	for(int i=0; i<5; i++)
 	{
-		TEST_EQUAL(Utilities::getRandomAA(test[i],aaList),res[i]);
+		srand(test[i]);
+		TEST_EQUAL(Utilities::getRandomAA(aaList),res[i]);
 	}
 }
 END_SECTION
@@ -130,8 +132,9 @@ START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence,
 	String 	exSeq[] = {"DQPAFGC","GEPQVFG","VGASNRK","VQMAAGR","DDNIALA"};
 	bool 	expRes[] = {false,true,true,true,true,true};
 	for(int i=0; i<5; i++) {
+		srand(test[i]);
 		AASequence rand(inSeq[i]);
-		Utilities::adjustToFitMass(test[i],rand,seq.getMonoWeight(Residue::Full),1.5,aaList);
+		Utilities::adjustToFitMass(rand,seq.getMonoWeight(Residue::Full),1.5,aaList);
 		TEST_EQUAL(expRes[i],(std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5));
 		TEST_EQUAL(7,rand.size());
 		TEST_NOT_EQUAL(inSeq[i],rand.toString());
@@ -140,7 +143,7 @@ START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence,
 
 	AASequence m("AAAAAAAAAA");
 	AASequence c("AAGGGLLLLL");
-	Utilities::adjustToFitMass(50,c,m.getMonoWeight(Residue::Full),1.5,aaList);
+	Utilities::adjustToFitMass(c,m.getMonoWeight(Residue::Full),1.5,aaList);
 	TEST_EQUAL((std::abs(c.getMonoWeight(Residue::Full)-m.getMonoWeight(Residue::Full))<1.5),false);
 }
 END_SECTION

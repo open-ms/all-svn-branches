@@ -54,6 +54,7 @@ namespace OpenMS
   void Seeder::seed(const Size seed)
   {
 	  rng.seed(seed);
+	  utils.seed(seed);
   }
 
   std::vector<boost::shared_ptr<Chromosome> > Seeder::createIndividuals(const Size num) const

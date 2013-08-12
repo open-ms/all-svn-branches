@@ -63,6 +63,29 @@ START_TEST(Mater, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
 	GenPool gp(500,1000,1000,1);
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),1,0.1)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),1,0.15)));
@@ -106,24 +129,6 @@ START_SECTION((virtual std::vector<boost::shared_ptr<Chromosome> > mate(boost::s
 }
 END_SECTION
 
-START_SECTION((void seed(const unsigned int seed)))
-{
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  tm.seed(10);
-  TEST_EQUAL(10,tm.getSeed());
-}
-END_SECTION
-
-START_SECTION((unsigned int getSeed() const ))
-{
-  std::vector<const Residue*> aaList;
-  TestMater tm(100.1, 0.3, aaList);
-  tm.seed(10);
-  TEST_EQUAL(10,tm.getSeed());
-}
-END_SECTION
-
 START_SECTION((std::vector<boost::shared_ptr<Chromosome> > tournament(GenPool &genPool) const ))
 {
 	ptr->seed(10000);
@@ -135,21 +140,27 @@ END_SECTION
 START_SECTION((void tournamentAndAddToPool(GenPool &genPool) const ))
 {
 	ptr->tournamentAndAddToPool(gp);
-	TEST_EQUAL(gp.getPopulationSize(),56);
+	TEST_EQUAL(gp.getPopulationSize(),60);
 }
 END_SECTION
 
-START_SECTION((void seed(const unsigned int seed)))
+START_SECTION((void seed(const Size seed)))
 {
-  TEST_NOT_EQUAL(ptr->getSeed(),50);
-  ptr->seed(50);
-  TEST_EQUAL(ptr->getSeed(),50);
+  Size test[] = {0,6000,10000,14000,15000};
+  String res[] = {"L","Q","L","V","D"};
+  for(int i=0; i<5; i++)
+  {
+	  ptr->seed(test[i]);
+	  const Utilities * utils = ptr->getUtils();
+	  TEST_EQUAL(utils->getRandomAA(aaList),res[i]);
+  }
 }
 END_SECTION
-
-START_SECTION((unsigned int getSeed() const ))
+	
+START_SECTION((const Utilities * getUtils() const))
 {
-	TEST_EQUAL(ptr->getSeed(),50);
+	const Utilities * utils = ptr->getUtils();
+	TEST_EQUAL(utils->editDistance("ALLMER","ELLMER"),1);
 }
 END_SECTION
 

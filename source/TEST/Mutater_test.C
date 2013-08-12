@@ -64,6 +64,28 @@ START_TEST(Mutater, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
 	GenPool gp(500,1000,1000,1);
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTA"),1,0.1)));
 	gp.addIndividual(boost::shared_ptr<Chromosome>(new Chromosome(AASequence("TESTR"),1,0.15)));
@@ -94,13 +116,6 @@ START_SECTION((Mutater(double precursorMass, double precursorMassTolerance, std:
 	std::vector< const Residue * > aaList;
 	ptr = new TestMutater(1000, 1000, aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr);
-}
-END_SECTION
-	
-START_SECTION((void seed(unsigned int seed)))
-{
-	ptr->seed(10000);
-	TEST_EQUAL(ptr->getSeed(),10000);
 }
 END_SECTION
 
@@ -169,12 +184,27 @@ START_SECTION((double getPrecursorMassTolerance() const))
   TEST_REAL_SIMILAR(ptr->getPrecursorMassTolerance(),1000);
 }
 END_SECTION
-
-START_SECTION((unsigned int getSeed() const))
+	
+START_SECTION((void seed(const Size seed)))
 {
-  TEST_EQUAL(ptr->getSeed(),10000);
+  Size test[] = {0,6000,10000,14000,15000};
+  String res[] = {"L","Q","L","V","D"};
+  for(int i=0; i<5; i++)
+  {
+	  ptr->seed(test[i]);
+	  const Utilities * utils = ptr->getUtils();
+	  TEST_EQUAL(utils->getRandomAA(aaList),res[i]);
+  }
 }
 END_SECTION
+	
+START_SECTION((const Utilities * getUtils() const))
+{
+	const Utilities * utils = ptr->getUtils();
+	TEST_EQUAL(utils->editDistance("ALLMER","ELLMER"),1);
+}
+END_SECTION
+
 START_SECTION(~Mutater())
 {
 	delete ptr;

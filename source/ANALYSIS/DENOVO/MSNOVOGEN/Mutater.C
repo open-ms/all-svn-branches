@@ -43,7 +43,11 @@ namespace  OpenMS
 
   Mutater::Mutater(double pm, double pmt, std::vector<const Residue*> al)
     : rng(time(NULL)), mutationRate_(0.2), precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
-  { }
+  { 
+	  Size seed = (unsigned int)time(0);
+	  this->seed(seed);
+	  utils.seed(seed);
+  }
 
   Mutater::~Mutater()
   {
@@ -87,6 +91,7 @@ namespace  OpenMS
   void Mutater::seed(const Size seed)
   {
 	rng.seed(seed);
+	utils.seed(seed);
   }
 
 } // namespace

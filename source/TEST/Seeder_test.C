@@ -65,11 +65,32 @@ START_TEST(Seeder, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
+	std::vector<const Residue*> aaList;
+	aaList.push_back(ResidueDB::getInstance()->getResidue("A"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("R"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("N"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("D"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("C"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("E"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Q"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("G"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("H"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("I"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("L"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("K"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("M"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("F"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("P"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("S"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
+	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+
 double precursorMass = 1500.5;
 double precursorMassTolerance = 2;
 double fragmentMassTolerance = 0.5;
 const MSSpectrum<>* msms = 0;
-std::vector<const Residue*> aaList;
 
 Seeder* ptr = 0;
 Seeder* null_ptr = 0;
@@ -95,18 +116,10 @@ START_SECTION((virtual std::vector<boost::shared_ptr<Chromosome> > createIndivid
 	TEST_EQUAL(chrs.size(),10);
 }
 END_SECTION
-
-START_SECTION((void seed(const unsigned int seed)))
-{
-  TEST_NOT_EQUAL(ptr->getSeed(),50);
-  ptr->seed(50);
-  TEST_EQUAL(ptr->getSeed(),50);
-}
-END_SECTION
 	
 START_SECTION((const std::vector<const Residue*>& getAAList() const))
 {
-  TEST_EQUAL(ptr->getAAList().size(),0);
+  TEST_EQUAL(ptr->getAAList().size(),20);
 }
 END_SECTION
 	
@@ -121,10 +134,24 @@ START_SECTION((double getPrecursorMassTolerance() const))
   TEST_REAL_SIMILAR(ptr->getPrecursorMassTolerance(),2);
 }
 END_SECTION
-
-START_SECTION((unsigned int getSeed() const))
+	
+START_SECTION((void seed(const Size seed)))
 {
-  TEST_EQUAL(ptr->getSeed(),50);
+  Size test[] = {0,6000,10000,14000,15000};
+  String res[] = {"L","Q","L","V","D"};
+  for(int i=0; i<5; i++)
+  {
+	  ptr->seed(test[i]);
+	  const Utilities * utils = ptr->getUtils();
+	  TEST_EQUAL(utils->getRandomAA(aaList),res[i]);
+  }
+}
+END_SECTION
+	
+START_SECTION((const Utilities * getUtils() const))
+{
+	const Utilities * utils = ptr->getUtils();
+	TEST_EQUAL(utils->editDistance("ALLMER","ELLMER"),1);
 }
 END_SECTION
 

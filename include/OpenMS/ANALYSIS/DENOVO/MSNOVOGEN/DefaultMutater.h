@@ -66,12 +66,6 @@ public:
 
 	/// Overriding Mutater::seed since the seed must be forwarded to the default mutater (dm_).
 	void seed(const unsigned int seed);
-
-	/// Overriding Mutater::getSeed since the seed must be requested from the default mutater (dm_).
-	unsigned int getSeed()
-	{
-		return dm_.getSeed();
-	}
   };
 } // namespace
 

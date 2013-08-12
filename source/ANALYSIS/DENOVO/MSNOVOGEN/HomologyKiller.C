@@ -52,6 +52,7 @@ namespace OpenMS
 	  boost::shared_ptr<Chromosome> b = * i;
 	  ngp.push_back(b);
 	  b->getSequence().toString();
+	  Utilities utils;
 	  while(i != genPool.end())
 	  {
 		boost::shared_ptr<Chromosome> o = *i;
@@ -59,7 +60,7 @@ namespace OpenMS
 		bool homolog = false;
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator n = ngp.begin(); n != ngp.end(); n++) {
 			p = *n;
-			if(Utilities::editDistance(p->getSequence(),o->getSequence()) < minEditDistance)
+			if(utils.editDistance(p->getSequence(),o->getSequence()) < minEditDistance)
 			{
 			  homolog = true;
 			  break;

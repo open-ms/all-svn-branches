@@ -38,14 +38,13 @@
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <time.h>
+#include <boost/random/uniform_int_distribution.hpp>
 
 namespace OpenMS
 {
 	SequenceTagSeeder::SequenceTagSeeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
 	  Seeder(ms, pm, pmt,fmt, al)
-	{
-		seed((unsigned int)time(0));
-	}
+	{}
 
 	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual() const
 	{
@@ -55,15 +54,16 @@ namespace OpenMS
 
 	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual(std::vector<OpenMS::SequenceTagSeeder::SeqTag> tags) const
 	{
-		Size rs = rand() % tags.size();
+		boost::random::uniform_int_distribution<Size> int_distribution(0, (tags.size()-1));
+		Size rs = int_distribution(rng);
 		OpenMS::SequenceTagSeeder::SeqTag rst = tags[rs];
 		int len = rst.before_ / 110;
-		AASequence beg = Utilities::getRandomSequence(len, rst.before_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
+		AASequence beg = getUtils()->getRandomSequence(len, rst.before_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
 		len = rst.after_ / 110;
-		AASequence end = Utilities::getRandomSequence(len, rst.after_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
+		AASequence end = getUtils()->getRandomSequence(len, rst.after_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
 		String fullSeq = beg.toString() + rst.seq_ + end.toString();
 		AASequence seq(fullSeq);
-		if(Utilities::adjustToFitMass(seq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+		if(getUtils()->adjustToFitMass(seq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 			return boost::shared_ptr<Chromosome>(new Chromosome(seq,1));
 		return boost::shared_ptr<Chromosome>(new Chromosome());
 	}

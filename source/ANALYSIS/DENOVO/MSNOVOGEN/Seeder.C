@@ -41,19 +41,19 @@ namespace OpenMS
 {
 
   Seeder::Seeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
-    aaList_(al), precursorMass_(pm), precursorMassTolerance_(pmt), fragmentMassTolerance_(fmt), msms_(ms)
+    aaList_(al), precursorMass_(pm), precursorMassTolerance_(pmt), fragmentMassTolerance_(fmt), msms_(ms), rng(std::time(NULL))
   {
-	seed(time(0));
+	  Size seed = (unsigned int)time(0);
+	  this->seed(seed);
+	  utils.seed(seed);
   }
 
   Seeder::~Seeder()
-  {
-  }
+  {}
 
-  void Seeder::seed(const unsigned int seed)
+  void Seeder::seed(const Size seed)
   {
-	randomSeed_ = seed;
-	srand(randomSeed_);
+	  rng.seed(seed);
   }
 
   std::vector<boost::shared_ptr<Chromosome> > Seeder::createIndividuals(const Size num) const

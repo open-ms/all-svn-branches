@@ -87,6 +87,9 @@ public:
     /// mutate the Chromosome. Returns the mutated Chromosome.
     void mutate(boost::shared_ptr<Chromosome> chromosome) const;
 
+    /// overrides the method in Mutater too forward seeds to contained objects derived from Mutater.
+    void seed(const Size seed);
+
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const
 	{

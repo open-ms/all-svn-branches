@@ -40,6 +40,11 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
 #include <vector>
 #include <boost/shared_ptr.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/normal_distribution.hpp>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
 
 namespace OpenMS
 {
@@ -52,15 +57,18 @@ namespace OpenMS
 
   class OPENMS_DLLAPI Mater
   {
+protected:
+	/// random number generator must be mutable since Mater must be const * in GenAlg.
+	mutable boost::mt19937 rng;
 private:
-	/// Seed to initialize rand
-	unsigned int randomSeed_;
 	/// A list of amino acids that can form a sequence is needed for some mutation processes.
 	std::vector<const Residue*> aaList_;
 	/// it is necessary to know the precursor mass to propose suitable sequences
 	double precursorMass_;
 	/// it is necessary to know the precursor mass to propose suitable sequences
 	double precursorMassTolerance_;
+	/// Utilities class necessary for some calculations.
+	Utilities utils;
 
 private:
 	/// Copy c'tor shouldn't be used.
@@ -93,13 +101,7 @@ public:
     void tournamentAndAddToPool(GenPool & genPool) const;
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const unsigned int seed);
-
-	/// Returns the currently set seed.
-	unsigned int getSeed() const
-	{
-		return randomSeed_;
-	}
+	void seed(const Size seed);
 
 	/// Allows derived classes to access the amino acid list.
 	const std::vector<const Residue*>& getAAList() const {
@@ -115,6 +117,12 @@ public:
 	double getPrecursorMassTolerance() const {
 		return precursorMassTolerance_;
 	}
+
+	/// Allows derived classes to use the utilities in the base class.
+	const Utilities * getUtils() const {
+		return(&utils);
+	}
+
 };
 } // namespace
 

@@ -86,7 +86,7 @@ public:
     std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
     
 	/// Ovrerriding base method to ensure that seeding is forwarded to the contained objects.
-	void seed(unsigned int seed);
+	void seed(const Size seed);
     
 	/// Returns the weights currently set for the Mutaters ordered by their id.
 	const std::vector<double> getWeights() const

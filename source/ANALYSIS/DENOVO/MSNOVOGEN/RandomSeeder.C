@@ -35,6 +35,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSeeder.h>
 #include <stdlib.h>
 #include <time.h>
+#include <boost/random.hpp>
 
 namespace OpenMS
 {
@@ -48,13 +49,14 @@ namespace OpenMS
 	weights_.push_back(0.4);
 	weights_.push_back(0.7);
 	weights_.push_back(1.0);
-	seed((unsigned int)time(0));
+	seed((Size)time(NULL));
   }
 
   boost::shared_ptr<Chromosome> RandomSeeder::createIndividual() const
   {
 	boost::shared_ptr<Chromosome> chr;
-	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
+	boost::random::uniform_real_distribution<double> u01;
+	double rv = u01(rng);
     for(unsigned int i=0; i<weights_.size(); i++)
     {
       if(weights_[i] > rv)
@@ -75,7 +77,7 @@ namespace OpenMS
     return(chr);
   }
 
-  void RandomSeeder::seed(const unsigned int seed) 
+  void RandomSeeder::seed(const Size seed)
   {
 	  rss.seed(seed);
 	  sts.seed(seed);

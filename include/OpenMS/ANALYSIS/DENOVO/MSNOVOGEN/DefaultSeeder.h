@@ -66,13 +66,7 @@ public:
 	boost::shared_ptr<Chromosome> createIndividual() const;
 
 	/// Overridden to forward the seed to the default seeder.
-	void seed(const unsigned int seed);
-
-	/// Overridden to request the seed from the default seeder.
-	unsigned int getSeed() const
-	{
-		return ds_.getSeed();
-	}
+	void seed(const Size seed);
   };
 } // namespace
 

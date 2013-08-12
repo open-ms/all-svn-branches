@@ -41,7 +41,7 @@ namespace OpenMS
 	DefaultMater::DefaultMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
 	Mater(precursorMass, precursorMassTolerance, aaList), dm_(precursorMass, precursorMassTolerance, aaList)
 	{
-		dm_.seed((unsigned int)time(0));
+		dm_.seed((Size)time(0));
 	}
 
 	std::vector<boost::shared_ptr<Chromosome> > DefaultMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
@@ -49,13 +49,8 @@ namespace OpenMS
 		return dm_.mate(lhs, rhs);
 	}
 
-	void DefaultMater::seed(const unsigned int seed)
+	void DefaultMater::seed(const Size seed)
 	{
 		dm_.seed(seed);
-	}
-
-	unsigned int DefaultMater::getSeed()
-	{
-		return dm_.getSeed();
 	}
 } // namespace

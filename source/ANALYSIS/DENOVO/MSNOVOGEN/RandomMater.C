@@ -35,6 +35,9 @@
 #include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/RandomMater.h>
 #include <stdlib.h>
 #include <time.h>
+#include <boost/random.hpp>
+
+using boost::random::uniform_real_distribution;
 
 namespace OpenMS
 {
@@ -48,12 +51,14 @@ namespace OpenMS
 	weights_.push_back(0.4);
 	weights_.push_back(0.7);
 	weights_.push_back(1.0);
-	seed((unsigned int)time(0));
+	seed((Size)time(0));
   }
 
   std::vector<boost::shared_ptr<Chromosome> > RandomMater::mate(boost::shared_ptr<Chromosome> lhs, boost::shared_ptr<Chromosome> rhs) const
   {
-	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
+
+	boost::random::uniform_real_distribution<double> u01;
+	double rv = u01(rng);
     for(unsigned int i=0; i<weights_.size(); i++)
     {
       if(weights_[i] <= rv)
@@ -74,7 +79,7 @@ namespace OpenMS
     return dm.mate(lhs, rhs);
   }
 
-  void RandomMater::seed(unsigned int seed)
+  void RandomMater::seed(const Size seed)
   {
 	  sm.seed(seed);
 	  zm.seed(seed);

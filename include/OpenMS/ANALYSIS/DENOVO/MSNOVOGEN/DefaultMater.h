@@ -68,7 +68,7 @@ public:
     std::vector<boost::shared_ptr<Chromosome> > mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const;
 
     /// Overriding seed since it must be forwarded to the contained mating implementation (dm_).
-    void seed(const unsigned int seed);
+    void seed(const Size seed);
 
     /// Overriding getSeed since it must be requested from the mating implementation (dm_).
     unsigned int getSeed();

@@ -38,9 +38,15 @@
 #include <OpenMS/config.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
-#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mutater.h>
 #include <vector>
 #include <OpenMS/KERNEL/MSSpectrum.h>
+#include <boost/random/variate_generator.hpp>
+#include <boost/random/mersenne_twister.hpp>
+#include <boost/random/normal_distribution.hpp>
+
+using boost::random::variate_generator;
+using boost::random::mt19937;
+using boost::random::normal_distribution;
 
 namespace OpenMS
 {
@@ -52,6 +58,9 @@ namespace OpenMS
   class OPENMS_DLLAPI Utilities
   {
 private:
+	/// random number generator.
+	mutable boost::mt19937 rng;
+
 	/// Copy c'tor shouldn't be used.
 	Utilities(const Utilities& other);
 
@@ -62,26 +71,32 @@ private:
     /// Default c'tor
     Utilities();
 
+    /// provide the seed for the random number generator
+    Utilities(const Size seed);
+
 	/// Generates a random sequence of the desired length and then adjusts the
 	/// amino acids until the weight matches the desired criteria.
 	/// srand must have been called before.
-	static const AASequence getRandomSequence(const int len, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
+	const AASequence getRandomSequence(const int len, const double weight, const double tolerance, const std::vector<const Residue *> aaList) const;
 
     /// from the list of available amino acids selects a random one.
 	/// srand must have been called before.
-    static const String getRandomAA(const std::vector<const Residue *> aaList);
+    const String getRandomAA(const std::vector<const Residue *> aaList) const;
 
     /// The random string may not fit to the expected precursor mass and is then adjusted to fit (if possible with a maximum of 3 changes).
     /// The passed in sequence is directly modified.
 	/// srand must have been called before.
-    static bool adjustToFitMass(AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList);
+    bool adjustToFitMass(AASequence & sequence, const double weight, const double tolerance, const std::vector<const Residue *> aaList) const;
 
 	/// Uses the Seqan Needleman-Wunsch implementation to calculated the edit distance
 	/// of the two amino acid sequences.
-    static unsigned int editDistance(const AASequence & lhs, const AASequence & rhs);
+    Size editDistance(const AASequence & lhs, const AASequence & rhs) const;
 
 	/// Iterates over the provided spectrum and returns the sum of all intensities.
-    static double getSummedIntensity(const MSSpectrum<> * ms);
+    double getSummedIntensity(const MSSpectrum<> * ms) const;
+
+    /// to change the seed or to fix it for unit tests.
+    void seed(const Size seed);
 
   };
 } // namespace

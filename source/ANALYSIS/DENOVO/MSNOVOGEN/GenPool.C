@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h"
 #include <vector>
+#include <boost/random/uniform_int_distribution.hpp>
 
 using std::vector;
 
@@ -47,12 +48,10 @@ namespace OpenMS
 {
 
   GenPool::GenPool(const int maxPoolSize, const double pmt, const double pm, const int charge) :
-    maxPoolSize_(maxPoolSize), previousPoolSize_(0),
+	rng(time(NULL)), maxPoolSize_(maxPoolSize), previousPoolSize_(0),
     precursorMassTolerance_(pmt),
     precursorMass_(pm), precursorCharge_(charge)
-  {
-	  seed(time(0));
-  }
+  {}
 
   void GenPool::sort(const int sortMethod)
   {
@@ -123,7 +122,8 @@ namespace OpenMS
     }
     for(int i=0; i<toAdd; i++)
     {
-    	Size pos = rand() % ki.size();
+		boost::random::uniform_int_distribution<Size> int_distribution(0, (ki.size()-1));
+    	Size pos = int_distribution(rng);
     	genPool_.push_back(ki[pos]);
     }
     sort(Chromosome::sortScoreDescending);

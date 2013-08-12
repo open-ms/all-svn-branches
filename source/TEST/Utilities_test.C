@@ -80,6 +80,7 @@ START_TEST(Utilities, "$Id$")
 
 Utilities* ptr = 0;
 Utilities* null_ptr = 0;
+
 START_SECTION(Utilities())
 {
 	ptr = new Utilities();
@@ -87,22 +88,16 @@ START_SECTION(Utilities())
 }
 END_SECTION
 
-START_SECTION(~Utilities())
-{
-	delete ptr;
-}
-END_SECTION
-
 START_SECTION((static const AASequence getRandomSequence(const int seed, const int len, const double weight, const double tolerance, const std::vector< const Residue * > aaList)))
 {
 
-	int test[] = {0,3000,10000,12000,14000,15500};
-	String 	expSeq[] = {"GGQGIWD","KNHGYGG","WGGAWGV","","GCAVVRK","RGMEGAI"};
-	int		expLen[] = {7,7,7,0,7,7};
-	bool	expRes[] = {true,true,true,false,true,true};
-	for(int i=0; i<6; i++) {
-		srand(test[i]);
-		AASequence rand = Utilities::getRandomSequence(7,seq.getMonoWeight(Residue::Full),1.5,aaList);
+	int test[] = {10000,12000,14000,66666};
+	String 	expSeq[] = {"","EGHYIGG","CIDDPLG","HSGVSMD"};
+	int		expLen[] = {0,7,7,7};
+	bool	expRes[] = {false,true,true,true};
+	for(int i=0; i<4; i++) {
+		ptr->seed(test[i]);
+		AASequence rand = ptr->getRandomSequence(7,seq.getMonoWeight(Residue::Full),1.5,aaList);
 		TEST_STRING_EQUAL(rand.toString(), expSeq[i]);
 		TEST_NOT_EQUAL(rand.toString(), seq.toString());
 		TEST_EQUAL(expLen[i],rand.size());
@@ -115,11 +110,11 @@ START_SECTION((static const String getRandomAA(const int seed, const std::vector
 {
 
 	int test[] = {0,6000,10000,14000,15000};
-	String res[] = {"D","A","V","C","D"};
+	String res[] = {"L","Q","L","V","D"};
 	for(int i=0; i<5; i++)
 	{
-		srand(test[i]);
-		TEST_EQUAL(Utilities::getRandomAA(aaList),res[i]);
+		ptr->seed(test[i]);
+		TEST_EQUAL(ptr->getRandomAA(aaList),res[i]);
 	}
 }
 END_SECTION
@@ -129,12 +124,12 @@ START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence,
     
 	int test[] = {0,6000,10000,14000,15000};
 	String 	inSeq[] = {"DPPAFGC","GEPIVFG","VGASNFK","VQQAASR","DDNIALR"};
-	String 	exSeq[] = {"DQPAFGC","GEPQVFG","VGASNRK","VQMAAGR","DDNIALA"};
-	bool 	expRes[] = {false,true,true,true,true,true};
+	String 	exSeq[] = {"DPPPFGC","GQIIVFG","VGAPNFK","VQQAASE","SGNDALR"};
+	bool 	expRes[] = {true,true,true,true,true,true};
 	for(int i=0; i<5; i++) {
-		srand(test[i]);
+		ptr->seed(test[i]);
 		AASequence rand(inSeq[i]);
-		Utilities::adjustToFitMass(rand,seq.getMonoWeight(Residue::Full),1.5,aaList);
+		ptr->adjustToFitMass(rand,seq.getMonoWeight(Residue::Full),1.5,aaList);
 		TEST_EQUAL(expRes[i],(std::abs(rand.getMonoWeight(Residue::Full)-seq.getMonoWeight(Residue::Full))<1.5));
 		TEST_EQUAL(7,rand.size());
 		TEST_NOT_EQUAL(inSeq[i],rand.toString());
@@ -143,8 +138,9 @@ START_SECTION((static bool adjustToFitMass(const int seed, AASequence &sequence,
 
 	AASequence m("AAAAAAAAAA");
 	AASequence c("AAGGGLLLLL");
-	Utilities::adjustToFitMass(c,m.getMonoWeight(Residue::Full),1.5,aaList);
-	TEST_EQUAL((std::abs(c.getMonoWeight(Residue::Full)-m.getMonoWeight(Residue::Full))<1.5),false);
+	ptr->seed(5080);
+	bool success = ptr->adjustToFitMass(c,m.getMonoWeight(Residue::Full),0.05,aaList);
+	TEST_EQUAL(success,false);
 }
 END_SECTION
 
@@ -154,10 +150,10 @@ START_SECTION((static int editDistance(const AASequence &lhs, const AASequence &
   AASequence seq2("ALLMER");
   AASequence seq3("TELLER");
   AASequence seq4("TELLLLER");
-  TEST_EQUAL(0,Utilities::editDistance(seq1,seq1));
-  TEST_EQUAL(0,Utilities::editDistance(seq1,seq2));
-  TEST_EQUAL(3,Utilities::editDistance(seq1,seq3));
-  TEST_EQUAL(2,Utilities::editDistance(seq4,seq3));
+  TEST_EQUAL(0,ptr->editDistance(seq1,seq1));
+  TEST_EQUAL(0,ptr->editDistance(seq1,seq2));
+  TEST_EQUAL(3,ptr->editDistance(seq1,seq3));
+  TEST_EQUAL(2,ptr->editDistance(seq4,seq3));
 }
 END_SECTION
 
@@ -173,8 +169,14 @@ START_SECTION((static double getSummedIntensity(const MSSpectrum<> *ms)))
 		ms.push_back(Peak1D(*iter));
 	}
 	Param param;
-	double tic = Utilities::getSummedIntensity(&ms);
+	double tic = ptr->getSummedIntensity(&ms);
 	TEST_REAL_SIMILAR(tic,9);
+}
+END_SECTION
+
+START_SECTION(~Utilities())
+{
+	delete ptr;
 }
 END_SECTION
 

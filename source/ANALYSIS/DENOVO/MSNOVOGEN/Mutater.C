@@ -36,21 +36,14 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <stdlib.h>
 #include <time.h>
+#include <boost/random.hpp>
 
 namespace  OpenMS
 {
 
   Mutater::Mutater(double pm, double pmt, std::vector<const Residue*> al)
-    : mutationRate_(0.2), precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
-  {
-	//mutationRate = 0.2;
-    //this->precursorMass = precursorMass;
-    //this->precursorMassTolerance = precursorMassTolerance;
-    //this->aaList = aaList;
-
-    // make sure random is initialized
-	  seed((unsigned int)time(0));
-  }
+    : rng(time(NULL)), mutationRate_(0.2), precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
+  { }
 
   Mutater::~Mutater()
   {
@@ -58,9 +51,10 @@ namespace  OpenMS
 
 	void Mutater::mutatePool(GenPool& pool) const
 	{
+		boost::random::uniform_real_distribution<double> u01;
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
 		{
-		  double rv = (rand() % 101)/100.0;
+		  double rv = u01(rng);
 		  if(rv > getMutationRate())
 			continue;
 		  this->mutate(*iter);
@@ -70,9 +64,10 @@ namespace  OpenMS
 	void Mutater::mutateAndAddToPool(GenPool& pool) const
 	{
 		std::vector<boost::shared_ptr<Chromosome> > add;
+		boost::random::uniform_real_distribution<double> u01;
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
 		{
-		  double rv = (rand() % 101)/100.0;
+		  double rv = u01(rng);
 		  if(rv > getMutationRate())
 			continue;
 		  boost::shared_ptr<Chromosome> ni(new Chromosome((*iter)->getSequence(),(*iter)->getCharge()));
@@ -89,10 +84,9 @@ namespace  OpenMS
 		return cpy;
 	}
 
-  void Mutater::seed(unsigned int seed)
+  void Mutater::seed(const Size seed)
   {
-	randomSeed_ = seed;
-	srand(randomSeed_);
+	rng.seed(seed);
   }
 
 } // namespace

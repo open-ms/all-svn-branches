@@ -34,6 +34,7 @@
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SwappingMutater.h>
 #include <stdlib.h>
+#include <boost/random/uniform_int_distribution.hpp>
 
 namespace OpenMS
 {
@@ -48,8 +49,10 @@ namespace OpenMS
   {
     AASequence as = chromosome->getSequence();
     Size mid = as.size()/2;
-    Size lpos = rand() % mid;
-    Size rpos = rand() % mid + mid;
+	boost::random::uniform_int_distribution<> ldist(0, (int)(mid-1));
+	boost::random::uniform_int_distribution<> rdist(0, (int)((mid+mid)-1));
+	Size lpos = ldist(rng);
+    Size rpos = rdist(rng);
     const Residue & r = as.getResidue(rpos);
     const Residue & nr = as.setResidue(lpos, &r);
     as.setResidue(rpos, &nr);

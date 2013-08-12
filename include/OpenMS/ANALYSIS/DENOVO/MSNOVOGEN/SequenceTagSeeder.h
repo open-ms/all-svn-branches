@@ -62,7 +62,7 @@ private:
 	std::vector<OpenMS::SequenceTagSeeder::SeqTag> createSequenceTags() const;
 
 	/// Allows to remove code duplication.
-	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual(std::vector<OpenMS::SequenceTagSeeder::SeqTag> tags) const;
+	boost::shared_ptr<Chromosome> createIndividual(std::vector<OpenMS::SequenceTagSeeder::SeqTag> tags) const;
 
 public:
 	/// Default c'tor taking all necessary information

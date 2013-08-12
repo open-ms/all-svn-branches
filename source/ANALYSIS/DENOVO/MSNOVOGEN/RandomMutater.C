@@ -34,6 +34,7 @@
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomMutater.h>
 #include <stdlib.h>
+#include <boost/random.hpp>
 
 namespace OpenMS
 {
@@ -48,16 +49,14 @@ namespace OpenMS
     weights_.push_back(0.4);
     weights_.push_back(0.7);
     weights_.push_back(1.0);
-	subm_.seed(getSeed());
-	swam_.seed(getSeed());
-	invm_.seed(getSeed());
-	defm_.seed(getSeed());
+    seed((Size)time(NULL));
   }
 
   void RandomMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
-	double rv = (double)(rand() % 101) / (double)100; //Random number between 0 and 1 (inclusive).
-    for(unsigned int i=0; i<weights_.size(); i++)
+	boost::random::uniform_real_distribution<double> u01;
+	double rv = u01(rng);
+    for(Size i=0; i<weights_.size(); i++)
     {
       if(weights_[i] <= rv)
       {
@@ -78,6 +77,15 @@ namespace OpenMS
       }
     }
     return defm_.mutate(chromosome);
+  }
+
+  void RandomMutater::seed(const Size seed)
+  {
+	subm_.seed(seed);
+	swam_.seed(seed);
+	invm_.seed(seed);
+	defm_.seed(seed);
+
   }
 
 } // namespace

@@ -42,24 +42,23 @@ namespace OpenMS
 
   SimpleMater::SimpleMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
     Mater(precursorMass, precursorMassTolerance, aaList)
-  {
-	  seed((unsigned int)time(0));
-  }
+  {}
 
   std::vector<boost::shared_ptr<Chromosome> > SimpleMater::mate(const boost::shared_ptr<Chromosome> lhs, const boost::shared_ptr<Chromosome> rhs) const
   {
 	Size min = std::min(lhs->getSequence().size(), rhs->getSequence().size());
 	std::vector<boost::shared_ptr<Chromosome> > ret;
-	int cop = rand() % min;
+	boost::random::uniform_int_distribution<int> int_distribution(0, ((int)(min-1)));
+	int cop = int_distribution(rng);
 	String uc(lhs->getSequence().getSubsequence(0,cop).toString() + rhs->getSequence().getSubsequence(cop,rhs->getSequence().size()-cop).toString());
 	AASequence ucaa(uc);
-	if(Utilities::adjustToFitMass(ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+	if(getUtils()->adjustToFitMass(ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 	{
 		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(ucaa,lhs->getCharge())));
 	}
 	String lc(rhs->getSequence().getSubsequence(0,cop).toString() + lhs->getSequence().getSubsequence(cop,lhs->getSequence().size()-cop).toString());
 	AASequence lcaa(lc);
-	if(Utilities::adjustToFitMass(lcaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+	if(getUtils()->adjustToFitMass(lcaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 		ret.push_back(boost::shared_ptr<Chromosome>(new Chromosome(lcaa,lhs->getCharge())));
 	return ret;
   }

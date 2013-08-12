@@ -41,14 +41,21 @@
 #include <stdlib.h>
 #include <iostream>
 #include <boost/shared_ptr.hpp>
+#include <time.h>
+#include <boost/random/uniform_int_distribution.hpp>
 
 namespace OpenMS
 {
 
-  Utilities::Utilities()
+  Utilities::Utilities() : rng(time(NULL))
   {}
 
-	const AASequence Utilities::getRandomSequence(const int len,const double weight, const double tolerance,const std::vector<const Residue*> aaList)
+  Utilities::Utilities(const Size seed)
+  {
+	  this->seed(seed);
+  }
+
+	const AASequence Utilities::getRandomSequence(const int len,const double weight, const double tolerance,const std::vector<const Residue*> aaList) const
 	{
 	    String str;
 	    for(int i=0; i<len; i++)
@@ -60,15 +67,16 @@ namespace OpenMS
 	    	return(AASequence(""));
 	}
 
-	const String Utilities::getRandomAA(const std::vector<const Residue*> aaList)
+	const String Utilities::getRandomAA(const std::vector<const Residue*> aaList) const
 	{
-	    Size i = rand() % aaList.size();
+		boost::random::uniform_int_distribution<int> int_distribution(0, (int)(aaList.size()-1));
+	    Size i = int_distribution(rng);
 	    return(aaList[i]->getModifiedOneLetterCode());
 	}
 
 	bool Utilities::adjustToFitMass(AASequence& sequence,
 		const double weight, const double tolerance,
-		const std::vector<const Residue*> aaList)
+		const std::vector<const Residue*> aaList) const
 	{
 		double curWeight = sequence.getMonoWeight();
 		double diff = std::abs(curWeight-weight);
@@ -80,7 +88,8 @@ namespace OpenMS
 		int mi = 10;	//max iterations for while loop
 		while(diff > tolerance)
 	    {
-		  pos = rand() % sequence.size();
+		  boost::random::uniform_int_distribution<int> int_distribution(0, (int)(sequence.size()-1));
+		  pos = int_distribution(rng);
 		  minDiff = diff;
 		  const Residue * replace = NULL;
 		  for(Size lp=0; lp<aaList.size(); lp++)
@@ -105,16 +114,16 @@ namespace OpenMS
 	}
 
 	using namespace seqan;
-	unsigned int Utilities::editDistance(const AASequence& lhs, const AASequence& rhs)
+	Size Utilities::editDistance(const AASequence& lhs, const AASequence& rhs) const
 	{
 		Align<std::string> align;
 		resize(rows(align), 2);
 		assignSource(row(align,0),lhs.toUnmodifiedString());
 		assignSource(row(align,1),rhs.toUnmodifiedString());
-		return std::abs(globalAlignment(align, seqan::Score<int,Simple>(0,-1,-1)));
+		return (Size)std::abs(globalAlignment(align, seqan::Score<int,Simple>(0,-1,-1)));
 	}
 
-	double Utilities::getSummedIntensity(const MSSpectrum<>* ms)
+	double Utilities::getSummedIntensity(const MSSpectrum<>* ms) const
 	{
 		double ret = 0;
 		for(std::vector<Peak1D>::const_iterator iter = ms->begin(); iter != ms->end(); iter++)
@@ -122,6 +131,11 @@ namespace OpenMS
 			ret += iter->getIntensity();
 		}
 		return(ret);
+	}
+
+	void Utilities::seed(const Size seed)
+	{
+		rng.seed(seed);
 	}
 
 } // namespace

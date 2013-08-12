@@ -86,7 +86,7 @@ public:
     boost::shared_ptr<Chromosome> createIndividual() const;
 
 	/// Ovrridden to forward the seed to the contained objects.
-	void seed(const unsigned int seed);
+	void seed(const Size seed);
 
     /// Returns the weights currently set for the Mutaters.
 	const std::vector<double> getWeights() const

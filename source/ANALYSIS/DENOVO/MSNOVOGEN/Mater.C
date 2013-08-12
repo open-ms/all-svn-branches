@@ -35,6 +35,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h>
+#include <boost/random.hpp>
 #include <time.h>
 #include <stdlib.h>
 
@@ -42,9 +43,11 @@
 namespace OpenMS
 {
 	Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-	aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
+		rng(std::time(NULL)), aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
 	{
-	  seed((unsigned int)time(0));
+	  Size seed = (unsigned int)time(0);
+	  this->seed(seed);
+	  utils.seed(seed);
 	}
 
 	Mater::~Mater()
@@ -54,13 +57,14 @@ namespace OpenMS
 	{
 		boost::shared_ptr<Chromosome> ret;
 		boost::shared_ptr<Chromosome> test;
-		Size rv = 0;
-		int dist = 0;
+		int rv = 0;
+		Size dist = 0;
+		boost::random::uniform_int_distribution<int> int_distribution(0, (int)(genPool.getPopulationSize()-1));
 		while(!ret)
 		{
-			rv = rand() % genPool.getPopulationSize();
+			rv = int_distribution(rng);
 			test = genPool.getGenPool()[rv];
-			dist = Utilities::editDistance(exclude->getSequence(),test->getSequence());
+			dist = utils.editDistance(exclude->getSequence(),test->getSequence());
 			if(dist < 3)
 				continue;
 			ret = test;
@@ -68,10 +72,10 @@ namespace OpenMS
 		return(ret);
 	}
 
-	void Mater::seed(const unsigned int seed)
+	void Mater::seed(const Size seed)
 	{
-		randomSeed_ = seed;
-		srand(randomSeed_);
+		rng.seed(seed);
+		utils.seed(seed);
 	}
 
 	std::vector<boost::shared_ptr<Chromosome> > Mater::tournament(GenPool & pool) const

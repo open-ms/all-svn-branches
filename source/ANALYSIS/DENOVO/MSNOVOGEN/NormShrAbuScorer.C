@@ -81,7 +81,8 @@ namespace OpenMS
 		  }
 	  }
 	  epue = expMS->size() - nsp;
-	  double tic = Utilities::getSummedIntensity(expMS);
+	  Utilities utils;
+	  double tic = utils.getSummedIntensity(expMS);
 	  ems = tic  - sms;
 	  score = sms/tic/(double)chromosome->getSequence().size();
 	  chromosome->setScore(score);

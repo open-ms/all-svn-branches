@@ -58,7 +58,7 @@ private:
 	NormShrAbuScorer(const NormShrAbuScorer& other);
 
 public:
-	/// Default c'tor providing all neccessary information.
+	/// Default c'tor providing all necessary information.
 	NormShrAbuScorer(const double fragmentMassTolerance);
 
 	/// Implementation of virtual method Scorer::score.

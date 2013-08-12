@@ -40,7 +40,7 @@ namespace OpenMS
 	DefaultSeeder::DefaultSeeder(const MSSpectrum<> * ms, const double pm, const double pmt, const double fmt, const std::vector<const Residue*> al) :
 	Seeder(ms, pm, pmt,fmt, al), ds_(ms, pm, pmt,fmt, al)
 	{
-		ds_.seed((unsigned int)time(0));
+		ds_.seed((Size)time(0));
 	}
 
 	boost::shared_ptr<Chromosome> DefaultSeeder::createIndividual() const
@@ -48,7 +48,7 @@ namespace OpenMS
 		return ds_.createIndividual();
 	}
 
-	void DefaultSeeder::seed(const unsigned int seed)
+	void DefaultSeeder::seed(const Size seed)
 	{
 		ds_.seed(seed);
 	}

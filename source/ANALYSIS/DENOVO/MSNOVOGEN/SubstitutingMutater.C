@@ -35,22 +35,23 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h>
 #include <stdlib.h>
 #include <time.h>
+#include <boost/random/uniform_int_distribution.hpp>
 
 namespace OpenMS
 {
 
   SubstitutingMutater::SubstitutingMutater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
     : Mutater(precursorMass, precursorMassTolerance, aaList)
-  {
-	seed((unsigned int)time(0));
-  }
+  {}
 
   void SubstitutingMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
 	AASequence as = chromosome->getSequence();
 	double seqMass = as.getMonoWeight();
-    Size rp = rand() % as.size();
-    int sa = rand() % getAAList().size();
+	boost::random::uniform_int_distribution<Size> seqPos(0,(as.size()-1));
+	Size rp = seqPos(rng);
+    boost::random::uniform_int_distribution<Size> listPos(0, (getAAList().size()-1));
+    int sa = listPos(rng);
     const Residue * nr = getAAList()[sa];
     const Residue & replaced = as.setResidue(rp, nr);
 
@@ -77,7 +78,8 @@ namespace OpenMS
     	}
     }
     if(possRep.size() > 0) {
-      int w = rand() % possRep.size();
+	  boost::random::uniform_int_distribution<Size> posDist(0, (possRep.size()-1));
+	  Size w = posDist(rng);
       as.setResidue(possRep[w].first, possRep[w].second);
       chromosome->setSequence(as);
     }

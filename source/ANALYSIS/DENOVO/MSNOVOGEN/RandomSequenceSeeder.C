@@ -57,13 +57,13 @@ namespace OpenMS
 	  AASequence aaSeq;
 	  do
 	  {
-		sequence += Utilities::getRandomAA(getAAList());
+		sequence += getUtils()->getRandomAA(getAAList());
 		aaSeq = AASequence(sequence);
 		curMass = aaSeq.getMonoWeight();
 	  } while(curMass < maxMass && sequence.length() <= maxLen);
 	  if(sequence.length() >= minLen)
 	  {
-		  if(Utilities::adjustToFitMass(aaSeq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
+		  if(getUtils()->adjustToFitMass(aaSeq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 		  {
 		    return boost::shared_ptr<Chromosome>(new Chromosome(aaSeq,0));
 		  }

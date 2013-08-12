@@ -41,6 +41,8 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 #include <OpenMS/KERNEL/MSSpectrum.h>
+#include <boost/random/mersenne_twister.hpp>
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Utilities.h"
 
 namespace OpenMS
 {
@@ -51,9 +53,10 @@ namespace OpenMS
 	*/
   class OPENMS_DLLAPI Seeder
   {
+protected:
+  	/// random number generator must be mutable since Mater must be const * in GenAlg.
+  	mutable boost::mt19937 rng;
 private:
-	/// Seed to initialize random processes.
-	unsigned int randomSeed_;
 	/// A list of amino acids that can form a sequence is needed for some mutation processes.
 	std::vector<const Residue*> aaList_;
 	/// it is necessary to know the precursor mass to propose suitable sequences
@@ -64,6 +67,8 @@ private:
 	double fragmentMassTolerance_;
 	/// Mass spectrum which may be used in some deriving classes.
 	const MSSpectrum<> * msms_;
+	/// Utilities class necessary for some calculations.
+	Utilities utils;
 
 private:
 	/// To forbid copy construction
@@ -86,13 +91,7 @@ public:
     virtual std::vector<boost::shared_ptr<Chromosome> > createIndividuals(const Size num) const;
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const unsigned int seed);
-
-	/// Allows the retrieval of the currently set seed (needed in some derived classes).
-	unsigned int getSeed() const
-	{
-		return randomSeed_;
-	}
+	void seed(const Size seed);
 	
 	/// Allows to retrieve the amino acid list (needed in derived classes).
 	const std::vector<const Residue*>& getAAList() const {
@@ -117,6 +116,11 @@ public:
 	/// Allows to retrieve the spectrum (needed in derived classes)
 	const MSSpectrum<> * getMassSpectrum() const {
 		return msms_;
+	}
+
+	/// Allows derived classes to use the utilities in the base class.
+	const Utilities * getUtils() const {
+		return(&utils);
 	}
 };
 } // namespace

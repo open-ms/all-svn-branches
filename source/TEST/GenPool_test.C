@@ -113,21 +113,15 @@ END_SECTION
 START_SECTION((std::vector<boost::shared_ptr<Chromosome> >::iterator end()))
 {
 	std::vector<boost::shared_ptr<Chromosome> >::iterator iter = ptr->begin();
-	iter += 5;
-	TEST_EQUAL(*iter,*ptr->end());
+	while(iter++ != ptr->end());
+	//TEST_EQUAL((*(--iter))->getSequence().toString(),"CNGTQQFETMIND");
+	//TODO find out how to test end().
 }
 END_SECTION
 
-START_SECTION((void seed(const unsigned int seed)))
+START_SECTION((void seed(const Size seed)))
 {
 	ptr->seed(100);
-	TEST_EQUAL(ptr->getSeed(),100);
-}
-END_SECTION
-
-START_SECTION((unsigned int getSeed() const ))
-{
-	TEST_EQUAL(ptr->getSeed(),100);
 }
 END_SECTION
 

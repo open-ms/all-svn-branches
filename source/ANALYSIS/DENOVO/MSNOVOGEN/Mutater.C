@@ -88,7 +88,7 @@ namespace  OpenMS
 		return cpy;
 	}
 
-  void Mutater::seed(const Size seed)
+  void Mutater::seed(const Size seed) const
   {
 	rng.seed(seed);
 	utils.seed(seed);

@@ -68,7 +68,7 @@ private:
 	/// it is necessary to know the precursor mass to propose suitable sequences
 	double precursorMassTolerance_;
 	/// Utilities class necessary for some calculations.
-	Utilities utils;
+	mutable Utilities utils;
 
 private:
 	/// Copy c'tor shouldn't be used.
@@ -101,7 +101,7 @@ public:
     void tournamentAndAddToPool(GenPool & genPool) const;
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const Size seed);
+	void seed(const Size seed) const;
 
 	/// Allows derived classes to access the amino acid list.
 	const std::vector<const Residue*>& getAAList() const {

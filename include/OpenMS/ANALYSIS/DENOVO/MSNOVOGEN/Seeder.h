@@ -68,7 +68,7 @@ private:
 	/// Mass spectrum which may be used in some deriving classes.
 	const MSSpectrum<> * msms_;
 	/// Utilities class necessary for some calculations.
-	Utilities utils;
+	mutable Utilities utils;
 
 private:
 	/// To forbid copy construction
@@ -91,7 +91,7 @@ public:
     virtual std::vector<boost::shared_ptr<Chromosome> > createIndividuals(const Size num) const;
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const Size seed);
+	void seed(const Size seed) const;
 	
 	/// Allows to retrieve the amino acid list (needed in derived classes).
 	const std::vector<const Residue*>& getAAList() const {

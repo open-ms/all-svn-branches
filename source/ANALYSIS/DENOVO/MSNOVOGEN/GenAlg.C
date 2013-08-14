@@ -49,14 +49,14 @@ using std::vector;
 namespace OpenMS
 {
 
-	GenAlg::GenAlg(const MSSpectrum<>* spec, const std::vector<const Residue *>& al, const int mps, const double pmt, const double fmt) :
+	GenAlg::GenAlg(const MSSpectrum<>* spec, const std::vector<const Residue *>& al, const Size mps, const double pmt, const double fmt) :
 	  aaList_(al),
 	  rejuvenateAfter_(mps),
 	  precursorMassTolerance_(pmt),
-	  fragmentMassTolerance_(fmt)
+	  fragmentMassTolerance_(fmt),
+	  rng_(time(NULL))
 	{
 		setMSMSSpectrum(spec);
-		seed(time(0));
 		genPool_ = new GenPool(mps, precursorMassTolerance_, getPrecursorMH(), precursorCharge_);
 		mutater_ = boost::shared_ptr<const Mutater>(new DefaultMutater(getPrecursorMH(),precursorMassTolerance_,aaList_));
 		mater_= boost::shared_ptr<const Mater>(new DefaultMater(getPrecursorMH(),precursorMassTolerance_,aaList_));
@@ -69,6 +69,14 @@ namespace OpenMS
 	GenAlg::~GenAlg()
 	{
 		delete genPool_;
+	}
+
+	void GenAlg::seed(const Size seed) const
+	{
+		rng_.seed(seed);
+		mutater_->seed(seed);
+		mater_->seed(seed);
+		seeder_->seed(seed);
 	}
 
 	const std::map<String, boost::shared_ptr<Chromosome> > GenAlg::getKnownIndividuals() const
@@ -169,32 +177,34 @@ namespace OpenMS
 		return true;
 	}
 
-	void GenAlg::startEvolution(const int numGenerations)
+	void GenAlg::startEvolution(const Size numGenerations)
 	{
 		startEvolution(numGenerations, numGenerations + 1);
 	}
 
 	void GenAlg::initGenPool()
 	{
+		if(genPool_->getPopulationSize() > 0)
+			genPool_->clear();
 		Size maxTries = 20 * genPool_->getMaxPoolSize();
 	    while((maxTries > 0) && (genPool_->getPopulationSize() < genPool_->getMaxPoolSize()))
 	    {
 	      boost::shared_ptr<Chromosome> ni = seeder_->createIndividual();
-	      if(ni.get()->getSequence().size() > 0)
+		  if(ni && ni->getSequence().size() > 0)
 	        genPool_->addIndividual(ni);
 	      maxTries--;
 	    }
 	    genPool_->setPreviousPoolSize(genPool_->getPopulationSize());
 	}
 
-	void GenAlg::startEvolution(const int numGenerations,
-			const int endIfStableForNumGenerations)
+	void GenAlg::startEvolution(const Size numGenerations,
+			const Size endIfStableForNumGenerations)
 	{
 		if(!checkEnvironment())
 			return;
 		initGenPool();
-		int i = 0;
-		int sameBestRepeat = 0;
+		Size i = 0;
+		Size sameBestRepeat = 0;
 		while((i++ < numGenerations) && (sameBestRepeat < endIfStableForNumGenerations))
 		{
 			crossover();

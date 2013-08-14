@@ -85,7 +85,7 @@ public:
     ~GenPool() {};
 
     /// Returns the size of the current population.
-    Size getPopulationSize();
+    const Size getPopulationSize() const;
 
     /// Sorts the current gen pool by score either decreasing (default) or increasing (Chromosome::sortScoreAscending).
     void sort(const int sortMethod = Chromosome::sortScoreDescending);
@@ -162,6 +162,11 @@ public:
 	/// returns the maximum pool size that was set during construction.
 	unsigned int getMaxPoolSize() const {
 		return maxPoolSize_;
+	}
+
+	/// Clear the current gene pool.
+	void clear() {
+		genPool_.clear();
 	}
 };
 } // namespace

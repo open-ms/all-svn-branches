@@ -51,7 +51,7 @@ namespace OpenMS
   Seeder::~Seeder()
   {}
 
-  void Seeder::seed(const Size seed)
+  void Seeder::seed(const Size seed) const
   {
 	  rng.seed(seed);
 	  utils.seed(seed);

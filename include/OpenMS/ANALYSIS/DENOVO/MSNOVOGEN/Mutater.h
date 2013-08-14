@@ -70,7 +70,7 @@ private:
     /// A list of amino acids that can form a sequence is needed for some mutation processes.
     std::vector<const Residue*> aaList_;
     /// Utilities class necessary for some calculations.
-	Utilities utils;
+	mutable Utilities utils;
 
 private:
     /// To forbid copy construction
@@ -116,7 +116,7 @@ public:
 	}
 
 	/// to change the seed or to fix it for unit tests.
-	void seed(const Size seed);
+	void seed(const Size seed) const;
 
 	/// Allows to retrieve the amino acid list (needed in derived classes).
 	const std::vector<const Residue*>& getAAList() const {

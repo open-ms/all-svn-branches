@@ -65,7 +65,7 @@ namespace OpenMS
 	  }
   }
 
-  Size GenPool::getPopulationSize() {
+  const Size GenPool::getPopulationSize() const {
     return(genPool_.size());
   }
 

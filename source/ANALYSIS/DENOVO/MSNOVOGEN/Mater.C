@@ -72,7 +72,7 @@ namespace OpenMS
 		return(ret);
 	}
 
-	void Mater::seed(const Size seed)
+	void Mater::seed(const Size seed) const
 	{
 		rng.seed(seed);
 		utils.seed(seed);

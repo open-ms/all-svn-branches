@@ -48,8 +48,11 @@ namespace OpenMS
 
 	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual() const
 	{
+		boost::shared_ptr<Chromosome> chr;
 		std::vector<OpenMS::SequenceTagSeeder::SeqTag> tags = createSequenceTags();
-		return createIndividual(tags);
+		if(tags.size() > 0)
+			return createIndividual(tags);
+		return chr;
 	}
 
 	boost::shared_ptr<Chromosome> SequenceTagSeeder::createIndividual(std::vector<OpenMS::SequenceTagSeeder::SeqTag> tags) const
@@ -57,15 +60,23 @@ namespace OpenMS
 		boost::random::uniform_int_distribution<Size> int_distribution(0, (tags.size()-1));
 		Size rs = int_distribution(rng);
 		OpenMS::SequenceTagSeeder::SeqTag rst = tags[rs];
-		int len = rst.before_ / 110;
-		AASequence beg = getUtils()->getRandomSequence(len, rst.before_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
-		len = rst.after_ / 110;
-		AASequence end = getUtils()->getRandomSequence(len, rst.after_+19 /* method assumes full sequence */, getPrecursorMassTolerance(), getAAList());
+		Size bmaxlen = std::max(((int)(rst.before_ / 57)),1);
+		Size bminlen = std::max(((int)(rst.before_ / 186)),1);
+		boost::random::uniform_int_distribution<Size> befLen(bminlen, bmaxlen);
+		Size len = befLen(rng);
+		AASequence beg = getUtils()->getRandomSequence(len, rst.before_+19 /* method assumes MH+ */, getPrecursorMassTolerance(), getAAList());
+		Size amaxlen = std::max(((int)(rst.after_ / 57)),1);
+		Size aminlen = std::max(((int)(rst.after_ / 186)),1);
+		boost::random::uniform_int_distribution<Size> aftLen(aminlen, amaxlen);
+		len = aftLen(rng);
+		AASequence end = getUtils()->getRandomSequence(len, rst.after_+19 /* method assumes MH+ */, getPrecursorMassTolerance(), getAAList());
+
 		String fullSeq = beg.toString() + rst.seq_ + end.toString();
 		AASequence seq(fullSeq);
 		if(getUtils()->adjustToFitMass(seq,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))
 			return boost::shared_ptr<Chromosome>(new Chromosome(seq,1));
-		return boost::shared_ptr<Chromosome>(new Chromosome());
+		boost::shared_ptr<Chromosome> chr;
+		return chr;
 	}
 
 	std::vector<boost::shared_ptr<Chromosome> > SequenceTagSeeder::createIndividuals(const Size num) const

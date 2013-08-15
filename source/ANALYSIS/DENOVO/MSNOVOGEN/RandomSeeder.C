@@ -57,19 +57,22 @@ namespace OpenMS
 	boost::shared_ptr<Chromosome> chr;
 	boost::random::uniform_real_distribution<double> u01;
 	double rv = u01(rng);
-    for(unsigned int i=0; i<weights_.size(); i++)
+    for(Size i=0; i<weights_.size(); i++)
     {
       if(weights_[i] > rv)
       {
         switch(i) {
           case RandomSeeder::randomSequenceSeeder :
 			   chr = rss.createIndividual();
+			   return chr;
 			   break;
           case RandomSeeder::sequenceTagSeeder :
 			   chr = sts.createIndividual();
+			   return chr;
 			   break;
           default:
 			   chr = ds.createIndividual();
+			   return chr;
 			   break;
         }
       }
@@ -79,6 +82,7 @@ namespace OpenMS
 
   void RandomSeeder::seed(const Size seed)
   {
+	  Seeder::seed(seed);
 	  rss.seed(seed);
 	  sts.seed(seed);
 	  ds.seed(seed);

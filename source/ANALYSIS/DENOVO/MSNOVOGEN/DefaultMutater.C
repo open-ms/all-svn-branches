@@ -51,7 +51,7 @@ namespace OpenMS
 		dm_.mutate(chromosome);
 	}
 
-	void DefaultMutater::seed(const unsigned int seed)
+	void DefaultMutater::seed(const Size seed)
 	{
 		dm_.seed(seed);
 	}

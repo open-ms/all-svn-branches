@@ -59,7 +59,7 @@ namespace OpenMS
   {
 protected:
 	/// random number generator must be mutable since Mater must be const * in GenAlg.
-	mutable boost::mt19937 rng;
+	mutable boost::mt19937 rng_;
 private:
 	/// A list of amino acids that can form a sequence is needed for some mutation processes.
 	std::vector<const Residue*> aaList_;
@@ -68,7 +68,7 @@ private:
 	/// it is necessary to know the precursor mass to propose suitable sequences
 	double precursorMassTolerance_;
 	/// Utilities class necessary for some calculations.
-	mutable Utilities utils;
+	mutable Utilities utils_;
 
 private:
 	/// Copy c'tor shouldn't be used.
@@ -120,7 +120,7 @@ public:
 
 	/// Allows derived classes to use the utilities in the base class.
 	const Utilities * getUtils() const {
-		return(&utils);
+		return(&utils_);
 	}
 
 };

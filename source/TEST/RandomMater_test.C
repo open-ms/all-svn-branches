@@ -92,13 +92,13 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 	RandomMater rm(m.getMonoWeight(Residue::Full),1.5,aaList);
-	rm.seed(150);
+	rm.seed(100);
 	vector<boost::shared_ptr<Chromosome> > res = rm.mate(boost::shared_ptr<Chromosome>(new Chromosome(m,0)), boost::shared_ptr<Chromosome>(new Chromosome(f,0)));
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
-	TEST_EQUAL(2,res.size());
-	TEST_STRING_EQUAL("AAAAGGAAGL",res[0]->getSequence().toString());
-	TEST_STRING_EQUAL("GGGGGALLGA",res[1]->getSequence().toString());
+	TEST_EQUAL(res.size(),2);
+	TEST_STRING_EQUAL(res[0]->getSequence().toString(),"AGGAGGGLGL");
+	TEST_STRING_EQUAL(res[1]->getSequence().toString(),"QGGGGAAAAA");
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[1]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 

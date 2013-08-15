@@ -87,8 +87,8 @@ END_SECTION
 
 START_SECTION((void mutate(boost::shared_ptr< Chromosome > chromosome) const ))
 {
-	int test[]{0,3000,6000,6500,7000,8000,9000};
-	String res[]{"WLQQEVIHAD","WLQSEVIHQV","ELQSEVIHKR","WLQQEVIHAD","WLESKVIHAR","WLQQEVIHAD","WLQSNNIHAR"};
+	int test[] = {0,3000,6000,6500,7000,8000,9000};
+	String res[] = {"WLQSEVIHAR","WLQGEEIHAR","WEQAEVIHAR","IWQSEVIHAR","WLQSEVIHAR","WLQSEVPHSR","WLNSELIHAR"};
 	for(int i=0; i<7; i ++)
 	{
 		boost::shared_ptr<Chromosome> chr(new Chromosome());
@@ -102,17 +102,9 @@ START_SECTION((void mutate(boost::shared_ptr< Chromosome > chromosome) const ))
 }
 END_SECTION
 
-START_SECTION((void seed(const unsigned int seed)))
+START_SECTION((void seed(const Size seed)))
 {
-  TEST_NOT_EQUAL(ptr->getSeed(),50);
   ptr->seed(50);
-  TEST_EQUAL(ptr->getSeed(),50);
-}
-END_SECTION
-
-START_SECTION((unsigned int getSeed()))
-{
-  TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 

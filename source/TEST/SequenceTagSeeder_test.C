@@ -72,7 +72,7 @@ aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
 
-double precursorMass = 1500.5;
+double precursorMass = AASequence("ALLMER").getMonoWeight(Residue::Full);
 double precursorMassTolerance = 2;
 double fragmentMassTolerance = 0.5;
 MSSpectrum<>* msms = new MSSpectrum<>();
@@ -108,23 +108,23 @@ START_SECTION((SequenceTagSeeder(const MSSpectrum<> * spec, const double precurs
 {
 	ptr = new SequenceTagSeeder(msms,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList);
 	ptr->seed(1000);
-	TEST_NOT_EQUAL(ptr, null_ptr)
+	TEST_NOT_EQUAL(ptr, null_ptr);
 }
 END_SECTION
 
 START_SECTION((virtual boost::shared_ptr<Chromosome> createIndividual() const = 0))
 {
 	boost::shared_ptr<Chromosome> chr(ptr->createIndividual());
-	TEST_STRING_EQUAL(chr->getSequence().toString(),"ALLMER");
+	TEST_STRING_EQUAL(chr->getSequence().toString(),"YDHLLA");
 }
 END_SECTION
 
 START_SECTION((virtual std::vector<boost::shared_ptr<Chromosome> > createIndividuals(const Size num) const))
 {
+	ptr->seed(1000);
 	vector<boost::shared_ptr<Chromosome> > chrs(ptr->createIndividuals(10));
 	TEST_EQUAL(chrs.size(),10);
-	for(int i=0; i<10; i++)
-		TEST_STRING_EQUAL(chrs[1]->getSequence().toString(),"ALLMER");
+	TEST_STRING_EQUAL(chrs[4]->getSequence().toString(),"DALHIY");
 }
 END_SECTION
 

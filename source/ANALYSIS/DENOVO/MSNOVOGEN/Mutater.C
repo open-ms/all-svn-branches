@@ -42,11 +42,11 @@ namespace  OpenMS
 {
 
   Mutater::Mutater(double pm, double pmt, std::vector<const Residue*> al)
-    : rng(time(NULL)), mutationRate_(0.2), precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
+    : rng_(time(NULL)), mutationRate_(0.2), precursorMass_(pm), precursorMassTolerance_(pmt), aaList_(al)
   { 
 	  Size seed = (unsigned int)time(0);
 	  this->seed(seed);
-	  utils.seed(seed);
+	  utils_.seed(seed);
   }
 
   Mutater::~Mutater()
@@ -58,7 +58,7 @@ namespace  OpenMS
 		boost::random::uniform_real_distribution<double> u01;
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
 		{
-		  double rv = u01(rng);
+		  double rv = u01(rng_);
 		  if(rv > getMutationRate())
 			continue;
 		  this->mutate(*iter);
@@ -71,7 +71,7 @@ namespace  OpenMS
 		boost::random::uniform_real_distribution<double> u01;
 		for(std::vector<boost::shared_ptr<Chromosome> >::iterator iter = pool.begin(); iter!= pool.end(); ++iter)
 		{
-		  double rv = u01(rng);
+		  double rv = u01(rng_);
 		  if(rv > getMutationRate())
 			continue;
 		  boost::shared_ptr<Chromosome> ni(new Chromosome((*iter)->getSequence(),(*iter)->getCharge()));
@@ -90,8 +90,8 @@ namespace  OpenMS
 
   void Mutater::seed(const Size seed) const
   {
-	rng.seed(seed);
-	utils.seed(seed);
+	rng_.seed(seed);
+	utils_.seed(seed);
   }
 
 } // namespace

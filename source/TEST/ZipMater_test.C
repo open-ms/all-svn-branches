@@ -98,8 +98,8 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
 	TEST_EQUAL(2,res.size());
-	TEST_STRING_EQUAL("GGGGAGALGL",res[0]->getSequence().toString());
-	TEST_STRING_EQUAL("GAGAGALAAA",res[1]->getSequence().toString());
+	TEST_STRING_EQUAL(res[0]->getSequence().toString(),"AGGGALGLGG");
+	TEST_STRING_EQUAL(res[1]->getSequence().toString(),"GAGAGALAAA");
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-res[1]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 

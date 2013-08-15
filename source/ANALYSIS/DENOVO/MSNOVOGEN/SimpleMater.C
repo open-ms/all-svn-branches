@@ -49,7 +49,7 @@ namespace OpenMS
 	Size min = std::min(lhs->getSequence().size(), rhs->getSequence().size());
 	std::vector<boost::shared_ptr<Chromosome> > ret;
 	boost::random::uniform_int_distribution<int> int_distribution(0, ((int)(min-1)));
-	int cop = int_distribution(rng);
+	int cop = int_distribution(rng_);
 	String uc(lhs->getSequence().getSubsequence(0,cop).toString() + rhs->getSequence().getSubsequence(cop,rhs->getSequence().size()-cop).toString());
 	AASequence ucaa(uc);
 	if(getUtils()->adjustToFitMass(ucaa,getPrecursorMass(),getPrecursorMassTolerance(),getAAList()))

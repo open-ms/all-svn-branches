@@ -49,6 +49,7 @@ namespace OpenMS
 
   boost::shared_ptr<Chromosome> RandomSequenceSeeder::createIndividual() const
   {
+	  boost::shared_ptr<Chromosome> chr;
 	  Size minLen = getPrecursorMass() / ResidueDB::getInstance()->getResidue("W")->getMonoWeight(Residue::Full);
 	  Size maxLen = getPrecursorMass() / ResidueDB::getInstance()->getResidue("G")->getMonoWeight(Residue::Full);
 	  double maxMass = getPrecursorMass() + getPrecursorMassTolerance();
@@ -68,7 +69,7 @@ namespace OpenMS
 		    return boost::shared_ptr<Chromosome>(new Chromosome(aaSeq,0));
 		  }
 	  }
-	  return boost::shared_ptr<Chromosome>(new Chromosome(AASequence(""),0));
+	  return chr;
 
   }
 } // namespace

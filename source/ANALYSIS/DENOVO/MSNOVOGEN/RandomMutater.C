@@ -55,23 +55,23 @@ namespace OpenMS
   void RandomMutater::mutate(boost::shared_ptr<Chromosome> chromosome) const
   {
 	boost::random::uniform_real_distribution<double> u01;
-	double rv = u01(rng);
+	double rv = u01(rng_);
     for(Size i=0; i<weights_.size(); i++)
     {
       if(weights_[i] <= rv)
       {
         switch(i) {
           case RandomMutater::substitutingMutater :
-			   subm_.mutate(chromosome);
+			   return subm_.mutate(chromosome);
 			   break;
           case RandomMutater::swappingMutater :
-			   swam_.mutate(chromosome);
+			   return swam_.mutate(chromosome);
 			   break;
           case RandomMutater::invertingMutater :
-			   invm_.mutate(chromosome);
+			   return invm_.mutate(chromosome);
 			   break;
           default:
-			   defm_.mutate(chromosome);
+			   return defm_.mutate(chromosome);
 			   break;
         }
       }
@@ -81,6 +81,7 @@ namespace OpenMS
 
   void RandomMutater::seed(const Size seed)
   {
+	Mutater::seed(seed);
 	subm_.seed(seed);
 	swam_.seed(seed);
 	invm_.seed(seed);

@@ -51,8 +51,8 @@ namespace OpenMS
     Size mid = as.size()/2;
 	boost::random::uniform_int_distribution<> ldist(0, (int)(mid-1));
 	boost::random::uniform_int_distribution<> rdist(0, (int)((mid+mid)-1));
-	Size lpos = ldist(rng);
-    Size rpos = rdist(rng);
+	Size lpos = ldist(rng_);
+    Size rpos = rdist(rng_);
     const Residue & r = as.getResidue(rpos);
     const Residue & nr = as.setResidue(lpos, &r);
     as.setResidue(rpos, &nr);

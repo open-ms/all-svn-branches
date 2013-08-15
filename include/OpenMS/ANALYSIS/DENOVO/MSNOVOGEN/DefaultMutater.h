@@ -65,7 +65,7 @@ public:
 	void mutate(boost::shared_ptr<Chromosome> chromosome) const;
 
 	/// Overriding Mutater::seed since the seed must be forwarded to the default mutater (dm_).
-	void seed(const unsigned int seed);
+	void seed(const Size seed);
   };
 } // namespace
 

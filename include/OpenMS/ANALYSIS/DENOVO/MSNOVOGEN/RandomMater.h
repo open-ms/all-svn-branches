@@ -66,11 +66,11 @@ private:
 	/// The weights are increasing with the size of the vector and the last double must be 1.0.
     std::vector<double> weights_;
 	/// object of the SimpleMater build in the constructor to avoid rebuilding during mating.
-	SimpleMater sm;
+	SimpleMater sm_;
 	/// object of the DefaultMater build in the constructor to avoid rebuilding during mating.
-	DefaultMater dm;
+	DefaultMater dm_;
 	/// object of the ZipMater build in the constructor to avoid rebuilding during mating.
-	ZipMater zm;
+	ZipMater zm_;
 
 private:
 	/// Copy c'tor

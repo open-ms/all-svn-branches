@@ -41,6 +41,8 @@
 #include <vector>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <boost/shared_ptr.hpp>
+#include <OpenMS/KERNEL/MSSpectrum.h>
+#include <OpenMS/METADATA/Precursor.h>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -74,44 +76,52 @@ aaList.push_back(ResidueDB::getInstance()->getResidue("T"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
+MSSpectrum<> msAll;
+Precursor prec1;
+double pm1 = AASequence("ALLMER").getMonoWeight(Residue::Full);
+prec1.setMZ(pm1);
+prec1.setCharge(1);
+prec1.setIntensity(100.0);
+vector<Precursor> precursors1;
+precursors1.push_back(prec1);
+msAll.setPrecursors(precursors1);
 
 DefaultSeeder* ptr = 0;
 DefaultSeeder* null_ptr = 0;
 
 START_SECTION((DefaultSeeder(double precursorMass, double precursorMassTolerance, std::vector< const Residue * > aaList)))
 {
-	ptr = new DefaultSeeder(precursorMass,precursorMassTolerance,aaList);
+	ptr = new DefaultSeeder(&msAll,precursorMass,precursorMassTolerance,0.5,aaList);
 	TEST_NOT_EQUAL(ptr, null_ptr)
 }
 END_SECTION
 
 START_SECTION((boost::shared_ptr<Chromosome> createIndividual() const ))
 {
-	int test[]{0,3000,6000,10000,14000,15000,16000};
-	String expSeq[]{"GDQIIW","MGRGRR","DAHSCIS","WEMHM","GCAVVRAG","FDHIEA","RMRLVG"};
-	bool expRes[]  {true, true, true, true, true, true, true};
+	int test[] = {0,3000,6000,14000,16000};
+	String expSeq[] = {"LKPGMW","DAKDPW","QANVVDS","CIDDPLG","DCGGQDH"};
+	bool expRes[] = {true, true, true, true, true};
 	double pm = seq.getMonoWeight(Residue::Full);
-	for(int i=0; i<7; i++) {
+	for(int i=0; i<5; i++) {
 		ptr->seed(test[i]);
 		boost::shared_ptr<Chromosome> rand = ptr->createIndividual();
 		double diff = abs(rand->getSequence().getMonoWeight(Residue::Full) - pm);
 		TEST_EQUAL(diff <= 1.5, expRes[i]);
 		TEST_STRING_EQUAL(rand->getSequence().toString(),expSeq[i]);
 	}
+	ptr->seed(10000);
+	boost::shared_ptr<Chromosome> rand = ptr->createIndividual();
+	if(rand) {
+		TEST_EQUAL(1,2);
+	} else {
+		TEST_EQUAL(1,1);
+	}
 }
 END_SECTION
 
 START_SECTION((void seed(const unsigned int seed)))
 {
-  TEST_NOT_EQUAL(ptr->getSeed(),50);
   ptr->seed(50);
-  TEST_EQUAL(ptr->getSeed(),50);
-}
-END_SECTION
-
-START_SECTION((unsigned int getSeed()))
-{
-  TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 

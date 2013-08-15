@@ -49,9 +49,9 @@ namespace OpenMS
 	AASequence as = chromosome->getSequence();
 	double seqMass = as.getMonoWeight();
 	boost::random::uniform_int_distribution<Size> seqPos(0,(as.size()-1));
-	Size rp = seqPos(rng);
+	Size rp = seqPos(rng_);
     boost::random::uniform_int_distribution<Size> listPos(0, (getAAList().size()-1));
-    int sa = listPos(rng);
+    int sa = listPos(rng_);
     const Residue * nr = getAAList()[sa];
     const Residue & replaced = as.setResidue(rp, nr);
 
@@ -79,7 +79,7 @@ namespace OpenMS
     }
     if(possRep.size() > 0) {
 	  boost::random::uniform_int_distribution<Size> posDist(0, (possRep.size()-1));
-	  Size w = posDist(rng);
+	  Size w = posDist(rng_);
       as.setResidue(possRep[w].first, possRep[w].second);
       chromosome->setSequence(as);
     }

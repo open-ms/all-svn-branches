@@ -59,7 +59,7 @@ namespace OpenMS
   {
 protected:
   	/// random number generator must be mutable since Mater must be const * in GenAlg.
-  	mutable boost::mt19937 rng;
+  	mutable boost::mt19937 rng_;
 private:
 	/// Mutation rate (0-1) defines how many percent of the sequences will be mutated in each attempt (def: 0.2).
 	double mutationRate_;
@@ -70,7 +70,7 @@ private:
     /// A list of amino acids that can form a sequence is needed for some mutation processes.
     std::vector<const Residue*> aaList_;
     /// Utilities class necessary for some calculations.
-	mutable Utilities utils;
+	mutable Utilities utils_;
 
 private:
     /// To forbid copy construction
@@ -135,7 +135,7 @@ public:
 
 	/// Allows derived classes to use the utilities in the base class.
 	const Utilities * getUtils() const {
-		return(&utils);
+		return(&utils_);
 	}
 };
 } // namespace

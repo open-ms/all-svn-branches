@@ -85,7 +85,7 @@ public:
     ~GenPool() {};
 
     /// Returns the size of the current population.
-    const Size getPopulationSize() const;
+    Size getPopulationSize() const;
 
     /// Sorts the current gen pool by score either decreasing (default) or increasing (Chromosome::sortScoreAscending).
     void sort(const int sortMethod = Chromosome::sortScoreDescending);

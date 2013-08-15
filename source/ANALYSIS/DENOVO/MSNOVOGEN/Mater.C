@@ -43,11 +43,11 @@
 namespace OpenMS
 {
 	Mater::Mater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
-		rng(std::time(NULL)), aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
+		rng_(std::time(NULL)), aaList_(aaList), precursorMass_(precursorMass), precursorMassTolerance_(precursorMassTolerance)
 	{
 	  Size seed = (unsigned int)time(0);
 	  this->seed(seed);
-	  utils.seed(seed);
+	  utils_.seed(seed);
 	}
 
 	Mater::~Mater()
@@ -62,9 +62,9 @@ namespace OpenMS
 		boost::random::uniform_int_distribution<int> int_distribution(0, (int)(genPool.getPopulationSize()-1));
 		while(!ret)
 		{
-			rv = int_distribution(rng);
+			rv = int_distribution(rng_);
 			test = genPool.getGenPool()[rv];
-			dist = utils.editDistance(exclude->getSequence(),test->getSequence());
+			dist = utils_.editDistance(exclude->getSequence(),test->getSequence());
 			if(dist < 3)
 				continue;
 			ret = test;
@@ -74,8 +74,8 @@ namespace OpenMS
 
 	void Mater::seed(const Size seed) const
 	{
-		rng.seed(seed);
-		utils.seed(seed);
+		rng_.seed(seed);
+		utils_.seed(seed);
 	}
 
 	std::vector<boost::shared_ptr<Chromosome> > Mater::tournament(GenPool & pool) const

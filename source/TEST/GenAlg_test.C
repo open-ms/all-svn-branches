@@ -47,6 +47,9 @@
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <vector>
+#include <boost/shared_ptr.hpp>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <utility>
 
 
 ///////////////////////////
@@ -115,6 +118,8 @@ END_SECTION
 	
 START_SECTION((void startEvolution(const Size numGenerations)))
 {
+  boost::shared_ptr<SubstitutingMutater> sm;
+  ptr->setMutater(sm);	// break the default mutater set in GenAlg
   ptr->startEvolution(1);
   TEST_EQUAL(ptr->getKnownIndividuals().size(),0); // make sure it doesn't run if not all functions are set.
 }
@@ -122,7 +127,6 @@ END_SECTION
 
 START_SECTION((void setMutater(boost::shared_ptr< const Mutater > mutater)))
 {
-	ptr->seed(10000);
 	boost::shared_ptr<SubstitutingMutater> sm(new SubstitutingMutater(pm1,pmt,aaList));
 	ptr->setMutater(sm);
 }
@@ -187,8 +191,8 @@ END_SECTION
 START_SECTION((void setKnownIndividuals(const std::map< String, boost::shared_ptr< Chromosome > > &knownIndividuals)))
 {
 	std::map<String, boost::shared_ptr<Chromosome> > ni;
-	ni.insert(std::pair<String,boost::shared_ptr<Chromosome> >("ALLMER",new Chromosome("ALLMER",1,1.0)));
-	ni.insert(std::pair<String,boost::shared_ptr<Chromosome> >("ELLMER",new Chromosome("ELLMER",1,0.50)));
+	ni.insert(std::pair<String,boost::shared_ptr<Chromosome> >("ALLMER",boost::shared_ptr<Chromosome>(new Chromosome("ALLMER",1,1.0))));
+	ni.insert(std::pair<String,boost::shared_ptr<Chromosome> >("ELLMER",boost::shared_ptr<Chromosome>(new Chromosome("ELLMER",1,0.7))));
 	ptr->setKnownIndividuals(ni);
 	TEST_EQUAL(ptr->getKnownIndividuals().size(),2);
 }

@@ -88,6 +88,7 @@ START_SECTION((Chromosome& mutate(Chromosome &chromosome)))
 {
 	boost::shared_ptr<Chromosome> chr(new Chromosome());
 	chr->setSequence(aas);
+	ptr->seed(100);
 	ptr->mutate(chr);
 	TEST_EQUAL((double)chr->getSequence().getMonoWeight(), aas.getMonoWeight());
 	TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());

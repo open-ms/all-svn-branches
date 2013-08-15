@@ -69,9 +69,6 @@ public:
 
     /// Overriding seed since it must be forwarded to the contained mating implementation (dm_).
     void seed(const Size seed);
-
-    /// Overriding getSeed since it must be requested from the mating implementation (dm_).
-    unsigned int getSeed();
   };
 } // namespace
 

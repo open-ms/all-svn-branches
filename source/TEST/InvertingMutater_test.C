@@ -88,9 +88,14 @@ END_SECTION
 
 START_SECTION((void mutate(boost::shared_ptr< Chromosome > chromosome) const ))
 {
-	ptr->mutate(chr);
-	TEST_EQUAL((double)chr->getSequence().getMonoWeight(), aas.getMonoWeight());
-	TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());
+	int test[] = {0,3000,6000,6500,7000,8000,9000};
+	for(int i=0; i<7; i ++)
+	{
+		ptr->seed(test[i]);
+		ptr->mutate(chr);
+		TEST_EQUAL((double)chr->getSequence().getMonoWeight(), aas.getMonoWeight());
+		TEST_NOT_EQUAL(chr->getSequence().toString(), aas.toString());
+	}
 }
 END_SECTION
 

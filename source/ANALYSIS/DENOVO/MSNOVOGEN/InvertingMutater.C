@@ -47,9 +47,9 @@ namespace OpenMS
 	AASequence seq = chromosome->getSequence();
 	Size mid = seq.size()/2;
 	boost::random::uniform_int_distribution<Size> ldist(0, (int)(mid-1));
-	boost::random::uniform_int_distribution<Size> rdist(0, (int)((mid+mid)-1));
-	Size lpos = ldist(rng);
-    Size rpos = rdist(rng);
+	boost::random::uniform_int_distribution<Size> rdist(mid, (int)((mid+mid)-1));
+	Size lpos = ldist(rng_);
+    Size rpos = rdist(rng_);
     //invert lpos .. rpos
     AASequence as = seq.getSubsequence(lpos,rpos-lpos);
     for(Size i=0, s=as.size()-1; i<as.size(); i++, s--)

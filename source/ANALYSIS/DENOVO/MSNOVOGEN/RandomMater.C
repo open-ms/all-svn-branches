@@ -44,9 +44,9 @@ namespace OpenMS
 
   RandomMater::RandomMater(double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList) :
     Mater(precursorMass, precursorMassTolerance, aaList),
-    sm(precursorMass, precursorMassTolerance, aaList),
-    dm(precursorMass, precursorMassTolerance, aaList),
-    zm(precursorMass, precursorMassTolerance, aaList)
+    sm_(precursorMass, precursorMassTolerance, aaList),
+    dm_(precursorMass, precursorMassTolerance, aaList),
+    zm_(precursorMass, precursorMassTolerance, aaList)
   {
 	weights_.push_back(0.4);
 	weights_.push_back(0.7);
@@ -58,31 +58,32 @@ namespace OpenMS
   {
 
 	boost::random::uniform_real_distribution<double> u01;
-	double rv = u01(rng);
+	double rv = u01(rng_);
     for(unsigned int i=0; i<weights_.size(); i++)
     {
       if(weights_[i] <= rv)
       {
         switch(i) {
           case RandomMater::simpleMater :
-			   sm.mate(lhs, rhs);
+			   return sm_.mate(lhs, rhs);
 			   break;
           case RandomMater::zipMater :
-			   zm.mate(lhs, rhs);
+			   return zm_.mate(lhs, rhs);
 			   break;
           default:
-			   dm.mate(lhs, rhs);
+			   return dm_.mate(lhs, rhs);
 			   break;
         }
       }
     }
-    return dm.mate(lhs, rhs);
+    return dm_.mate(lhs, rhs);
   }
 
   void RandomMater::seed(const Size seed)
   {
-	  sm.seed(seed);
-	  zm.seed(seed);
-	  dm.seed(seed);
+	  Mater::seed(seed);
+	  sm_.seed(seed);
+	  zm_.seed(seed);
+	  dm_.seed(seed);
   }
 } // namespace

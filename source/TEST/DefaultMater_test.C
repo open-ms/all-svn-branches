@@ -97,7 +97,7 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 	TEST_STRING_EQUAL("AAAAAAAAAA",m.toString());
 	TEST_STRING_EQUAL("GGGGGLLLLL",f.toString());
 	TEST_EQUAL(resDefault.size(),1);
-	TEST_STRING_EQUAL(resDefault[0]->getSequence().toString(),"GGVAAAAAAA");
+	TEST_STRING_EQUAL(resDefault[0]->getSequence().toString(),"GGGGAAAAAQ");
 	TEST_EQUAL(true,(std::abs(m.getMonoWeight(Residue::Full)-resDefault[0]->getSequence().getMonoWeight(Residue::Full)) < 1.5));
 
 	TEST_STRING_EQUAL(resSimple[0]->getSequence().toString(),resDefault[0]->getSequence().toString());
@@ -109,17 +109,9 @@ START_SECTION((std::vector<Chromosome> mate(const Chromosome &lhs, const Chromos
 }
 END_SECTION
 
-START_SECTION((void seed(const unsigned int seed)))
+START_SECTION((void seed(const Size seed)))
 {
-  TEST_NOT_EQUAL(ptr->getSeed(),50);
   ptr->seed(50);
-  TEST_EQUAL(ptr->getSeed(),50);
-}
-END_SECTION
-
-START_SECTION((unsigned int getSeed()))
-{
-  TEST_EQUAL(ptr->getSeed(),50);
 }
 END_SECTION
 

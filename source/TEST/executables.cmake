@@ -431,6 +431,7 @@ set(analysis_executables_list
 	GenAlg_test
 	GenPool_test
 	HomologyKiller_test
+	HyperScorer_test
 	InvertingMutater_test
 	Killer_test
 	Mater_test

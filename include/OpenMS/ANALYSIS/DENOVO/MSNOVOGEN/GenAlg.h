@@ -43,6 +43,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Scorer.h>
 #include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/HomologyKiller.h"
 #include <boost/shared_ptr.hpp>
+#include <vector>
 
 namespace OpenMS
 {
@@ -128,7 +129,7 @@ public:
 
     /// Performs this genetic algorithm for numGenerations generations.
     /// Calls startEvolution(numGenerations, numGenerations) to do so.
-    void startEvolution(const Size numGenerations);
+    PeptideIdentification startEvolution(const Size numGenerations, const Size bestNHits = 10);
 
     /// Performs this genetic algorithm for numGenerations generations.
     /// or until the same sequence is the best sequence for the set number of generations (endIfStableForNumGenerations).
@@ -143,7 +144,7 @@ public:
     ///			}
     ///			kill();
     /// for each generation.
-    void startEvolution(const Size numGenerations, const Size endIfStableForNumGenerations);
+    PeptideIdentification startEvolution(const Size numGenerations, const Size endIfStableForNumGenerations, const Size bestNHits = 10);
 
     /// Allows the setting of the custom Mutater derived from Mutater.
     void setMutater(boost::shared_ptr<const Mutater> mutater);

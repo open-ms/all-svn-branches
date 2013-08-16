@@ -31,6 +31,7 @@ RandomMater.h
 ZipMater.h
 HomologyKiller.h
 NormShrAbuScorer.h
+HyperScorer.h
 GenAlg.h
 )
 

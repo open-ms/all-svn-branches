@@ -31,6 +31,7 @@ RandomMater.C
 ZipMater.C
 HomologyKiller.C
 NormShrAbuScorer.C
+HyperScorer.C
 GenAlg.C
 )
 

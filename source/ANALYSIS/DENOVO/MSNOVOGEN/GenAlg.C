@@ -54,6 +54,7 @@ namespace OpenMS
 	  rejuvenateAfter_(mps),
 	  precursorMassTolerance_(pmt),
 	  fragmentMassTolerance_(fmt),
+	  precursorCharge_(1),
 	  rng_(time(NULL))
 	{
 		setMSMSSpectrum(spec);
@@ -177,9 +178,9 @@ namespace OpenMS
 		return true;
 	}
 
-	void GenAlg::startEvolution(const Size numGenerations)
+	PeptideIdentification GenAlg::startEvolution(const Size numGenerations, const Size bestNHits)
 	{
-		startEvolution(numGenerations, numGenerations + 1);
+		return startEvolution(numGenerations, numGenerations + 1, bestNHits);
 	}
 
 	void GenAlg::initGenPool()
@@ -197,11 +198,21 @@ namespace OpenMS
 	    genPool_->setPreviousPoolSize(genPool_->getPopulationSize());
 	}
 
-	void GenAlg::startEvolution(const Size numGenerations,
-			const Size endIfStableForNumGenerations)
+	PeptideIdentification GenAlg::startEvolution(const Size numGenerations,
+			const Size endIfStableForNumGenerations, const Size bestNHits)
 	{
 		if(!checkEnvironment())
 			return;
+		PeptideIdentification pi;
+		String score_name = "Normalized shared peak abundance ratio";
+		pi.setScoreType(score_name);
+		pi.setHigherScoreBetter(true);
+		pi.setMetaValue("MZ", getPrecursorMZ());
+		pi.setMetaValue("intensity", getPrecursorIntensity());
+		pi.setMetaValue("charge", precursorCharge_);
+		pi.setMetaValue("software","MSNovoGen");
+		pi.setMetaValue("type","de novo prediction");
+
 		initGenPool();
 		Size i = 0;
 		Size sameBestRepeat = 0;
@@ -217,6 +228,16 @@ namespace OpenMS
 			}
 			kill();
 		}
+
+		std::vector<boost::shared_ptr<Chromosome> > results;
+		results.insert(results.begin(),getKnownIndividuals().begin(),getKnownIndividuals().end());
+		std::sort(results.begin(), results.end(), Chromosome::sortScoreDesc);
+		for(int i = 0; (i < bestNHits && i < results.size()); i++)
+		{
+			PeptideHit ph(results[i]->getScore(),i,results[i]->getCharge(),results[i]->getSequence());
+			pi.insertHit(ph);
+		}
+		return pi;
 	}
 
 	void GenAlg::setMSMSSpectrum(const MSSpectrum<> * msms)

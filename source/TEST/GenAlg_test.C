@@ -116,7 +116,7 @@ START_SECTION((GenAlg(const MSSpectrum<> *spec, const std::vector< const Residue
 }
 END_SECTION
 	
-START_SECTION((void startEvolution(const Size numGenerations)))
+START_SECTION((PeptideIdentification startEvolution(const Size numGenerations, const Size numResults = 10)))
 {
   boost::shared_ptr<SubstitutingMutater> sm;
   ptr->setMutater(sm);	// break the default mutater set in GenAlg
@@ -228,17 +228,19 @@ START_SECTION((void setRejuvenate(const Size afterNGen)))
 }
 END_SECTION
 	
-START_SECTION((void startEvolution(const Size numGenerations)))
+START_SECTION((PeptideIdentification startEvolution(const Size numGenerations, const Size numResults = 10)))
 {
-  ptr->startEvolution(1);
+  PeptideIdentification pis = ptr->startEvolution(1);
+  TEST_EQUAL(pis.getHits().size(),10);
   TEST_EQUAL(ptr->getKnownIndividuals().size(),43);
   TEST_EQUAL(ptr->getGenPool()->getPopulationSize(),15);
 }
 END_SECTION
 
-START_SECTION((void startEvolution(const Size numGenerations, const Size endIfStableForNumGenerations)))
+START_SECTION((PeptideIdentification startEvolution(const Size numGenerations, const Size endIfStableForNumGenerations, const Size numResults =10)))
 {
-  ptr->startEvolution(1,2);
+  PeptideIdentification pis = ptr->startEvolution(1,2,100);
+  TEST_EQUAL(pis.getHits().size(),96);
   TEST_EQUAL(ptr->getKnownIndividuals().size(),96);
   TEST_EQUAL(ptr->getGenPool()->getPopulationSize(),15);
 }

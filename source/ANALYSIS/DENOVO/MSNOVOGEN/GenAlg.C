@@ -202,7 +202,7 @@ namespace OpenMS
 			const Size endIfStableForNumGenerations, const Size bestNHits)
 	{
 		if(!checkEnvironment())
-			return;
+			return PeptideIdentification();
 		PeptideIdentification pi;
 		String score_name = "Normalized shared peak abundance ratio";
 		pi.setScoreType(score_name);
@@ -230,9 +230,12 @@ namespace OpenMS
 		}
 
 		std::vector<boost::shared_ptr<Chromosome> > results;
-		results.insert(results.begin(),getKnownIndividuals().begin(),getKnownIndividuals().end());
+		for(std::map<String, boost::shared_ptr<Chromosome> >::const_iterator i = genPool_->getKnownIndividuals().begin(); i != genPool_->getKnownIndividuals().end(); i++) 
+		{
+			results.push_back(i->second);
+		}
 		std::sort(results.begin(), results.end(), Chromosome::sortScoreDesc);
-		for(int i = 0; (i < bestNHits && i < results.size()); i++)
+		for(Size i = 0; (i < bestNHits && i < results.size()); i++)
 		{
 			PeptideHit ph(results[i]->getScore(),i,results[i]->getCharge(),results[i]->getSequence());
 			pi.insertHit(ph);

@@ -48,43 +48,70 @@ namespace OpenMS
 
   void HyperScorer::score(const MSSpectrum<> * expMS, boost::shared_ptr<Chromosome> & chromosome) const
   {
-	  double score = 0;
-	  double ems = 0; //abundance of peaks in experimental spectrum not shared with theoretical spectrum.
-	  int epue = 0;   //number of peaks in experimental spectrum not in theoretical spectrum.
-	  int tpms = 0;   //number of peaks in theoretical spectrum not in experimental spectrum.
-	  int nsp = 0;    //Number of peaks shared between spectra.
-	  double sms = 0; //abundance of shared peaks (taken from theoretical spectrum).
-	  double rangeStart;
-	  double rangeEnd;
-	  AASequence peptide = chromosome->getSequence();
-	  TheoreticalSpectrumGenerator tsg;
-	  RichPeakSpectrum theoMS;
-	  tsg.getSpectrum(theoMS,peptide,chromosome->getCharge());
-	  MSSpectrum<>::ConstIterator wndBeg = expMS->begin();
-	  MSSpectrum<>::ConstIterator wndEnd;
-	  for(std::vector<RichPeak1D>::const_iterator iter = theoMS.begin(); iter != theoMS.end(); iter++)
-	  {
-		  rangeStart = iter->getMZ() - getFragmentMassTolerance();
-		  rangeEnd = iter->getMZ() + getFragmentMassTolerance();
-		  wndBeg = expMS->MZBegin(wndBeg, rangeStart, expMS->end());
-		  wndEnd = expMS->MZEnd(wndBeg, rangeEnd, expMS->end());
-		  int ct = 0;
-		  for(MSSpectrum<>::ConstIterator ri=wndBeg; ri != wndEnd; ri++)
-		  {
-			  sms += ri->getIntensity();
-			  nsp ++;
-			  ct++;
-		  }
-		  if(ct == 0)
-		  {
-			  tpms++;
-		  }
-	  }
-	  epue = expMS->size() - nsp;
-	  Utilities utils;
-	  double tic = utils.getSummedIntensity(expMS);
-	  ems = tic  - sms;
-	  score = sms/tic/(double)chromosome->getSequence().size();
-	  chromosome->setScore(score);
+	
+	TheoreticalSpectrumGenerator generator;
+	Param p(generator.getParameters());
+	p.setValue("add_metainfo", "true");
+	generator.setParameters(p);
+	RichPeakSpectrum sp;
+	// generate spectrum for b- and y-ions single and doubly charged
+	for (int c = 1; c<3; c++) {
+		generator.addPeaks(sp, chromosome->getSequence(), Residue::BIon, c);
+		generator.addPeaks(sp, chromosome->getSequence(), Residue::YIon, c);
+	}
+
+	std::vector<Peak1D>::const_iterator p_it = expMS->begin();
+	std::vector<RichPeak1D>::const_iterator tp_it = sp.begin();
+	double score = 0.0;
+	Size yN = 0;
+	Size bN = 0;
+	while (p_it != expMS->end() && tp_it != sp.end()) {
+		// check if peaks match in m/z
+		const double p_mz = p_it->getMZ();
+		const double tp_mz = tp_it->getMZ();
+		double dist = abs(p_mz - tp_mz);
+		double dist_old;
+		if (abs(p_mz - tp_mz) < tp_mz * getFragmentMassTolerance() * 1e-6) {
+			// find the closest peak
+			double s_tmp = 0.0;
+			do {
+				dist_old = dist;
+				s_tmp = p_it->getIntensity();
+				++p_it;
+				if(p_it == expMS->end()) {
+					--p_it;
+					break;
+				}
+				dist = abs(p_it->getMZ() - tp_mz);
+			} while (dist < dist_old && p_it != expMS->end());
+			score += s_tmp;
+			if (tp_it->getMetaValue("IonName").toString()[0]
+					== 'y')
+				++yN;
+			else
+				++bN;
+			++tp_it;
+			continue;
+		}
+		// peaks do not match, increase respective peak
+		if (p_mz < tp_mz) {
+			++p_it;
+		} else {
+			++tp_it;
+		}
+	}
+	// found hit...
+	if (score > 0) {
+		score *= fac(bN) * fac(yN);
+	}
+	chromosome->setScore(score);
   }
+
+	Size HyperScorer::fac(const Size i) const
+	{
+		if (i < 2)
+			return 1;
+		return i * fac(i - 1);
+	}
+
 } // namespace

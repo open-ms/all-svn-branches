@@ -86,10 +86,10 @@ START_SECTION((void score(const MSSpectrum<> *msms, boost::shared_ptr< Chromosom
 	msms.push_back(Peak1D(p9));
 	msms.push_back(Peak1D(p10));
 	msms.sortByPosition();
-	//4*3 + 5*5 = 37/57/6
+
 	boost::shared_ptr< Chromosome > chr(new Chromosome(AASequence("ALLMER"),1));
 	ptr->score(&msms,chr);
-	double er = 37.0/57.0/6.0;
+	double er = 106560.0;
 	TEST_REAL_SIMILAR(chr->getScore(),er);
 }
 END_SECTION

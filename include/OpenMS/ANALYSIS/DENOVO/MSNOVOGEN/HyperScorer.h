@@ -48,6 +48,9 @@ namespace OpenMS
   class OPENMS_DLLAPI HyperScorer : public Scorer
   {
 private:
+	/// Calculates faculty of i recursively.
+	Size fac(const Size i) const;
+
 	/// Assignment operator shouldn't be used
 	HyperScorer & operator=(const HyperScorer& rhs);
 

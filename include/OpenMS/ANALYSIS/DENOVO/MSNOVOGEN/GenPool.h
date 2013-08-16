@@ -139,7 +139,7 @@ public:
 	void addToGenPool(std::vector<boost::shared_ptr<Chromosome> > genPool);
 
 	/// returns the map with all known individuals.
-	const std::map<String, boost::shared_ptr<Chromosome> > getKnownIndividuals() const {
+	const std::map<String, boost::shared_ptr<Chromosome> > & getKnownIndividuals() const {
 		return knownIndividuals_;
 	}
 

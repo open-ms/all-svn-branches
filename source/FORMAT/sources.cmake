@@ -11,6 +11,7 @@ CVMappingFile.C
 ConsensusXMLFile.C
 ControlledVocabulary.C
 CsvFile.C
+DNMSOFile.c
 DTA2DFile.C
 DTAFile.C
 EDTAFile.C

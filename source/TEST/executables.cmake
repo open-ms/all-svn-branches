@@ -143,6 +143,7 @@ set(format_executables_list
   ConsensusXMLFile_test
   ControlledVocabulary_test
   CsvFile_test
+  DNMSOFile_test
   DTA2DFile_test
   DTAFile_test
   EDTAFile_test

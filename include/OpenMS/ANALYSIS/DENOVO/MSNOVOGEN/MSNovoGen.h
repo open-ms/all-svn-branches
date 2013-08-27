@@ -35,6 +35,7 @@
 #ifndef OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_MSNOVOGEN_H
 #define OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_MSNOVOGEN_H
 
+#include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/config.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenPool.h>
@@ -44,16 +45,9 @@
 namespace OpenMS
 {
 
-  class OPENMS_DLLAPI MSNovoGen
+  class OPENMS_DLLAPI MSNovoGen : public DefaultParamHandler
   {
 private:
-	  /*
-	  int maxGenNum;
-	  int maxPopulation;
-	  GenPool genPool;
-	  std::vector<Residue> aminoAcids;
-*/
-	
     /// Copy c'tor
     MSNovoGen(const MSNovoGen& other);
 

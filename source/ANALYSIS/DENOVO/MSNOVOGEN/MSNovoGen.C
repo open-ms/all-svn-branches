@@ -41,8 +41,8 @@
 namespace OpenMS
 {
 
-  MSNovoGen::MSNovoGen() //:
-    //maxGenNum(500), maxPopulation(500), genPool(500,2.0,0.5)
+  MSNovoGen::MSNovoGen() :
+    DefaultParamHandler("DeNovoAlgorithm")
   {}
 
 bool MSNovoGen::isTerminated()

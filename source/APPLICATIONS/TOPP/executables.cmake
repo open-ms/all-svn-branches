@@ -53,6 +53,7 @@ MascotAdapter
 MascotAdapterOnline
 MassTraceExtractor
 MRMMapper
+MSNovoGen
 MyriMatchAdapter
 NoiseFilterGaussian
 NoiseFilterSGolay

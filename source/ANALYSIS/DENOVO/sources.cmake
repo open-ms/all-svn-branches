@@ -13,7 +13,6 @@ CompNovoIonScoring.C
 CompNovoIdentification.C
 CompNovoIonScoringBase.C
 CompNovoIonScoringCID.C
-MSNOVOGEN.C
 )
 
 ### add path to the filenames

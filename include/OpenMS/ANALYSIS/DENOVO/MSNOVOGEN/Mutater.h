@@ -138,6 +138,7 @@ public:
 		return(&utils_);
 	}
 };
+
 } // namespace
 
 #endif // OPENMS_ANALYSIS_DENOVO_MSNOVOGEN_MUTATER_H

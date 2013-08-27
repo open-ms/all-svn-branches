@@ -40,6 +40,7 @@
 
 #include <OpenMS/CHEMISTRY/ModificationsDB.h>
 
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenAlg.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <vector>
@@ -131,6 +132,8 @@ public:
 	  StringList mutators;
 	  mutators.push_back("InvertingMutator");
 	  mutators.push_back("SwappingMutator");
+	  mutators.push_back("DefaultMutator");
+	  mutators.push_back("RandomMutator");
 	  registerStringOption_("mutators", "", "InvertingMutator", "Mutators used by the genetic algorithm.", false, true);
 	  setValidStrings_("mutators", mutators);
   }
@@ -186,6 +189,7 @@ public:
 	  {
 		  const MSSpectrum<> * msms = &*spec_it;
 		  GenAlg ga(msms,aaList,poolSize,pmt,fmt);
+		  ga.setMutater(MutaterCreator::getInstance(getStringOption_("mutators"),ga.getPrecursorMH(),pmt,aaList));
 		  pep_idents.push_back(ga.startEvolution(numGenerations,endStable,bestHits));
 	  }
 

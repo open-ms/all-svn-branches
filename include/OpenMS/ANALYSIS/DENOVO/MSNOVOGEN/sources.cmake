@@ -33,6 +33,7 @@ HomologyKiller.h
 NormShrAbuScorer.h
 HyperScorer.h
 GenAlg.h
+MutaterCreator.h
 )
 
 ### add path to the filenames

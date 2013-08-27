@@ -33,6 +33,7 @@ HomologyKiller.C
 NormShrAbuScorer.C
 HyperScorer.C
 GenAlg.C
+MutaterCreator.C
 )
 
 ### add path to the filenames

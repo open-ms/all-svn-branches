@@ -32,20 +32,32 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SCORERCREATOR_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SCORERCREATOR_H
+
+#include <OpenMS/config.h>
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Scorer.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/NormShrAbuScorer.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultScorer.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/HyperScorer.h"
 
 namespace OpenMS
 {
-	MutaterCreator::MutaterCreator()
-	{}
-
-	MutaterCreator::MutaterCreator(const MutaterCreator& other)
-	{}
-
-	MutaterCreator & MutaterCreator::operator=(const MutaterCreator &other)
-	{
-		return *this;
-	}
-
-
+  class OPENMS_DLLAPI ScorerCreator
+  {
+public:
+	  static boost::shared_ptr<Scorer> getInstance(String scorer, const double fragmentMassTolerance)
+	  {
+		  if(scorer == "NormalizedSharedAbundanceScorer")
+		    return boost::shared_ptr<NormShrAbuScorer>(new NormShrAbuScorer(fragmentMassTolerance));
+		  else {
+			if(scorer == "HyperScorer")
+			  return boost::shared_ptr<HyperScorer>(new HyperScorer(fragmentMassTolerance));
+			else
+			  return boost::shared_ptr<DefaultScorer>(new DefaultScorer(fragmentMassTolerance));
+		  }
+	  }
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SCORERCREATOR_H

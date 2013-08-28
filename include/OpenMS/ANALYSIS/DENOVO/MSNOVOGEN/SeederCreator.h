@@ -32,20 +32,41 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SEEDERERCREATOR_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SEEDERERCREATOR_H
+
+#include <OpenMS/config.h>
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Seeder.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultSeeder.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSeeder.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SequenceTagSeeder.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomSequenceSeeder.h"
 
 namespace OpenMS
 {
-	MutaterCreator::MutaterCreator()
-	{}
-
-	MutaterCreator::MutaterCreator(const MutaterCreator& other)
-	{}
-
-	MutaterCreator & MutaterCreator::operator=(const MutaterCreator &other)
-	{
-		return *this;
-	}
-
-
+  class OPENMS_DLLAPI SeederCreator
+  {
+public:
+	  static boost::shared_ptr<Seeder> getInstance(String seeder, const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fragmentMassTolerance, const std::vector<const Residue*> aaList)
+	  {
+		  if(seeder == "DefaultSeeder")
+		    return boost::shared_ptr<DefaultSeeder>(new DefaultSeeder(spec,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList));
+		  else {
+			if(seeder == "RandomSeeder")
+			  return boost::shared_ptr<RandomSeeder>(new RandomSeeder(spec,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList));
+			else {
+			  if(seeder == "SequenceTagSeeder")
+			    return boost::shared_ptr<SequenceTagSeeder>(new SequenceTagSeeder(spec,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList));
+			  else {
+				if(seeder == "RandomSequenceSeeder")
+				  return boost::shared_ptr<RandomSequenceSeeder>(new RandomSequenceSeeder(spec,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList));
+				else
+			      return boost::shared_ptr<DefaultSeeder>(new DefaultSeeder(spec,precursorMass,precursorMassTolerance,fragmentMassTolerance,aaList));
+			  }
+			}
+		  }
+	  }
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_SEEDERERCREATOR_H

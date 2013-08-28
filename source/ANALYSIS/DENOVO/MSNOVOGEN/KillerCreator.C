@@ -32,20 +32,19 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/KillerCreator.h>
 
 namespace OpenMS
 {
-	MutaterCreator::MutaterCreator()
+	KillerCreator::KillerCreator()
 	{}
 
-	MutaterCreator::MutaterCreator(const MutaterCreator& other)
+	KillerCreator::KillerCreator(const KillerCreator& other)
 	{}
 
-	MutaterCreator & MutaterCreator::operator=(const MutaterCreator &other)
+	KillerCreator & KillerCreator::operator=(const KillerCreator &other)
 	{
 		return *this;
 	}
-
 
 } // namespace

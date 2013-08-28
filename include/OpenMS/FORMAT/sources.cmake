@@ -30,7 +30,6 @@ CVMappingFile.h
 ConsensusXMLFile.h
 ControlledVocabulary.h
 CsvFile.h
-DNMSOFile.h
 DTA2DFile.h
 DTAFile.h
 EDTAFile.h

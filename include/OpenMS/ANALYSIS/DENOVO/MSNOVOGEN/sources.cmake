@@ -17,7 +17,11 @@ DefaultKiller.h
 SwappingMutater.h
 SubstitutingMutater.h
 RandomMutater.h
+ScorerCreator.h
+KillerCreator.h
+MaterCreator.h
 Seeder.h
+SeederCreator.h
 RandomSeeder.h
 SequenceTagSeeder.h
 InvertingMutater.h

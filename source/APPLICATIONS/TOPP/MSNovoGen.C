@@ -39,8 +39,12 @@
 #include <OpenMS/FORMAT/FileHandler.h>
 
 #include <OpenMS/CHEMISTRY/ModificationsDB.h>
-
+#include <boost/shared_ptr.hpp>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SeederCreator.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/ScorerCreator.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/KillerCreator.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/MaterCreator.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenAlg.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <vector>
@@ -96,7 +100,7 @@ public:
   void registerOptionsAndFlags_()
   {
 	  registerInputFile_("in", "", "", "Input map", true, false);
-	  setValidFormats_("in", StringList::create("mzML"));
+	  setValidFormats_("in", StringList::create("mzML,dta"));
 
 	  registerOutputFile_("out", "", "", "Output file", true, false);
 	  setValidFormats_("out", StringList::create("idXML"));
@@ -131,11 +135,42 @@ public:
 
 	  StringList mutators;
 	  mutators.push_back("InvertingMutator");
+	  mutators.push_back("SubstitutingMutator");
 	  mutators.push_back("SwappingMutator");
-	  mutators.push_back("DefaultMutator");
 	  mutators.push_back("RandomMutator");
-	  registerStringOption_("mutators", "", "InvertingMutator", "Mutators used by the genetic algorithm.", false, true);
+	  registerStringOption_("mutators", "", "SubstitutingMutator", "Mutators used by the genetic algorithm.", false, true);
 	  setValidStrings_("mutators", mutators);
+	  
+	  StringList seeders;
+	  mutators.push_back("DefaultSeeder");
+	  mutators.push_back("RandomSequenceSeeder");
+	  mutators.push_back("SequenceTagSeeder");
+	  mutators.push_back("RandomSeeder");
+	  registerStringOption_("seeders", "", "SequenceTagSeeder", "Seeders used by the genetic algorithm to seed the gene pool.", false, true);
+	  setValidStrings_("seeders", seeders);
+	  
+	  StringList scorers;
+	  scorers.push_back("NormalizedSharedAbundanceScorer");
+	  scorers.push_back("HyperScorer");
+	  scorers.push_back("DefaultScorer");
+	  registerStringOption_("scorers", "", "NormalizedSharedAbundanceScorer", "Scorers used by the genetic algorithm as fitness function.", false, true);
+	  setValidStrings_("scorers", scorers);
+	  
+	  StringList killers;
+	  killers.push_back("SimpleDecreasingKiller");
+	  killers.push_back("HomologyKiller");
+	  killers.push_back("RandomKiller");
+	  killers.push_back("DefaultKiller");
+	  registerStringOption_("killers", "", "SimpleDecreasingKiller", "Killers used by the genetic algorithm to remove unfit individuals.", false, true);
+	  setValidStrings_("killers", killers);
+
+	  StringList maters;
+	  maters.push_back("SimpleMater");
+	  maters.push_back("RandomMater");
+	  maters.push_back("ZipMater");
+	  maters.push_back("DefaultMater");
+	  registerStringOption_("maters", "", "SimpleMater", "Maters used by the genetic algorithm to perform cross over.", false, true);
+	  setValidStrings_("maters", maters);
   }
 
   ExitCodes main_(int, const char **)
@@ -190,6 +225,10 @@ public:
 		  const MSSpectrum<> * msms = &*spec_it;
 		  GenAlg ga(msms,aaList,poolSize,pmt,fmt);
 		  ga.setMutater(MutaterCreator::getInstance(getStringOption_("mutators"),ga.getPrecursorMH(),pmt,aaList));
+		  ga.setSeeder(SeederCreator::getInstance(getStringOption_("seeders"),msms,ga.getPrecursorMH(),pmt,fmt,aaList));
+		  ga.setScorer(ScorerCreator::getInstance(getStringOption_("scorers"),fmt));
+		  ga.setKiller(KillerCreator::getInstance(getStringOption_("killers")));
+		  ga.setMater(MaterCreator::getInstance(getStringOption_("maters"),ga.getPrecursorMH(),pmt,aaList));
 		  pep_idents.push_back(ga.startEvolution(numGenerations,endStable,bestHits));
 	  }
 

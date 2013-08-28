@@ -41,16 +41,23 @@
 #include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomMutater.h"
 #include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/InvertingMutater.h"
 #include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SwappingMutater.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SubstitutingMutater.h"
 
 namespace OpenMS
 {
   class OPENMS_DLLAPI MutaterCreator
   {
+
+private:
+	MutaterCreator();
+	MutaterCreator(const MutaterCreator& other);
+	MutaterCreator & operator=(const MutaterCreator& other);
+
 public:
-	  static boost::shared_ptr<Mutater> getInstance(String mutator, double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
+	  static boost::shared_ptr<Mutater> getInstance(const String & mutator, double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
 	  {
-		  if(mutator == "DefaultMutator")
-		    return boost::shared_ptr<DefaultMutater>(new DefaultMutater(precursorMass,precursorMassTolerance,aaList));
+		  if(mutator == "SubstitutingMutator")
+		    return boost::shared_ptr<SubstitutingMutater>(new SubstitutingMutater(precursorMass,precursorMassTolerance,aaList));
 		  else {
 			if(mutator == "RandomMutator")
 			  return boost::shared_ptr<RandomMutater>(new RandomMutater(precursorMass,precursorMassTolerance,aaList));

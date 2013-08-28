@@ -17,7 +17,11 @@ DefaultKiller.C
 SwappingMutater.C
 SubstitutingMutater.C
 RandomMutater.C
+ScorerCreator.C
+KillerCreator.C
+MaterCreator.C
 Seeder.C
+SeederCreator.C
 RandomSeeder.C
 SequenceTagSeeder.C
 InvertingMutater.C

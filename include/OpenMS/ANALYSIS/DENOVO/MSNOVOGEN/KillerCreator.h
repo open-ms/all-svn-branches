@@ -32,20 +32,43 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_KILLERERCREATOR_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_KILLERERCREATOR_H
+
+#include <OpenMS/config.h>
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Killer.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultKiller.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleDecreasingKiller.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/HomologyKiller.h"
+#include <boost/shared_ptr.hpp>
+#include <string>
 
 namespace OpenMS
 {
-	MutaterCreator::MutaterCreator()
-	{}
+  class OPENMS_DLLAPI KillerCreator
+  {
+private:
+	KillerCreator();
+	KillerCreator(const KillerCreator& other);
+	KillerCreator & operator=(const KillerCreator &other);
 
-	MutaterCreator::MutaterCreator(const MutaterCreator& other)
-	{}
-
-	MutaterCreator & MutaterCreator::operator=(const MutaterCreator &other)
-	{
-		return *this;
-	}
-
-
+public:
+	  static boost::shared_ptr<Killer> getInstance(const std::string & killer)
+	  {
+		  if(killer == "SimpleDecreasingKiller")
+		    return boost::shared_ptr<SimpleDecreasingKiller>(new SimpleDecreasingKiller());
+		  else {
+			if(killer == "DefaultKiller")
+			  return boost::shared_ptr<DefaultKiller>(new DefaultKiller());
+			else {
+			  if(killer == "HomologyKiller")
+			    return boost::shared_ptr<HomologyKiller>(new HomologyKiller());
+			  else
+			    return boost::shared_ptr<DefaultKiller>(new DefaultKiller());
+			}
+		  }
+	  }
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_KILLERERCREATOR_H

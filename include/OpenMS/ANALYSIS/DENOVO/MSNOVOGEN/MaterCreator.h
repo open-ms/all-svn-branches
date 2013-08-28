@@ -32,20 +32,37 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#ifndef OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_MATERCREATOR_H
+#define OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_MATERCREATOR_H
+
+#include <OpenMS/config.h>
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Mater.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/DefaultMater.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/RandomMater.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/SimpleMater.h"
+#include "OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/ZipMater.h"
 
 namespace OpenMS
 {
-	MutaterCreator::MutaterCreator()
-	{}
-
-	MutaterCreator::MutaterCreator(const MutaterCreator& other)
-	{}
-
-	MutaterCreator & MutaterCreator::operator=(const MutaterCreator &other)
-	{
-		return *this;
-	}
-
-
+  class OPENMS_DLLAPI MaterCreator
+  {
+public:
+	  static boost::shared_ptr<Mater> getInstance(String mater, double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
+	  {
+		  if(mater == "RandomMater")
+		    return boost::shared_ptr<RandomMater>(new RandomMater(precursorMass,precursorMassTolerance,aaList));
+		  else {
+			if(mater == "SimpleMater")
+			  return boost::shared_ptr<SimpleMater>(new SimpleMater(precursorMass,precursorMassTolerance,aaList));
+			else {
+			  if(mater == "ZipMater")
+				return boost::shared_ptr<ZipMater>(new ZipMater(precursorMass,precursorMassTolerance,aaList));
+			  else
+			    return boost::shared_ptr<DefaultMater>(new DefaultMater(precursorMass,precursorMassTolerance,aaList));
+			}
+		  }
+	  }
+  };
 } // namespace
+
+#endif // OPENMS__ANALYSIS_DENOVO_MSNOVOGEN_MATERCREATOR_H

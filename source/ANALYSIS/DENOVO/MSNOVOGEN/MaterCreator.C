@@ -32,20 +32,10 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MutaterCreator.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/ScorerCreator.h>
 
 namespace OpenMS
 {
-	MutaterCreator::MutaterCreator()
-	{}
-
-	MutaterCreator::MutaterCreator(const MutaterCreator& other)
-	{}
-
-	MutaterCreator & MutaterCreator::operator=(const MutaterCreator &other)
-	{
-		return *this;
-	}
 
 
 } // namespace

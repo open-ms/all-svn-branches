@@ -37,5 +37,14 @@
 namespace OpenMS
 {
 
+	SeederCreator::SeederCreator()
+	{}
 
+	SeederCreator::SeederCreator(const SeederCreator& other)
+	{}
+
+	SeederCreator & SeederCreator::operator=(const SeederCreator &other)
+	{
+		return *this;
+	}
 } // namespace

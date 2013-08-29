@@ -45,8 +45,13 @@ namespace OpenMS
 {
   class OPENMS_DLLAPI ScorerCreator
   {
+private:
+	ScorerCreator();
+	ScorerCreator(const ScorerCreator& other);
+	ScorerCreator & operator=(const ScorerCreator &other);
+
 public:
-	  static boost::shared_ptr<Scorer> getInstance(String scorer, const double fragmentMassTolerance)
+	  static boost::shared_ptr<Scorer> getInstance(const String & scorer, const double fragmentMassTolerance)
 	  {
 		  if(scorer == "NormalizedSharedAbundanceScorer")
 		    return boost::shared_ptr<NormShrAbuScorer>(new NormShrAbuScorer(fragmentMassTolerance));

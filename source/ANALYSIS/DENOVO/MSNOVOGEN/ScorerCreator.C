@@ -36,6 +36,15 @@
 
 namespace OpenMS
 {
+	ScorerCreator::ScorerCreator()
+	{}
 
+	ScorerCreator::ScorerCreator(const ScorerCreator& other)
+	{}
+
+	ScorerCreator & ScorerCreator::operator=(const ScorerCreator &other)
+	{
+		return *this;
+	}
 
 } // namespace

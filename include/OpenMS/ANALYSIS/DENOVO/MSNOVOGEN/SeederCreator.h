@@ -46,6 +46,10 @@ namespace OpenMS
 {
   class OPENMS_DLLAPI SeederCreator
   {
+private:
+	SeederCreator();
+	SeederCreator(const SeederCreator& other);
+	SeederCreator & operator=(const SeederCreator &other);
 public:
 	  static boost::shared_ptr<Seeder> getInstance(String seeder, const MSSpectrum<> * spec, const double precursorMass, const double precursorMassTolerance, const double fragmentMassTolerance, const std::vector<const Residue*> aaList)
 	  {

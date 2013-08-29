@@ -46,8 +46,13 @@ namespace OpenMS
 {
   class OPENMS_DLLAPI MaterCreator
   {
+private:
+	MaterCreator();
+	MaterCreator(const MaterCreator& other);
+	MaterCreator & operator=(const MaterCreator &other);
+
 public:
-	  static boost::shared_ptr<Mater> getInstance(String mater, double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
+	  static boost::shared_ptr<Mater> getInstance(const String & mater, double precursorMass, double precursorMassTolerance, std::vector<const Residue*> aaList)
 	  {
 		  if(mater == "RandomMater")
 		    return boost::shared_ptr<RandomMater>(new RandomMater(precursorMass,precursorMassTolerance,aaList));

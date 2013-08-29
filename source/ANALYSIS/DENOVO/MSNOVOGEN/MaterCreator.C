@@ -32,10 +32,19 @@
 // $Authors: Jens Allmer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/ScorerCreator.h>
+#include <OpenMS//ANALYSIS/DENOVO/MSNOVOGEN/MaterCreator.h>
 
 namespace OpenMS
 {
+	MaterCreator::MaterCreator()
+	{}
 
+	MaterCreator::MaterCreator(const MaterCreator& other)
+	{}
+
+	MaterCreator & MaterCreator::operator=(const MaterCreator &other)
+	{
+		return *this;
+	}
 
 } // namespace

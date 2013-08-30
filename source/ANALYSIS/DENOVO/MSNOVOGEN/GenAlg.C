@@ -149,11 +149,10 @@ namespace OpenMS
 
 	void GenAlg::setPrecursorInfo(const MSSpectrum<>* ms)
 	{
-	  double abMax = 0;
+	  double abMax = -1;
 	  const vector<Precursor>& precursors = ms->getPrecursors();
-	  for (vector<Precursor>::const_iterator pc_it = precursors.begin();
-						pc_it != precursors.end(); ++pc_it) {
-		  if(abMax < pc_it->getIntensity())
+	  for (vector<Precursor>::const_iterator pc_it = precursors.begin(); pc_it != precursors.end(); ++pc_it) {
+		  if(abMax <= pc_it->getIntensity())
 		  {
 			  precursorMZ_ = pc_it->getMZ();
 			  precursorCharge_ = pc_it->getCharge();
@@ -187,14 +186,16 @@ namespace OpenMS
 	{
 		if(genPool_->getPopulationSize() > 0)
 			genPool_->clear();
-		Size maxTries = 20 * genPool_->getMaxPoolSize();
-	    while((maxTries > 0) && (genPool_->getPopulationSize() < genPool_->getMaxPoolSize()))
-	    {
-	      boost::shared_ptr<Chromosome> ni = seeder_->createIndividual();
-		  if(ni && ni->getSequence().size() > 0)
-	        genPool_->addIndividual(ni);
-	      maxTries--;
-	    }
+		genPool_->addIndividuals(seeder_->createIndividuals(genPool_->getMaxPoolSize()));
+
+//		Size maxTries = 20 * genPool_->getMaxPoolSize();
+//	    while((maxTries > 0) && (genPool_->getPopulationSize() < genPool_->getMaxPoolSize()))
+//	    {
+//	      boost::shared_ptr<Chromosome> ni = seeder_->createIndividual();
+//		  if(ni && ni->getSequence().size() > 0)
+//	        genPool_->addIndividual(ni);
+//	      maxTries--;
+//	    }
 	    genPool_->setPreviousPoolSize(genPool_->getPopulationSize());
 	}
 
@@ -215,6 +216,7 @@ namespace OpenMS
 
 		initGenPool();
 		Size i = 0;
+		String bestSeq = "";
 		Size sameBestRepeat = 0;
 		while((i++ < numGenerations) && (sameBestRepeat < endIfStableForNumGenerations))
 		{
@@ -227,6 +229,15 @@ namespace OpenMS
 				genPool_->replenish(genPool_->getPreviousPoolSize());
 			}
 			kill();
+			genPool_->sort();
+			String cbseq = genPool_->getIndividual(0)->getSequence().toString();
+			if(cbseq != bestSeq)
+			{
+			  sameBestRepeat = 0;
+			  bestSeq = cbseq;
+			}
+			else
+			  sameBestRepeat++;
 		}
 
 		std::vector<boost::shared_ptr<Chromosome> > results;

@@ -118,13 +118,13 @@ public:
 	  setMaxFloat_("fragment_mass_tolerance", 5.0);
 	  setMinFloat_("fragment_mass_tolerance", 0.00001);
 
-	  registerIntOption_("number_of_individuals", "", 100, "", false, false);
+	  registerIntOption_("number_of_individuals", "", 300, "", false, false);
 	  setMinInt_("number_of_individuals",1);
-	  setMaxInt_("number_of_individuals",10000);
+	  setMaxInt_("number_of_individuals",1000);
 
 	  registerIntOption_("number_of_generations", "", 100, "", false, false);
 	  setMinInt_("number_of_generations",1);
-	  setMaxInt_("number_of_generations",10000);
+	  setMaxInt_("number_of_generations",1000);
 
 	  registerIntOption_("return_n_best_results", "", 10, "", false, false);
 	  setMinInt_("return_n_best_results",1);
@@ -142,10 +142,10 @@ public:
 	  setValidStrings_("mutators", mutators);
 	  
 	  StringList seeders;
-	  mutators.push_back("DefaultSeeder");
-	  mutators.push_back("RandomSequenceSeeder");
-	  mutators.push_back("SequenceTagSeeder");
-	  mutators.push_back("RandomSeeder");
+	  seeders.push_back("DefaultSeeder");
+	  seeders.push_back("RandomSequenceSeeder");
+	  seeders.push_back("SequenceTagSeeder");
+	  seeders.push_back("RandomSeeder");
 	  registerStringOption_("seeders", "", "SequenceTagSeeder", "Seeders used by the genetic algorithm to seed the gene pool.", false, true);
 	  setValidStrings_("seeders", seeders);
 	  
@@ -232,7 +232,39 @@ public:
 		  pep_idents.push_back(ga.startEvolution(numGenerations,endStable,bestHits));
 	  }
 
+
+	  // search parameters
+	  ProteinIdentification::SearchParameters search_parameters;
+	  search_parameters.db = "none";
+	  search_parameters.db_version = "";
+	  search_parameters.taxonomy = "";
+	  //search_parameters.charges = getStringOption_("charges");
+	  search_parameters.mass_type = ProteinIdentification::MONOISOTOPIC;
+	  search_parameters.fixed_modifications = allowed_modifications;
+	  search_parameters.enzyme = ProteinIdentification::TRYPSIN;
+	  search_parameters.missed_cleavages = 1;
+	  search_parameters.peak_mass_tolerance = fmt;
+	  search_parameters.precursor_tolerance = pmt;
+
+      DateTime now;
+      now.now();
+      String protein_identifier = "MSNOVOGEN_" + now.get();
+
+	  ProteinIdentification protein_identification;
+	  protein_identification.setDateTime(now);
+	  protein_identification.setSearchEngine("MSNOVOGEN");
+	  protein_identification.setSearchEngineVersion("alpha");
+	  protein_identification.setSearchParameters(search_parameters);
+	  protein_identification.setIdentifier(protein_identifier);
+
 	  std::vector<ProteinIdentification> prot_idents;
+	  prot_idents.push_back(protein_identification);
+
+	  for(std::vector<PeptideIdentification>::iterator pepit = pep_idents.begin(); pepit != pep_idents.end(); ++pepit)
+	  {
+		pepit->setIdentifier(protein_identifier);
+	  }
+
 	  IdXMLFile().store(output_file,prot_idents, pep_idents);
 
 	  return EXECUTION_OK;

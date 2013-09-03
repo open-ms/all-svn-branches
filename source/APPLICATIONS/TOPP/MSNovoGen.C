@@ -50,6 +50,9 @@
 #include <vector>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/NLargest.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/GoodDiffFilter.h>
+#include <time.h>
 
 using namespace OpenMS;
 
@@ -118,7 +121,7 @@ public:
 	  setMaxFloat_("fragment_mass_tolerance", 5.0);
 	  setMinFloat_("fragment_mass_tolerance", 0.00001);
 
-	  registerIntOption_("number_of_individuals", "", 300, "", false, false);
+	  registerIntOption_("number_of_individuals", "", 500, "", false, false);
 	  setMinInt_("number_of_individuals",1);
 	  setMaxInt_("number_of_individuals",1000);
 
@@ -126,9 +129,23 @@ public:
 	  setMinInt_("number_of_generations",1);
 	  setMaxInt_("number_of_generations",1000);
 
+	  registerIntOption_("rejuvenate_after_generations", "", 20, "", false, false);
+	  setMinInt_("rejuvenate_after_generations",5);
+	  setMaxInt_("rejuvenate_after_generations",1000);
+
 	  registerIntOption_("return_n_best_results", "", 10, "", false, false);
 	  setMinInt_("return_n_best_results",1);
 
+	  registerIntOption_("retain_n_peaks", "", 100, "", false, false);
+	  setMinInt_("retain_n_peaks",50);
+	  setMaxInt_("retain_n_peaks",200);
+	  
+	  StringList peakFilter;
+	  peakFilter.push_back("yes");
+	  peakFilter.push_back("no");
+	  registerStringOption_("use_peak_filter", "", "no", "Filter peaks (recommended if not done in pipeline).", false, true);
+	  setValidStrings_("use_peak_filter", peakFilter);
+	  
 	  registerIntOption_("end_after_n_stable_generations", "", 10, "", false, false);
 	  setMinInt_("number_of_generations",1);
 	  setMaxInt_("number_of_generations",100);
@@ -215,15 +232,40 @@ public:
 	  Size endStable = getIntOption_("end_after_n_stable_generations");
 	  Size numGenerations = getIntOption_("number_of_generations");
 	  Size bestHits = getIntOption_("return_n_best_results");
+	  Size numPeaks = getIntOption_("retain_n_peaks");
+	  Size rejAft = getIntOption_("rejuvenate_after_generations");
 
 	  // identifications
 	  std::vector<PeptideIdentification> pep_idents;
-
-	  // do work
+	  bool filterPeaks = false;
+	  if(getStringOption_("use_peak_filter") == "yes")
+		  filterPeaks = true;
+	  
+	  time_t s, e;
+	  s = time(NULL);
+	  //do work
 	  for(MSExperiment<>::const_iterator spec_it = exp.begin(); spec_it != exp.end(); ++spec_it)
 	  {
-		  const MSSpectrum<> * msms = &*spec_it;
+		  //const MSSpectrum<> * msms = &*spec_it;
+		  MSSpectrum<> * msms = const_cast<MSSpectrum<> *>(&*spec_it);
+		  //MSSpectrum<> * msms(const_cast<MSSpectrum<> *>(org));
+		  if(filterPeaks)
+		  {
+		    GoodDiffFilter::create()->apply(msms);
+			if(msms->size() > numPeaks)
+			{
+			  NLargest lf(numPeaks);
+			  lf.filterPeakSpectrum(*msms);
+			}
+			msms->sortByPosition();
+		  }
 		  GenAlg ga(msms,aaList,poolSize,pmt,fmt);
+	///TODO remove below
+	std::map<String, boost::shared_ptr<Chromosome> > ni;
+	ni.insert(std::pair<String,boost::shared_ptr<Chromosome> >("MIFAGIKK",boost::shared_ptr<Chromosome>(new Chromosome("MIFAGIKK",1))));
+	ga.setKnownIndividuals(ni);
+	///TODO remove above
+		  ga.setRejuvenate(rejAft);
 		  ga.setMutater(MutaterCreator::getInstance(getStringOption_("mutators"),ga.getPrecursorMH(),pmt,aaList));
 		  ga.setSeeder(SeederCreator::getInstance(getStringOption_("seeders"),msms,ga.getPrecursorMH(),pmt,fmt,aaList));
 		  ga.setScorer(ScorerCreator::getInstance(getStringOption_("scorers"),fmt));
@@ -231,7 +273,8 @@ public:
 		  ga.setMater(MaterCreator::getInstance(getStringOption_("maters"),ga.getPrecursorMH(),pmt,aaList));
 		  pep_idents.push_back(ga.startEvolution(numGenerations,endStable,bestHits));
 	  }
-
+	  e = time(NULL);
+	  double diff = difftime(e,s);
 
 	  // search parameters
 	  ProteinIdentification::SearchParameters search_parameters;
@@ -246,8 +289,7 @@ public:
 	  search_parameters.peak_mass_tolerance = fmt;
 	  search_parameters.precursor_tolerance = pmt;
 
-      DateTime now;
-      now.now();
+      DateTime now;	  
       String protein_identifier = "MSNOVOGEN_" + now.get();
 
 	  ProteinIdentification protein_identification;
@@ -256,6 +298,7 @@ public:
 	  protein_identification.setSearchEngineVersion("alpha");
 	  protein_identification.setSearchParameters(search_parameters);
 	  protein_identification.setIdentifier(protein_identifier);
+	  protein_identification.setMetaValue("runtime",String(diff)+"s");
 
 	  std::vector<ProteinIdentification> prot_idents;
 	  prot_idents.push_back(protein_identification);

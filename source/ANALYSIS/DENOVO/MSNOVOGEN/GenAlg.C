@@ -187,15 +187,6 @@ namespace OpenMS
 		if(genPool_->getPopulationSize() > 0)
 			genPool_->clear();
 		genPool_->addIndividuals(seeder_->createIndividuals(genPool_->getMaxPoolSize()));
-
-//		Size maxTries = 20 * genPool_->getMaxPoolSize();
-//	    while((maxTries > 0) && (genPool_->getPopulationSize() < genPool_->getMaxPoolSize()))
-//	    {
-//	      boost::shared_ptr<Chromosome> ni = seeder_->createIndividual();
-//		  if(ni && ni->getSequence().size() > 0)
-//	        genPool_->addIndividual(ni);
-//	      maxTries--;
-//	    }
 	    genPool_->setPreviousPoolSize(genPool_->getPopulationSize());
 	}
 
@@ -218,7 +209,10 @@ namespace OpenMS
 		Size i = 0;
 		String bestSeq = "";
 		Size sameBestRepeat = 0;
-		while((i++ < numGenerations) && (sameBestRepeat < endIfStableForNumGenerations))
+		while(	(i++ < numGenerations) && 
+				(sameBestRepeat < endIfStableForNumGenerations) && 
+				genPool_->getPopulationSize() > bestNHits
+			 )
 		{
 			crossover();
 			mutate();

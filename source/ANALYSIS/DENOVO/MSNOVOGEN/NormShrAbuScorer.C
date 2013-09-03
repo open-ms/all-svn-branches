@@ -33,7 +33,6 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/NormShrAbuScorer.h>
-#include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <vector>
@@ -56,10 +55,8 @@ namespace OpenMS
 	  double sms = 0; //abundance of shared peaks (taken from theoretical spectrum).
 	  double rangeStart;
 	  double rangeEnd;
-	  AASequence peptide = chromosome->getSequence();
-	  TheoreticalSpectrumGenerator tsg;
 	  RichPeakSpectrum theoMS;
-	  tsg.getSpectrum(theoMS,peptide,chromosome->getCharge());
+	  getSpectrumGenerator()->getSpectrum(theoMS,chromosome->getSequence(),chromosome->getCharge());
 	  MSSpectrum<>::ConstIterator wndBeg = expMS->begin();
 	  MSSpectrum<>::ConstIterator wndEnd;
 	  for(std::vector<RichPeak1D>::const_iterator iter = theoMS.begin(); iter != theoMS.end(); iter++)

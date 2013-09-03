@@ -39,6 +39,7 @@
 #include <boost/shared_ptr.hpp>
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/Chromosome.h>
+#include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 
 namespace OpenMS
 {
@@ -54,6 +55,10 @@ namespace OpenMS
 private:
 	/// the fragment mass tolerance to use when searching for agreement among spectra.
 	double fragmentMassTolerance;
+	
+	/// Creation of this object takes forever and should be done as little as possible
+	/// therefore it is a member object.
+	boost::shared_ptr<TheoreticalSpectrumGenerator> tsg_;
 
 	/// Copy c'tor shouldn't be used.
 	Scorer(const Scorer& other);
@@ -78,6 +83,16 @@ public:
 	/// Allows to get the currently set fragment mass tolerance (needed in derived classes).
 	double getFragmentMassTolerance() const {
 		return fragmentMassTolerance;
+	}
+
+	boost::shared_ptr<TheoreticalSpectrumGenerator> getSpectrumGenerator() const
+	{
+		return(tsg_);
+	}
+
+	void setSpectrumGenerator(boost::shared_ptr<TheoreticalSpectrumGenerator> tsg)
+	{
+		tsg_ = tsg;
 	}
 };
 } // namespace

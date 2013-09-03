@@ -39,7 +39,7 @@ namespace OpenMS
 {
 
   Scorer::Scorer(const double fmt) :
-    fragmentMassTolerance(fmt)
+    fragmentMassTolerance(fmt), tsg_(boost::shared_ptr<TheoreticalSpectrumGenerator>(new TheoreticalSpectrumGenerator()))
   {}
 
   Scorer::~Scorer()

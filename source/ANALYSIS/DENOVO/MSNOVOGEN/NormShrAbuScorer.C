@@ -44,6 +44,26 @@ namespace OpenMS
   NormShrAbuScorer::NormShrAbuScorer(const double fmt) :
     Scorer(fmt)
   {}
+ 
+  void NormShrAbuScorer::getBYSpectrum(MSSpectrum<> & spec, const AASequence &seq, const Size charge, double intensity) const 
+  {
+	  double pm = seq.getMonoWeight(Residue::Full) + 1;
+	  double ntfm = 0;
+	  double ntm = 0;
+	  double ctm = 0;
+	  for(Size ri = 0; ri != seq.size(); ri++)
+	  {
+		  ntfm += seq.getResidue(ri).getMonoWeight();
+		  ctm = pm - ntfm + 18;
+		  ntm = ntfm;
+		  for(Size c = 1; c <= charge; c++) 
+		  {
+		    spec.insert(spec.begin(),Peak1D((ntm+c)/c,intensity));
+		    spec.insert(spec.begin(),Peak1D((ctm+c)/c, intensity));
+		  }
+	  }
+	  spec.sortByPosition();
+  }
 
   void NormShrAbuScorer::score(const MSSpectrum<> * expMS, boost::shared_ptr<Chromosome> & chromosome) const
   {
@@ -55,11 +75,12 @@ namespace OpenMS
 	  double sms = 0; //abundance of shared peaks (taken from theoretical spectrum).
 	  double rangeStart;
 	  double rangeEnd;
-	  RichPeakSpectrum theoMS;
-	  getSpectrumGenerator()->getSpectrum(theoMS,chromosome->getSequence(),chromosome->getCharge());
+	  MSSpectrum<> theoMS;
+	  getBYSpectrum(theoMS,chromosome->getSequence(),chromosome->getCharge(),(expMS->getMaxInt() + expMS->getMinInt())/2);
+	  //getSpectrumGenerator()->getSpectrum(theoMS,chromosome->getSequence(),chromosome->getCharge());
 	  MSSpectrum<>::ConstIterator wndBeg = expMS->begin();
 	  MSSpectrum<>::ConstIterator wndEnd;
-	  for(std::vector<RichPeak1D>::const_iterator iter = theoMS.begin(); iter != theoMS.end(); iter++)
+	  for(std::vector<Peak1D>::const_iterator iter = theoMS.begin(); iter != theoMS.end(); iter++)
 	  {
 		  rangeStart = iter->getMZ() - getFragmentMassTolerance();
 		  rangeEnd = iter->getMZ() + getFragmentMassTolerance();

@@ -78,40 +78,70 @@ namespace OpenMS
 		const double weight, const double tolerance,
 		const std::vector<const Residue*> aaList) const
 	{
-		double curWeight = sequence.getMonoWeight();
-		double diff = std::abs(curWeight-weight);
-		double nDiff;
-		double minDiff;
-		Size pos;
-		if(diff <= tolerance)
-		  return true;
-		int mi = 10;	//max iterations for while loop
-		while(diff > tolerance)
-	    {
-		  boost::random::uniform_int_distribution<int> int_distribution(0, (int)(sequence.size()-1));
-		  pos = int_distribution(rng);
-		  minDiff = diff;
-		  const Residue * replace = NULL;
-		  for(Size lp=0; lp<aaList.size(); lp++)
-		  {
-		    nDiff = std::abs((curWeight - sequence[pos].getMonoWeight(Residue::Full) + aaList[lp]->getMonoWeight(Residue::Full)) - weight);
-		    if(nDiff < minDiff)
-		    {
-			  minDiff = nDiff;
-			  replace = aaList[lp];
-		    }
-		  }
-		  if(replace)
-		  {
-			  sequence.setResidue(pos,replace);
-			  curWeight = sequence.getMonoWeight(Residue::Full);
-			  diff = std::abs(curWeight - weight);
-		  }
-		  if(--mi == 0 && (diff > tolerance))
-			  return(false);
-	    }
-		return(true);
-	}
+		//double curWeight = sequence.getMonoWeight();
+		//double diff = std::abs(curWeight-weight);
+		//double nDiff;
+		//double minDiff;
+		//Size pos;
+		//if(diff <= tolerance)
+		//  return true;
+		//int mi = 10;	//max iterations for while loop
+		//
+		//while(diff > tolerance)
+	 //   {
+		//  boost::random::uniform_int_distribution<int> int_distribution(0, (int)(sequence.size()-1));
+		//  pos = int_distribution(rng);
+		//  minDiff = diff;
+		//  const Residue * replace = NULL;
+		//  for(Size lp=0; lp<aaList.size(); lp++)
+		//  {
+		//    nDiff = std::abs((curWeight - sequence[pos].getMonoWeight(Residue::Full) + aaList[lp]->getMonoWeight(Residue::Full)) - weight);
+		//    if(nDiff < minDiff)
+		//    {
+		//	  minDiff = nDiff;
+		//	  replace = aaList[lp];
+		//    }
+		//  }
+		//  if(replace)
+		//  {
+		//	  sequence.setResidue(pos,replace);
+		//	  curWeight = sequence.getMonoWeight(Residue::Full);
+		//	  diff = std::abs(curWeight - weight);
+		//  }
+		//  if(--mi == 0 && (diff > tolerance))
+		//	  return(false);
+	 //   }
+		//std::cout << "Took " << mi << "iterations" << std::endl;
+		//return(true);
+
+
+	double seqMass = sequence.getMonoWeight();
+	
+    std::vector<std::pair<Size,const Residue*> > possRep;
+    for(Size p = 0; p < aaList.size(); p++)
+    {
+    	for(Size i = 0; i < sequence.size(); i++)
+    	{
+    	  const Residue& cu = sequence.getResidue(i);
+		  const Residue* pr = aaList[p];
+    	  double pdiff = cu.getMonoWeight(Residue::Full) - pr->getMonoWeight(Residue::Full);
+    	  if(std::abs(weight - (seqMass - pdiff)) <= tolerance)
+    	  {
+    		std::pair<Size, const Residue*> p(i,pr);
+    	    possRep.push_back(p);
+    	  }
+    	}
+		if(possRep.size() > 3)
+			break;
+    }
+    if(possRep.size() > 0) {
+	  boost::random::uniform_int_distribution<Size> posDist(0, (possRep.size()-1));
+	  Size w = posDist(rng);
+      sequence.setResidue(possRep[w].first, possRep[w].second);
+	  return(true);
+    }
+	return(false);
+}
 
 	using namespace seqan;
 	Size Utilities::editDistance(const AASequence& lhs, const AASequence& rhs) const

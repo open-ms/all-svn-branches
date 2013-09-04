@@ -46,6 +46,7 @@
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/KillerCreator.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/MaterCreator.h>
 #include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/GenAlg.h>
+#include <OpenMS/ANALYSIS/DENOVO/MSNOVOGEN/ResidueServer.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <vector>
 #include <OpenMS/CHEMISTRY/Residue.h>
@@ -155,7 +156,7 @@ public:
 	  mutators.push_back("SubstitutingMutator");
 	  mutators.push_back("SwappingMutator");
 	  mutators.push_back("RandomMutator");
-	  registerStringOption_("mutators", "", "SubstitutingMutator", "Mutators used by the genetic algorithm.", false, true);
+	  registerStringOption_("mutators", "", "RandomMutator", "Mutators used by the genetic algorithm.", false, true);
 	  setValidStrings_("mutators", mutators);
 	  
 	  StringList seeders;
@@ -163,7 +164,7 @@ public:
 	  seeders.push_back("RandomSequenceSeeder");
 	  seeders.push_back("SequenceTagSeeder");
 	  seeders.push_back("RandomSeeder");
-	  registerStringOption_("seeders", "", "SequenceTagSeeder", "Seeders used by the genetic algorithm to seed the gene pool.", false, true);
+	  registerStringOption_("seeders", "", "RandomSeeder", "Seeders used by the genetic algorithm to seed the gene pool.", false, true);
 	  setValidStrings_("seeders", seeders);
 	  
 	  StringList scorers;
@@ -186,7 +187,7 @@ public:
 	  maters.push_back("RandomMater");
 	  maters.push_back("ZipMater");
 	  maters.push_back("DefaultMater");
-	  registerStringOption_("maters", "", "SimpleMater", "Maters used by the genetic algorithm to perform cross over.", false, true);
+	  registerStringOption_("maters", "", "RandomMater", "Maters used by the genetic algorithm to perform cross over.", false, true);
 	  setValidStrings_("maters", maters);
   }
 
@@ -218,11 +219,13 @@ public:
 	  aaList.push_back(ResidueDB::getInstance()->getResidue("W"));
 	  aaList.push_back(ResidueDB::getInstance()->getResidue("Y"));
 	  aaList.push_back(ResidueDB::getInstance()->getResidue("V"));
-
+	  ResidueServer rs;
+	  rs.add(aaList);
 	  StringList allowed_modifications = getStringList_("modifications");
-	  for(Size i=0; i<allowed_modifications.size(); i++)
+	  for(Size i=0; i<allowed_modifications.size(); i++) {
 		  aaList.push_back(ResidueDB::getInstance()->getModifiedResidue(allowed_modifications[i]));
-
+		  rs.add(ResidueDB::getInstance()->getModifiedResidue(allowed_modifications[i]));
+	  }
 	  MSExperiment<> exp;
 	  FileHandler().loadExperiment(input_file, exp);
 

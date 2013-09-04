@@ -23,6 +23,7 @@ MaterCreator.h
 Seeder.h
 SeederCreator.h
 RandomSeeder.h
+ResidueServer.h
 SequenceTagSeeder.h
 InvertingMutater.h
 SimpleDecreasingKiller.h

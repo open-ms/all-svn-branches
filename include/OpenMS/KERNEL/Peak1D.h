@@ -76,6 +76,17 @@ public:
       intensity_(0)
     {}
 
+    ///@name Constructors and Destructor
+    ///@{
+    /// Full constructor
+	/// for convenience it seems essential to have a constructor taking the basic types
+	/// also 1. constructing peaks and copying them is more expensive than mere construction.
+    inline Peak1D(CoordinateType mz, IntensityType intensity) 
+	{
+		setMZ(mz);
+		setIntensity(intensity);
+	}
+
     /// Copy constructor
     inline Peak1D(const Peak1D & p) :
       position_(p.position_),

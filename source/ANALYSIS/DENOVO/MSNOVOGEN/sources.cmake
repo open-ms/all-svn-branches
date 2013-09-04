@@ -23,6 +23,7 @@ MaterCreator.C
 Seeder.C
 SeederCreator.C
 RandomSeeder.C
+ResidueServer.C
 SequenceTagSeeder.C
 InvertingMutater.C
 SimpleDecreasingKiller.C

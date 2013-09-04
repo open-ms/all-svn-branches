@@ -57,6 +57,9 @@ private:
 	/// Copy c'tor shouldn't be used
 	NormShrAbuScorer(const NormShrAbuScorer& other);
 
+	/// A simple implementation for generating a BY spectrum (for speed).
+	void getBYSpectrum(MSSpectrum<> & spec, const AASequence &seq, const Size charge, double intensity = 1000) const;
+
 public:
 	/// Default c'tor providing all necessary information.
 	NormShrAbuScorer(const double fragmentMassTolerance);

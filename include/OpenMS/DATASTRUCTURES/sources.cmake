@@ -14,8 +14,6 @@ CVMappingTerm.h
 CVMappingRule.h
 CVReference.h
 CVMappings.h
-DataPoint.h
-DataSubset.h
 DBoundingBox.h
 DIntervalBase.h
 DPosition.h
@@ -26,9 +24,7 @@ DateTime.h
 DefaultParamHandler.h
 DistanceMatrix.h
 DoubleList.h
-GridElement.h
 GridFeature.h
-HashGrid.h
 IntList.h
 IsotopeCluster.h
 Map.h
@@ -36,9 +32,7 @@ MassExplainer.h
 Matrix.h
 Param.h
 QTCluster.h
-QTSILACCluster.h
 SeqanIncludeWrapper.h
-SILACTreeNode.h
 SparseVector.h
 String.h
 StringList.h
@@ -48,6 +42,7 @@ SuffixArraySeqan.h
 SuffixArrayTrypticCompressed.h
 SuffixArrayTrypticSeqan.h
 ToolDescription.h
+LPWrapper.h
 )
 
 ### add path to the filenames

@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
@@ -40,99 +47,101 @@ namespace OpenMS
 {
 
   /**
-	  @brief IsotopeMarker marks peak pairs which could represent an ion and its isotope
+      @brief IsotopeMarker marks peak pairs which could represent an ion and its isotope
 
-		@todo implement a real isotope marking here with isotopedistributions and fitting (Andreas)
+        @todo implement a real isotope marking here with isotopedistributions and fitting (Andreas)
 
-		@htmlinclude OpenMS_IsotopeMarker.parameters
+        @htmlinclude OpenMS_IsotopeMarker.parameters
 
-		@ingroup PeakMarker
+        @ingroup PeakMarker
   */
-  class OPENMS_DLLAPI IsotopeMarker
-    : public PeakMarker
+  class OPENMS_DLLAPI IsotopeMarker :
+    public PeakMarker
   {
-  public:
+public:
 
-		// @name Constructors and Destructors
-		// @{
+    // @name Constructors and Destructors
+    // @{
     /// default constructor
     IsotopeMarker();
 
     /// copy constructor
-    IsotopeMarker(const IsotopeMarker& source);
+    IsotopeMarker(const IsotopeMarker & source);
 
     /// destructor
     virtual ~IsotopeMarker();
-		// @}
+    // @}
 
-		// @name Operators
-		// @{
+    // @name Operators
+    // @{
     /// assignment operator
-    IsotopeMarker& operator=(const IsotopeMarker& source);
-		// @}
+    IsotopeMarker & operator=(const IsotopeMarker & source);
+    // @}
 
-		// @name Accessors
-		// @{
-		///
-    static PeakMarker* create() { return new IsotopeMarker();}
+    // @name Accessors
+    // @{
+    ///
+    static PeakMarker * create() { return new IsotopeMarker(); }
 
-		///
-		template <typename SpectrumType> void apply(std::map<double, bool>& marked, SpectrumType& spectrum)
-		{
-			double mzvariation = (double)param_.getValue("mz_variation");
-    	double invariation = (double)param_.getValue("in_variation");
-    	Size marks = param_.getValue("marks");
-			
-    	spectrum.sortByPosition();
-			
-			std::map<double, Size> isotopemarks ; // possible isotopes
-			
-    	for (Size i = 0; i < spectrum.size(); ++i)
-    	{
-      	double mz = spectrum[i].getPosition()[0];
-      	double intensity = spectrum[i].getIntensity();
-      	Size j = i+1;
+    ///
+    template <typename SpectrumType>
+    void apply(std::map<double, bool> & marked, SpectrumType & spectrum)
+    {
+      double mzvariation = (double)param_.getValue("mz_variation");
+      double invariation = (double)param_.getValue("in_variation");
+      Size marks = param_.getValue("marks");
 
-      	//std::vector<std::pair<double, double> > isotopes = SpectrumGenerator::instance()->isotopepeaks(mz, intensity);
-				IsotopeDistribution id;
-				id.estimateFromPeptideWeight(mz);
+      spectrum.sortByPosition();
 
-      	while (j < spectrum.size() && spectrum[j].getPosition()[0] <= mz + 3 + mzvariation)
-      	{
-        	double curmz = spectrum[j].getPosition()[0];
-        	double curIntensity = spectrum[j].getIntensity();
-        	UInt iso = (UInt)(curmz - mz + 0.499999);
-        	if (iso > 0 && curmz - mz - iso > mzvariation)
-        	{
-          	++j;
-          	continue;
-        	}
-        	if (std::fabs(id.begin()->second * intensity - curIntensity) < invariation * id.begin()->second * intensity)
-        	{
-          	isotopemarks[mz]++;
-        	  isotopemarks[curmz]++;
-        	}
-        	++j;
-      	}
-    	}
-			
-    	for (std::map<double, Size>::const_iterator cmit = isotopemarks.begin(); cmit != isotopemarks.end(); ++cmit)
-    	{
-      	if (cmit->second >= marks)
-      	{
-        	marked.insert(std::make_pair<double, bool>(cmit->first, true));
-      	}
-    	}
-    	return;
-		}
+      std::map<double, Size> isotopemarks;        // possible isotopes
 
-		///
-		static const String getProductName()
-		{
-			return "IsotopeMarker";
-		}
-		// @}
-		
+      for (Size i = 0; i < spectrum.size(); ++i)
+      {
+        double mz = spectrum[i].getPosition()[0];
+        double intensity = spectrum[i].getIntensity();
+        Size j = i + 1;
+
+        //std::vector<std::pair<double, double> > isotopes = SpectrumGenerator::instance()->isotopepeaks(mz, intensity);
+        IsotopeDistribution id;
+        id.estimateFromPeptideWeight(mz);
+
+        while (j < spectrum.size() && spectrum[j].getPosition()[0] <= mz + 3 + mzvariation)
+        {
+          double curmz = spectrum[j].getPosition()[0];
+          double curIntensity = spectrum[j].getIntensity();
+          UInt iso = (UInt)(curmz - mz + 0.499999);
+          if (iso > 0 && curmz - mz - iso > mzvariation)
+          {
+            ++j;
+            continue;
+          }
+          if (std::fabs(id.begin()->second * intensity - curIntensity) < invariation * id.begin()->second * intensity)
+          {
+            isotopemarks[mz]++;
+            isotopemarks[curmz]++;
+          }
+          ++j;
+        }
+      }
+
+      for (std::map<double, Size>::const_iterator cmit = isotopemarks.begin(); cmit != isotopemarks.end(); ++cmit)
+      {
+        if (cmit->second >= marks)
+        {
+          marked.insert(std::pair<double, bool>(cmit->first, true));
+        }
+      }
+      return;
+    }
+
+    ///
+    static const String getProductName()
+    {
+      return "IsotopeMarker";
+    }
+
+    // @}
+
   };
 
 }

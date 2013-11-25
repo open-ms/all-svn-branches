@@ -18,6 +18,8 @@ FeatureFinderAlgorithm.h
 FeatureFinderAlgorithmIsotopeWavelet.h
 FeatureFinderAlgorithmPicked.h
 FeatureFinderAlgorithmPickedHelperStructs.h
+FeatureFinderAlgorithmSH.h
+FeatureFinderAlgorithmSHCtrl.h
 FeatureFinderAlgorithmSimple.h
 FeatureFinderAlgorithmSimplest.h
 FeatureFinderAlgorithmMRM.h
@@ -44,6 +46,7 @@ LmaIsotopeModel.h
 MaxLikeliFitter1D.h
 ModelDescription.h
 ModelFitter.h
+PeakWidthEstimator.h
 ProductModel.h
 SeedListGenerator.h
 SimpleExtender.h

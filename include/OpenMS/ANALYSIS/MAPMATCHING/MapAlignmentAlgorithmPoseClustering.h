@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
@@ -30,86 +37,83 @@
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithm.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/TransformationDescription.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/StablePairFinder.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
 
 namespace OpenMS
 {
-	/**
-		@brief A map alignment algorithm based on pose clustering.
+  /**
+    @brief A map alignment algorithm based on pose clustering.
 
-		Pose clustering analyses pair distances to find the most probable transformation of retention times.
+    Pose clustering analyzes pair distances to find the most probable transformation of retention times.
+        The algorithm chooses the x most intensity peaks/features per map.
+    This is modeled via the parameter 'max_num_peaks_considered', which in turn influences the runtime and stability of the results.
+        Bigger values prolong computation, smaller values might lead to no or unstable trafos. Set to -1 to use all features (might take very
+        long for large maps).
 
-		For further details see:
-		@n Eva Lange et.al
-		@n A Geometric Approach for the Alignment of Liquid Chromatography-Mass Spectrometry Data
-		@n ISMB/ECCB 2007
+    For further details see:
+    @n Eva Lange et al.
+    @n A Geometric Approach for the Alignment of Liquid Chromatography-Mass Spectrometry Data
+    @n ISMB/ECCB 2007
 
-	  @htmlinclude OpenMS_MapAlignmentAlgorithmPoseClustering.parameters
+    @htmlinclude OpenMS_MapAlignmentAlgorithmPoseClustering.parameters
 
-		@ingroup MapAlignment
+    @ingroup MapAlignment
 
-		@todo write test, work out the TODOs (Clemens)
-	*/
-	class OPENMS_DLLAPI MapAlignmentAlgorithmPoseClustering
-		: public MapAlignmentAlgorithm
-	{
-	 public:
-		/// Default constructor
-		MapAlignmentAlgorithmPoseClustering();
+  */
+  class OPENMS_DLLAPI MapAlignmentAlgorithmPoseClustering :
+    public MapAlignmentAlgorithm
+  {
+public:
+    /// Default constructor
+    MapAlignmentAlgorithmPoseClustering();
 
-		/// Destructor
-		virtual ~MapAlignmentAlgorithmPoseClustering();
+    /// Destructor
+    virtual ~MapAlignmentAlgorithmPoseClustering();
 
-		// Docu in base class
-		virtual void alignPeakMaps(std::vector< MSExperiment<> >&, std::vector<TransformationDescription>&);
+    void align(const FeatureMap<> & map, TransformationDescription & trafo);
+    void align(const MSExperiment<> & map, TransformationDescription & trafo);
+    void align(const ConsensusMap & map, TransformationDescription & trafo);
 
-		// Docu in base class
-		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&);
+    template <typename MapType>
+    void setReference(const MapType & map)
+    {
+      MapType map2 = map; // todo: avoid copy (MSExperiment version of convert() demands non-const version)
+      ConsensusMap::convert(0, map2, reference_, max_num_peaks_considered_);
+    }
 
-		// Docu in base class
-		virtual void setReference(Size reference_index=0, const String& reference_file="");
+    /// Creates a new instance of this class (for Factory)
+    static MapAlignmentAlgorithm * create()
+    {
+      return new MapAlignmentAlgorithmPoseClustering();
+    }
 
-		// Docu in base class
-		virtual void getDefaultModel(String& model_type, Param& params);
+    /// Returns the product name (for the Factory)
+    static String getProductName()
+    {
+      return "pose_clustering";
+    }
 
-		/// Creates a new instance of this class (for Factory)
-		static MapAlignmentAlgorithm* create()
-		{
-			return new MapAlignmentAlgorithmPoseClustering();
-		}
+protected:
 
-		/// Returns the product name (for the Factory)
-		static String getProductName()
-		{
-			return "pose_clustering";
-		}
+    virtual void updateMembers_();
 
-	 protected:
+    PoseClusteringAffineSuperimposer superimposer_;
 
-		/// Index of input file to use as reference (1-based!)
-		Size reference_index_;
+    StablePairFinder pairfinder_;
 
-		/// Path to external reference file
-		String reference_file_;
+    ConsensusMap reference_;
 
-		/**
-			 Compute retention time transformations for feature maps or consensus maps
-		 */
-		template <typename MapType>
-			void computeTransformations_(std::vector<MapType>& maps, 
-																	 std::vector<TransformationDescription>& 
-																	 transformations, Size reference_index, 
-																	 Size max_num_peaks_considered = -1);
+    Int max_num_peaks_considered_;
 
-	 private:
+private:
 
-		/// Copy constructor intentionally not implemented -> private
-		MapAlignmentAlgorithmPoseClustering(const MapAlignmentAlgorithmPoseClustering& );
-		///Assignment operator intentionally not implemented -> private
-		MapAlignmentAlgorithmPoseClustering& operator=(const MapAlignmentAlgorithmPoseClustering& );
-
-	};
-
+    /// Copy constructor intentionally not implemented -> private
+    MapAlignmentAlgorithmPoseClustering(const MapAlignmentAlgorithmPoseClustering &);
+    ///Assignment operator intentionally not implemented -> private
+    MapAlignmentAlgorithmPoseClustering & operator=(const MapAlignmentAlgorithmPoseClustering &);
+  };
 } // namespace OpenMS
 
 #endif // OPENMS_ANALYSIS_MAPMATCHING_MAPALIGNMENTALGORITHMPOSECLUSTERING_H

@@ -9,6 +9,7 @@ BiGaussModel.C
 EGHTraceFitter.C
 EmgFitter1D.C
 EmgModel.C
+EmgScoring.C
 ExtendedIsotopeFitter1D.C
 ExtendedIsotopeModel.C
 FeaFiModule.C
@@ -17,6 +18,8 @@ FeatureFinderAlgorithm.C
 FeatureFinderAlgorithmIsotopeWavelet.C
 FeatureFinderAlgorithmPicked.C
 FeatureFinderAlgorithmPickedHelperStructs.C
+FeatureFinderAlgorithmSH.C
+FeatureFinderAlgorithmSHCtrl.C
 FeatureFinderAlgorithmSimple.C
 FeatureFinderAlgorithmSimplest.C
 FeatureFinderAlgorithmMRM.C
@@ -37,11 +40,11 @@ LmaIsotopeModel.C
 MaxLikeliFitter1D.C
 ModelDescription.C
 ModelFitter.C
+PeakWidthEstimator.C
 ProductModel.C
 SeedListGenerator.C
 SimpleExtender.C
 SimpleSeeder.C
-TraceFitter.C
 )
 
 ### add path to the filenames

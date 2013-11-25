@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2012.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer:  $
 // $Authors: Marc Sturm $
@@ -42,7 +49,7 @@
 //   Dont forget to add the built example application to the svn ignore list:
 //   'svn propedit svn:ignore source/EXAMPLES/'
 // - When talking about OpenMS in general, prefix it with a '%'. Otherwise a
-//   link to the OpenMS namspace is generated automatically
+//   link to the OpenMS namespace is generated automatically
 
 //####################################### GENERAL #######################################
 
@@ -56,12 +63,12 @@
 
 	The structure of this tutorial is similar to the modules of the class documentation.
 	First, the basic concepts and datastructures of %OpenMS are explained. The next chapter is
-	about the kernel datastructures. These datastructures represent the actual mass spectronomy
+	about the kernel datastructures. These datastructures represent the actual mass spectrometric
 	data: raw data, peaks, spectra and maps. In the following chapters, the more sophisticated
 	datastructures and algorithms, e.g. those used for peak picking, feature finding and identification
 	are presented.
 
-	All the example programs used in this tutorial, can be found in @a OpenMS/source/EXAMPLES/.
+	All the example programs used in this tutorial, can be found in @a doc/code_examples/.
 
 	If you are looking for C++ literature, we recommend the following books:
 	- <b>C++:</b> C++ Primer, Effective C++
@@ -70,7 +77,7 @@
 
 	@section general_search Class search engine
 
-	You can search for Classes in the %OpenMS documentation using the the class search engine
+	You can search for Classes in the %OpenMS documentation using the class search engine
 	that can be found at http://open-ms.sourceforge.net/documentation.php .
 
 	The search engine can e.g. be used to
@@ -250,7 +257,7 @@ file formats, data reduction functionality and all other analysis algorithms.
   The %OpenMS string implementation @a String is based on the STL @a std::string.
   In order to make the %OpenMS string class more convenient, a lot of methods have been
   implemented in addition to the methods provided by the base class.
-  A selection of the added functionaliy is given here:
+  A selection of the added functionality is given here:
   - Checking for a substring (suffix, prefix, substring, char)
   - Extracting a substring (suffix, prefix, substring)
   - Trimming (left, right, both sides)
@@ -269,6 +276,7 @@ file formats, data reduction functionality and all other analysis algorithms.
   First we need to include the header file for @a DPosition and @a iostream. Then we
   import all the %OpenMS symbols to the scope with the @a using directive.
   @dontinclude Tutorial_DPosition.C
+  @skip DPosition
   @until namespace
   The first commands in the main method initialize a 2-dimensional @a DPosition :
   @until 47.11
@@ -292,7 +300,7 @@ file formats, data reduction functionality and all other analysis algorithms.
   i.e. @f$ minPosition()[x] \le maxPosition()[x]@f$ for each dimension @a x. The following example (Tutorial_DRange.C) demonstrates this behavior.
 
   This time, we skip everything before the main method. In the main method, we
-  create a range and assign values to @a min and @a max. Note that the the minimum
+  create a range and assign values to @a min and @a max. Note that the minimum
   value of the first dimension is larger than the maximum value.
   @dontinclude Tutorial_DRange.C
   @skip main
@@ -479,7 +487,7 @@ file formats, data reduction functionality and all other analysis algorithms.
   and the intensity range of the container.
 
   The following example (Tutorial_RangeManager.C) shows the functionality of the class @a RangeManger using a @a FeatureMap.
-  First a @a FeatureMap with two features is created, then the ranges are calulated and printed:
+  First a @a FeatureMap with two features is created, then the ranges are calculated and printed:
   @dontinclude Tutorial_RangeManager.C
   @skip main
   @until end of main
@@ -510,12 +518,12 @@ file formats, data reduction functionality and all other analysis algorithms.
   or string information. It also supports casting of the stored
   value back to its original type.
 
-  @a MetaInfo is used to easily store information of any type, that does not fit into the the other
+  @a MetaInfo is used to easily store information of any type, that does not fit into the other
   classes. It implements type-name-value triplets.
   The main datastructure is an associative container that stores
   @a DataValue instances as values associated to string keys.
   Internally, the string keys are converted to integer keys for
-  performance resaons i.e. a @a map<UInt,DataValue> is used.
+  performance reasons i.e. a @a map<UInt,DataValue> is used.
 
   The @a MetaInfoRegistry associates the string keys used in
   @a MetaValue with the integer values that are used for
@@ -591,15 +599,21 @@ file formats, data reduction functionality and all other analysis algorithms.
 @page tutorial_format File and DB access
 
   All classes for file and database IO can be found in the @a FORMAT folder.
+  For most file formats, you can use the generic interfaces described in the
+  section "File adapter classes" but for some applications (e.g. where CPU or
+  memory usage are of concern), also consult the specific interfaces that
+  OpenMS provides for the mzML data format (see section "File I/O for MzML").
 
 @section format_file File adapter classes
 
   The interface of most file adapter classes is very similar. They implement
   a @a load and a @a store method, that take a file name and the appropriate
-  data structure.
+  data structure. Usually these methods expect a complete in-memory
+  representation of an MS run (see below for other ways to access MS data).
 
-  The following example (Tutorial_FileIO.C) demonstrates the use of @a MzMLFile
-  and @a MzXMLFile to convert one format into another using @a MSExperiment to hold the temporary data:
+  The following example (Tutorial_FileIO.C) demonstrates the use of @a OpenMS::MzMLFile
+  and @a OpenMS::MzXMLFile to convert one format into another using @a
+  OpenMS::MSExperiment to hold the temporary data:
   @dontinclude Tutorial_FileIO.C
   @skip main
   @until end of main
@@ -614,6 +628,107 @@ file formats, data reduction functionality and all other analysis algorithms.
   FileHandler handler();
   handler.loadExperiment("input.mzML",in);
   @endcode
+
+@section format_mzml File I/O for MzML
+
+  For MzML, several additional interfaces exist which make some data processing
+  tasks easier. Specifically, it is not always feasible to load the complete
+  data of an LC-MS/MS run into memory and for these cases, special interfaces
+  exist. One such interface is the OpenMS::OnDiscMSExperiment which abstracts
+  an mzML file that contains an index. The spectra and chromatogram can be
+  obtained by calling 
+  \link OpenMS::OnDiscMSExperiment::getSpectrum getSpectrum \endlink or
+  \link OpenMS::OnDiscMSExperiment::getChromatogram getChromatogram \endlink.
+   
+@subsection format_mzml_indexed Indexed mzML
+
+  The following example (Tutorial_FileIO_mzML.C) demonstrates the use of 
+  OpenMS::IndexedMzMLFileLoader to obtain a representation of a mass
+  spectrometric experiment in the form of an \link OpenMS::OnDiscMSExperiment
+  OnDiscMSExperiment\endlink:
+
+  @dontinclude Tutorial_FileIO_mzML.C
+  @skip main
+  @until end of main
+
+@subsection format_mzml_sequential Sequential Reading/Writing of mzML
+
+  In addition, the OpenMS::MzMLFile also offers the OpenMS::MzMLFile::transform
+  function which allows to load an MzML file and while loading the spectra and
+  chromatograms are fed into the provided MSDataConsumer (which inherits from
+  the interface \link OpenMS::IMSDataConsumer IMSDataConsumer\endlink). This
+  can allow for memory-efficient implementation of algorithms which only need
+  to access spectra and chromatograms sequentially. Of course several
+  MSDataConsumer implementations can be chained by writing an implementation
+  which hands the results of its computation directly to the next consumer. One
+  common usage scenario uses an OpenMS::PlainMSDataWritingConsumer or an
+  OpenMS::CachedMzMLConsumer as a final consumer which writes the data to disk
+  after usage.  In this way, only the memory to keep a single spectrum in
+  memory is used and algorithms that are constant in memory usage with respect
+  to the amount of data to be processed can be implemented.
+
+  The following example (Tutorial_FileIO_Consumer.C) demonstrates the use of 
+  a consumer to obtain all spectra contained in a file sequentially and apply
+  some data processing and then writing them to disk to them without ever
+  loading the whole file into memory:
+
+  @dontinclude Tutorial_FileIO_Consumer.C
+  @skip TICWritingConsumer
+  @until end of main
+
+@subsection format_mzml_summary Summary
+
+  However, if random access to the data is needed, then the consumer-based
+  approach will not suffice. Here one can either use the
+  OpenMS::OnDiscMSExperiment approach as discussed above or for very fast
+  access to individual spectra (no parsing of base64-encoded needed) one can
+  first cache the data to disk using the OpenMS::CachedmzML class.
+
+\htmlonly
+  In summary, here is a short table when to use which File access mode:
+
+<table border="1"> 
+  <tr>
+    <th>Use Case</th>
+    <th colspan="2">Access Type</th>
+  </tr>
+
+  <tr>
+    <td rowspan="2">Random Access in Memory</td>
+    <td>Read</td>
+    <td><a class="el" href="classOpenMS_1_1MSExperiment.html" title="Representation of a mass spectrometry experiment.">MSExperiment</a> 
+      (through <a class="el" href="classOpenMS_1_1MzMLFile.html" title="File adapter for MzML files.">MzMLFile</a>.load)</td>
+  </tr>
+  <tr>
+    <td>Write</td>
+    <td><a class="el" href="classOpenMS_1_1MSExperiment.html" title="Representation of a mass spectrometry experiment.">MSExperiment</a> 
+      (through <a class="el" href="classOpenMS_1_1MzMLFile.html" title="File adapter for MzML files.">MzMLFile</a>.load)</td>
+  </tr>
+
+  <tr>
+    <td rowspan="2">Random Access on Disc (indexed)</td>
+    <td>Read</td>
+    <td><a class="el" href="classOpenMS_1_1OnDiscMSExperiment.html">OnDiscMSExperiment</a> 
+      (through <a class="el" href="classOpenMS_1_1IndexedMzMLFileLoader.html">IndexedMzMLFileLoader</a>.load)</td>
+  </tr>
+  <tr>
+    <td>Write</td>
+    <td>random write access not possible</td>
+  </tr>
+
+  <tr>
+    <td rowspan="2">Sequential Processing</td>
+    <td>Read</td>
+    <td><a class="el" href="classOpenMS_1_1Interfaces_1_1IMSDataConsumer.html">IMSDataConsumer</a> 
+      (through <a class="el" href="classOpenMS_1_1MzMLFile.html" title="File adapter for MzML files.">MzMLFile</a>.transform)</td>
+  </tr>
+  <tr>
+    <td>Write</td>
+    <td><a class="el" href="classOpenMS_1_1MSDataWritingConsumer.html">MSDataWritingConsumer</a> (through consumeSpectrum or consumeChromatogram)</td>
+  </tr>
+
+</table>
+\endhtmlonly
 
 @section format_db DB access
 
@@ -680,7 +795,7 @@ The output of the program is:
 
 @section transformations_ff Feature detection
 
-The FeatureFinder implements algorithms for the detection and
+The FeatureFinders implement different algorithms for the detection and
 quantitation of peptides from LC-MS maps. In contrast to the
 previous step (peak picking), we do not only search for pronounced
 signals (peak) in the LC-MS map but search explicitly for peptides
@@ -688,8 +803,8 @@ which can be recognized by their isotopic pattern.
 
 %OpenMS offers different algorithms for this task. Details of how
 to apply them are given in the TOPP documentation. Please also refer
-to our publications on the %OpenMS web page. TOPP contains a command
-line program which allows to execute our algorithms without writing
+to our publications on the %OpenMS web page. TOPP contains multiple command
+line programs which allow to execute our algorithms without writing
 a single line of code.
 
 But you can also write your own FeatureFinder application. This gives you
@@ -724,7 +839,7 @@ container or with iterators that define a range on the input container along wit
 The classes described in this section can be found in the @a FILTERING folder.
 
 @section filtering_baseline Baseline filters
-Baseline reduction can be perfomed by the @a TopHatFilter. The top-hat filter is a morphological filter
+Baseline reduction can be performed by the @a TopHatFilter. The top-hat filter is a morphological filter
 which uses the basic morphological operations "erosion" and "dilatation" to remove the baseline in raw data.
 Because both operations are implemented as described by Van Herk the top-hat filter expects equally spaced raw
 data points. If your data is not uniform yet, please use the @a LinearResampler to generate equally spaced data.
@@ -836,12 +951,12 @@ The classes described in this section can be found in the @a CHEMISTRY folder.
 
 @section Elements
 
-There is a representation of Elements implemented in %OpenMS. The correcsponding class is named @a Element. This class stores the relevant information about an element. The handling of the Elements is done by the class ElementDB, which is implemented as a singleton. This means there is only one instance of the class in %OpenMS. This is straightforward because the Elements do not change during execution. Data stored in an Element spans its name, symbol, atomic weight, and isotope distribution beside others.
+There is a representation of Elements implemented in %OpenMS. The corresponding class is named @a Element. This class stores the relevant information about an element. The handling of the Elements is done by the class ElementDB, which is implemented as a singleton. This means there is only one instance of the class in %OpenMS. This is straightforward because the Elements do not change during execution. Data stored in an Element spans its name, symbol, atomic weight, and isotope distribution beside others.
 
 Example (Tutorial_Element.C):
 
 @dontinclude Tutorial_Element.C
-@skip ElementDB* db
+@skip ElementDB * db
 @until endl
 
 Elements can be accessed by the @a ElementDB class. As it is implemented as a singleton, only a pointer of the singleton can be used, via @a getInstance(). The example program writes the following output to the console.
@@ -878,12 +993,12 @@ The isotopic distribution can be simply accessed by the @a getIsotopeDistributio
 
 @section Residue
 
-A residue is represented in %OpenMS by the class @a Residue. It provides a container for the amino acids as well as some functionality. The class is able to provide information such as the isotope distribution of the residue, the average and monoisotopic weight. The residues can be identified by their full name, their three letter abbreviation or the single letter abreviation. The residue can also be modified, which is implemented in the Modification class. Additional less frequently used parameters of a residue like the gas-phase basicity and pk values are also available.
+A residue is represented in %OpenMS by the class @a Residue. It provides a container for the amino acids as well as some functionality. The class is able to provide information such as the isotope distribution of the residue, the average and monoisotopic weight. The residues can be identified by their full name, their three letter abbreviation or the single letter abbreviation. The residue can also be modified, which is implemented in the Modification class. Additional less frequently used parameters of a residue like the gas-phase basicity and pk values are also available.
 
 Example (Tutorial_Residue.C):
 
 @dontinclude Tutorial_Residue.C
-@skip  const ResidueDB* res_db = ResidueDB::getInstance();
+@skip  const ResidueDB * res_db = ResidueDB::getInstance();
 @until endl
 
 This small example show how to create a instance of ResidueDB were all Residues are stored in. The amino acids themselves can be accessed via the getResidue function. ResidueDB reads its amino acid and modification data from share/OpenMS/CHEMISTRY/.
@@ -954,7 +1069,7 @@ First, we load two feature maps:
 	@skip main
 	@until Tutorial_MapAlignment_2
 
-Then, we instanciate the algorithm and align the feature maps:
+Then, we instantiate the algorithm and align the feature maps:
 	@until alignFeatureMaps
 
 Finally, the aligned maps are written to files:
@@ -992,7 +1107,7 @@ two labels and another for label-free quantitation.
 	In order to write the a valid output file, we need to set the input file names and sizes.
 		@until maps[1].size()
 
-	Then, we instanciate the algorithm and group the features:
+	Then, we instantiate the algorithm and group the features:
 		@until algorithm.group
 
 	Finally, we store the grouped features in a consensusXML file.
@@ -1033,10 +1148,10 @@ Visualization in %OpenMS is based on Qt.
 @section visualization_1D 1D view
 
 All types of peak or feature visualization share a common interface. So here only an example how to visualize
-a single spectrum is given (Tutorial_Spectrum1D.C).
+a single spectrum is given (Tutorial_GUI_Spectrum1D.C).
 
 First we need to create a @a QApplication in order to be able to use Qt widgets in out application.
-	@dontinclude Tutorial_Spectrum1D.C
+	@dontinclude Tutorial_GUI_Spectrum1D.C
   @skip main
   @until QApplication
 
@@ -1052,11 +1167,11 @@ Finally we start the application.
 @section visualization_param Visual editing of parameters
 
 @a Param objects are used to set algorithm parameters in %OpenMS. In order to be able to visually edit them, the @a ParamEditor
-class can be used. The following example (Tutorial_ParamEditor.C) show how to use it.
+class can be used. The following example (Tutorial_GUI_ParamEditor.C) show how to use it.
 
 We need to create a QApplication, load the data from a file (e.g. the parameters file of any TOPP tool),
 create the @a ParamEditor and execute the application:
-	@dontinclude Tutorial_ParamEditor.C
+	@dontinclude Tutorial_GUI_ParamEditor.C
   @skip main
   @until exec
 
@@ -1071,12 +1186,12 @@ When it is closed, we store the result back to the @a Param object and then to t
 @page tutorial_clustering Clustering
 
 In OpenMS, generic hierarchical clustering is available, the example (Tutorial_Clustering.C)
-shows how to build a rudimental clustering pipeline.
+shows how to build a rudimentary clustering pipeline.
 
 @section Inputdata
 
 All types of data can be clustered, as long as a SimilarityComparator for the type is provided.
-This Comparator has to produce a similarity measurment with the @a ()-operator in the
+This Comparator has to produce a similarity measurement with the @a ()-operator in the
 range of @a [0,1] for each two elements of this type, so it can be transformed to a
 distance. Some SimilarityComparators are already implemented, e.g. the baseclass for the
 PeakSpectrum-type SimilarityComparator is OpenMS::PeakSpectrumCompareFunctor.
@@ -1085,7 +1200,7 @@ PeakSpectrum-type SimilarityComparator is OpenMS::PeakSpectrumCompareFunctor.
   @skip LowLevelComparator
   @until end of LowLevelComparator
 
-This example of a SimilarityComparator is very basic and takes onedimensional input of @a doubles
+This example of a SimilarityComparator is very basic and takes one-dimensional input of @a doubles
 in the range of @a [0,1]. Real input will generally be more complex and so has to be the
 corresponding SimilarityComparator. Note that similarity in the example is calculated by
 @a 1-distance, whereas generally distance is obtained by getting the similarity and not the other
@@ -1106,13 +1221,13 @@ optional (per default set to 1,0). The template-arguments have to be set to the 
   @skip clustering
   @until ch.cluster
 
-This function will create a hirarchical clustering up to the threshold. See @ref Output.
+This function will create a hierarchical clustering up to the threshold. See @ref Output.
 
 @section Output
 
 If known, at what threshold (see @a OpenMS::ClusterHierarchical::cluster) a reasonable clustering is produced,
-the setting of the right threshold can potentually speed up the clustering process. After exceeding the threshold,
-the resulting tree (std::vector of OpenMS::BinaryTreeNode) is filled with dummy nodes. The tree represents the hirarchy of
+the setting of the right threshold can potentially speed up the clustering process. After exceeding the threshold,
+the resulting tree (std::vector of OpenMS::BinaryTreeNode) is filled with dummy nodes. The tree represents the hierarchy of
 clusters by storing the stepwise merging process. It can eventually be transformed to a tree-representation in Newick-format
 and/or be analyzed with other methods the OpenMS::ClusterAnalyzer class provides.
 
@@ -1127,7 +1242,7 @@ So the output will look something like this (may actually vary since random numb
 @endcode
 
 
-For closer survey of the clustering process one can also view the whole hirarchy by viewing the tree in Newick-format
+For closer survey of the clustering process one can also view the whole hierarchy by viewing the tree in Newick-format
 with a tree viewer such as TreeViewX. A visualization of a particular cluster step (which gives rise
 to a certain partition of the data clustered) can be created with heatmaps (for example with gnuplot 4.3 heatmaps and the
 corresponding distance matrix).
@@ -1216,12 +1331,12 @@ corresponding distance matrix).
 
 	@section References References
 		<A NAME="References"></a>
-		\arg \c <b>[1]</b>:<A HREF="http://bieson.ub.uni-bielefeld.de/frontdoor.php?source_opus=1370">
+		<tt> <b>[1]</b> </tt>:<A HREF="http://bieson.ub.uni-bielefeld.de/frontdoor.php?source_opus=1370">
 		Wiebke Timm:  <em>Peak Intensity Prediction in Mass Spectra using Machine Learning Methods</em>,
 		PhD Thesis (2008)</A>
-		\arg \c <b>[2]</b>:Helge Ritter: <em>Learning with Self-Organizing Map, Artificial Neural Networks</em>, 
+		<tt> <b>[2]</b> </tt>:Helge Ritter: <em>Learning with Self-Organizing Map, Artificial Neural Networks</em>, 
 				In T. Kohonen et al., eds.: Artificial Neural Networks, Elsevier Science Publishers (1991), 379-384
-		\arg \c <b>[3]</b>:<A HREF="http://www.biomedcentral.com/1471-2105/9/443">
+		<tt> <b>[3]</b> </tt>:<A HREF="http://www.biomedcentral.com/1471-2105/9/443">
 		W. Timm, A. Scherbart, S. B&ouml;cker, O. Kohlbacher, T.W. Nattkemper: <em>Peak Intensity Prediction in 
 		MALDI-TOF Mass Spectrometry: A Machine Learning Study to support Quantitative Proteomics</em>, 
 		BMC Bioinformatics (2008)</A>

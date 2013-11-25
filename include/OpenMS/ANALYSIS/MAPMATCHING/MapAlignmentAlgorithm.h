@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
@@ -39,126 +46,88 @@
 namespace OpenMS
 {
 
-	/**
-		@brief Base class for all map-alignment algorithms
+  /**
+      @brief Base class for all map-alignment algorithms
 
-		It takes two or more maps and corrects for retention time distortions.
+      It takes two or more maps and corrects for retention time distortions.
 
-		The input maps are transformed and the transformation description is returned.
+      The input maps are transformed and the transformation description is returned.
 
-		@improvement The maps should not be all loaded before the algorithm  - in order to save memory e.g. in the star-wise approach (Clemens)
-	*/
-	class OPENMS_DLLAPI MapAlignmentAlgorithm
-		: public DefaultParamHandler,
-			public ProgressLogger
-	{
-	 public:
-		/// Default constructor
-		MapAlignmentAlgorithm();
+      @improvement The maps should not be all loaded before the algorithm  - in order to save memory e.g. in the star-wise approach (Clemens)
+  */
+  class OPENMS_DLLAPI MapAlignmentAlgorithm :
+    public DefaultParamHandler,
+    public ProgressLogger
+  {
+public:
+    /// Default constructor
+    MapAlignmentAlgorithm();
 
-		/// Destructor
-		virtual ~MapAlignmentAlgorithm();
+    /// Destructor
+    virtual ~MapAlignmentAlgorithm();
 
-		/**
-		@brief Aligns peak maps
+    /**
+    @brief Aligns peak maps
 
-		@exception Exception::NotImplemented is thrown if an algorithm cannot align peak maps
-		*/
-		virtual void alignPeakMaps(std::vector< MSExperiment<> >&, std::vector<TransformationDescription>&);
+    @exception Exception::NotImplemented is thrown if an algorithm cannot align peak maps
+    */
+    virtual void alignPeakMaps(std::vector<MSExperiment<> > &, std::vector<TransformationDescription> &);
 
-		/**
-		@brief Aligns feature maps
+    /**
+    @brief Aligns vectors of 2D peaks (memory efficient version of FeatureMap)
 
-		@exception Exception::NotImplemented is thrown if an algorithm cannot align feature maps
-		*/
-		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&);
+    @exception Exception::NotImplemented is thrown if an algorithm cannot align feature maps
+    */
+    virtual void alignCompactFeatureMaps(std::vector<std::vector<Peak2D> > &, std::vector<TransformationDescription> &);
 
-		/**
-		@brief Aligns consensus maps
+    /**
+    @brief Aligns feature maps
 
-		@exception Exception::NotImplemented is thrown if an algorithm cannot align consensus maps
-		*/
-		virtual void alignConsensusMaps(std::vector<ConsensusMap>&, std::vector<TransformationDescription>&);
+    @exception Exception::NotImplemented is thrown if an algorithm cannot align feature maps
+    */
+    virtual void alignFeatureMaps(std::vector<FeatureMap<> > &, std::vector<TransformationDescription> &);
 
-		/**
-		@brief Aligns peptide identifications
+    /**
+    @brief Aligns consensus maps
 
-		@exception Exception::NotImplemented is thrown if an algorithm cannot align peptide identifications
-		*/
-		virtual void alignPeptideIdentifications(std::vector< std::vector< PeptideIdentification > >&, std::vector<TransformationDescription>&);
+    @exception Exception::NotImplemented is thrown if an algorithm cannot align consensus maps
+    */
+    virtual void alignConsensusMaps(std::vector<ConsensusMap> &, std::vector<TransformationDescription> &);
 
-		/**
-			 @brief Defines a reference for the alignment
-			 
-			 @param reference_index Index of input file to use as reference (1-based!)
-			 @param reference_file Path to external reference file
+    /**
+    @brief Aligns peptide identifications
 
-			 @exception Exception::InvalidParameter is thrown if the algorithm does not support references
-			*/
-		virtual void setReference(Size reference_index=0, const String& reference_file="");
+    @exception Exception::NotImplemented is thrown if an algorithm cannot align peptide identifications
+    */
+    virtual void alignPeptideIdentifications(std::vector<std::vector<PeptideIdentification> > &, std::vector<TransformationDescription> &);
 
-		/// Gets the default model (incl. parameters) for the alignment algorithm
-		virtual void getDefaultModel(String& model_type, Param& params);
+    /**
+         @brief Defines a reference for the alignment
 
+         @param reference_index Index of input file to use as reference (1-based!)
+         @param reference_file Path to external reference file
 
-    /// Applies the <i>given</i> transformations to peak maps
-    static void transformPeakMaps( std::vector< MSExperiment<> >& maps, const std::vector<TransformationDescription>& given_trafos );
+         @exception Exception::InvalidParameter is thrown if the algorithm does not support references
+        */
+    virtual void setReference(Size reference_index = 0, const String & reference_file = "");
 
-    /// Applies the <i>given</i> transformations to feature maps
-    static void transformFeatureMaps( std::vector< FeatureMap<> >& maps, const std::vector<TransformationDescription>& given_trafos );
+    /**
+         @brief Fits a model with given parameters to the transformations
 
-    /// Applies the <i>given</i> transformations to consensus maps
-    static void transformConsensusMaps( std::vector<ConsensusMap>& maps, const std::vector<TransformationDescription>& given_trafos );
+         This will not alter transformations of reference files (transformation type "identity").
+    */
+    static void fitModel(const String & model_type, const Param & params, std::vector<TransformationDescription> & trafos);
 
-    /// Applies the <i>given</i> transformations to peptide identifications
-    static void transformPeptideIdentifications( std::vector< std::vector< PeptideIdentification > >& maps, const std::vector<TransformationDescription>& given_trafos );
+    /// Register all derived classes in this method
+    static void registerChildren();
 
+private:
+    /// Copy constructor is not implemented -> private
+    MapAlignmentAlgorithm(const MapAlignmentAlgorithm &);
+    /// Assignment operator is not implemented -> private
+    MapAlignmentAlgorithm & operator=(const MapAlignmentAlgorithm &);
 
-    /// Applies the <i>given</i> transformations to a single peak map
-    static void transformSinglePeakMap( MSExperiment<>& msexp, const TransformationDescription& trafo );
-
-    /// Applies the <i>given</i> transformations to a single feature map
-    static void transformSingleFeatureMap( FeatureMap<>& fmap, const TransformationDescription& trafo );
-
-    /// Applies the <i>given</i> transformations to a single consensus map
-    static void transformSingleConsensusMap( ConsensusMap& cmap, const TransformationDescription& trafo );
-
-    /// Applies the <i>given</i> transformations to a single peptide identification
-    static void transformSinglePeptideIdentification( std::vector< PeptideIdentification >& pepids, const TransformationDescription& trafo );
-
-
-		/**
-			 @brief Fits a model with given parameters to the transformations
-
-			 This will not alter transformations of reference files (transformation type "identity").
-		*/
-		static void fitModel(const String& model_type, const Param& params, std::vector<TransformationDescription>& trafos);
-
-		/// Register all derived classes in this method
-		static void registerChildren();
-
-
-   protected:
-
-		/// apply a transformation to a feature
-    static void applyToFeature_(Feature& feature,
-																const TransformationDescription& trafo);
-
-		/// apply a transformation to a basic feature
-    static void applyToBaseFeature_(BaseFeature& feature,
-																		const TransformationDescription& trafo);
-
-		/// apply a transformation to a consensus feature
-    static void applyToConsensusFeature_(ConsensusFeature& feature, const 
-																				 TransformationDescription& trafo);
-
-	 private:
-		/// Copy constructor is not implemented -> private
-		MapAlignmentAlgorithm(const MapAlignmentAlgorithm& );
-		/// Assignment operator is not implemented -> private
-		MapAlignmentAlgorithm& operator=(const MapAlignmentAlgorithm& );
-
-	};
+  };
 
 } // namespace OpenMS
 

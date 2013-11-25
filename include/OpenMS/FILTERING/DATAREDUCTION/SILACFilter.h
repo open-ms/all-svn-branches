@@ -1,36 +1,44 @@
-// -*- Mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Steffen Sass, Holger Plattfaut $
+// $Authors: Steffen Sass, Holger Plattfaut, Bastian Blank $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FILTERING_DATAREDUCTION_SILACFILTER_H
 #define OPENMS_FILTERING_DATAREDUCTION_SILACFILTER_H
 
 #include <OpenMS/KERNEL/StandardTypes.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
+#include <OpenMS/FILTERING/DATAREDUCTION/SILACPattern.h>
+#include <OpenMS/FILTERING/DATAREDUCTION/IsotopeDistributionCache.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <queue>
@@ -38,10 +46,7 @@
 
 namespace OpenMS
 {
-   class SILACFiltering;
-   class DataPoint;
-
-   /**
+  /**
    * @brief Filter to use for SILACFiltering
    *
    * A SILACFilter searches for SILAC patterns, which correspond to the defined mass shifts and charge.
@@ -50,150 +55,193 @@ namespace OpenMS
    *
    * @see SILACFiltering
    */
+  class OPENMS_DLLAPI SILACFilter
+  {
+private:
+    friend class SILACFiltering;
 
-   class OPENMS_DLLAPI SILACFilter {
-     friend class SILACFiltering;
+    typedef IsotopeDistributionCache::TheoreticalIsotopePattern TheoreticalIsotopePattern;
 
-  private:
+    /**
+     * @brief mass shift(s) in [Da] to search for
+     */
+    std::vector<DoubleReal> mass_separations_;
 
-  /**
-   * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
-   */
-   Size number_of_peptides_;
+    /**
+     * @brief charge of the ions to search for
+     */
+    Int charge_;
 
-  /**
-   * @brief charge of the ions to search for
-   */
-   Int charge_;
+    /**
+     * @brief maximal value of which a predicted SILAC feature may deviate from the averagine model
+     */
+    DoubleReal model_deviation_;
 
-  /**
-   * @brief number of peaks per peptide to search for
-   */
-   Size isotopes_per_peptide_;
+    /**
+     * @brief number of peaks per peptide to search for
+     */
+    Size isotopes_per_peptide_;
 
-  /**
-   * @brief mass shift(s) in [Da] to search for
-   */
-   std::vector<DoubleReal> mass_separations_;
+    /**
+     * @brief minimal intensity of SILAC features
+     */
+    DoubleReal intensity_cutoff_;
 
-  /**
-   * @brief peak positions of SILAC pattern
-   */
-   std::vector<DoubleReal> peak_positions_;
+    /**
+     * @brief minimal intensity correlation between regions of different peaks
+     */
+    DoubleReal intensity_correlation_;
 
-  /**
-  * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
-  */
-  std::vector<DoubleReal> mz_peptide_separations_;
+    /**
+     * @brief flag for missing peaks
+     */
+    bool allow_missing_peaks_;
 
-  /**
-  * @brief m/z shifts relative to mono-isotopic peak of unlabelled peptide
-  */
-  std::vector<DoubleReal> expected_mz_shifts_;
+    /**
+     * Isotope distributions
+     */
+    static IsotopeDistributionCache * isotope_distribution_;
 
-  /**
-   * @brief distance between isotopic peaks of a peptide in [Th]
-   */
-   DoubleReal isotope_distance_;
+    /**
+     * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
+     */
+    Size number_of_peptides_;
 
-  /**
-   * @brief holds the recognized features
-   */
-   std::vector<DataPoint> elements_;
+    /**
+     * @brief peak positions of SILAC pattern
+     */
+    std::vector<DoubleReal> peak_positions_;
 
-  /**
-   * @brief maximal value of which a predicted SILAC feature may deviate from the averagine model
-   */
-   DoubleReal model_deviation_;
+    /**
+     * @brief m/z separation between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
+     */
+    std::vector<DoubleReal> mz_peptide_separations_;
 
-  /**
-   * @brief m/z at which the filter is currently applied to
-   */
-   DoubleReal current_mz_;
+    /**
+     * @brief m/z shifts relative to mono-isotopic peak of unlabelled peptide
+     */
+    std::vector<DoubleReal> expected_mz_shifts_;
 
-  /**
-   * @brief exact m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
-   */
-   std::vector<std::vector<DoubleReal> > exact_shifts_;
+    /**
+     * @brief distance between isotopic peaks of a peptide in [Th]
+     */
+    DoubleReal isotope_distance_;
 
-  /**
-   * @brief intensities at mz + exact_shifts in a SILAC pattern, where mz is the m/z of the mono-isotopic peak of light peptide
-   */
-   std::vector<std::vector<DoubleReal> > exact_intensities_;
+    /**
+     * @brief holds the recognized features
+     */
+    std::vector<SILACPattern> elements_;
 
-  /**
-   * @brief expected m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
-   */
-   std::vector<std::vector<DoubleReal> > expected_shifts_;
+    /**
+     * @brief m/z at which the filter is currently applied to
+     */
+    DoubleReal current_mz_;
 
-  /**
-   * @brief Computes the actual m/z shift between the position mz and a region about expectedMzShift away. Returns -1 if there is no correlation between mz and signal in interval [mz + expectedMzShift - maxMzDeviation, mz + expectedMzShift + maxMzDeviation].
-   * [e.g. from theoretical considerations we expect a good correlation between peaks 4.02 Th apart. But the shift between signals actually observed is 4.0189 Th.]
-   * @param mz m/z position of the reference signal [e.g. mono-isotopic peak of the light peptide]
-   * @param expectedMzShift poitive m/z shift at which we would expect a correlating signal [e.g. 4.02 Th]
-   * @param maxMzDeviation maximum allowed deviation between expected and actual shift [In the above example the shift is 0.0011 Th.]
-   */
-   DoubleReal computeActualMzShift_(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
+    /**
+     * @brief exact m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
+     */
+    std::vector<std::vector<DoubleReal> > exact_shifts_;
 
-  /**
-   * @brief returns true if there exists a SILAC feature at the given position, which corresponds to the filter's properties
-   * @param rt RT value of the position
-   * @param mz m/z value of the position
-   */
-   bool isSILACPattern_(DoubleReal rt, DoubleReal mz);
+    /**
+     * @brief m/z positions mz + exact_shifts in a SILAC pattern, where mz is the m/z of the mono-isotopic peak of light peptide
+     */
+    std::vector<std::vector<DoubleReal> > exact_mz_positions_;
 
-   public:  
+    /**
+     * @brief intensities at mz + exact_shifts in a SILAC pattern, where mz is the m/z of the mono-isotopic peak of light peptide
+     */
+    std::vector<std::vector<DoubleReal> > exact_intensities_;
 
-  /**
-   * @brief default constructor
-   */
-   SILACFilter();
+    /**
+     * @brief expected m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
+     */
+    std::vector<std::vector<DoubleReal> > expected_shifts_;
 
-  /**
-   * @brief detailed constructor for SILAC pair filtering
-   * @param mass_separations all mass shifts of the filter
-   * @param charge charge of the ions to search for
-   * @param model_deviation maximum deviation from the averagine model
-   * @param isotopes_per_peptide number of peaks per petide to search for
-   */
-   SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide);
+    /**
+     * @brief Checks if there exists a SILAC feature at the given position in the raw (interpolated) data, which corresponds to the filter's properties
+     * @param rt RT value of the position
+     * @param mz m/z value of the position
+     */
+    bool isSILACPattern_(const MSSpectrum<Peak1D> &, const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &, MSSpectrum<Peak1D> & debug, SILACPattern & pattern);
 
-  /**
-   * @brief destructor
-   */
-   virtual ~SILACFilter();
+    /**
+     * @brief Checks if there exists a SILAC feature at the given position in the picked data
+     */
+    bool isSILACPatternPicked_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, MSSpectrum<Peak1D> & debug);
 
-  /**
-   * @brief returns the predicted peak width at position mz
-   * @param mz mz position of the peak
-   */
-   static DoubleReal getPeakWidth(DoubleReal mz);
+    /**
+     * @brief Extracts mass shifts and intensities from the raw (interpolated) data
+     */
+    bool extractMzShiftsAndIntensities_(const MSSpectrum<Peak1D> &, const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
 
-  /**
-   * @brief gets the m/z values of all peaks , which belong the last identified feature
-   */
-   std::vector<DoubleReal> getPeakPositions();
+    /**
+     * @brief Extracts mass shifts and intensities from the picked data
+     */
+    bool extractMzShiftsAndIntensitiesPicked_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &);
 
-  /**
-   * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
-   */
-   std::vector<DoubleReal> getExpectedMzShifts();
+    /**
+     * @brief Extracts mass shifts and intensities from the picked data and returns pattern information
+     */
+    bool extractMzShiftsAndIntensitiesPickedToPattern_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, SILACPattern & pattern);
 
-  /**
-   * @brief returns all identified elements
-   */
-   std::vector<DataPoint> getElements();
+    /**
+     * @brief Checks all peaks against intensity cutoff
+     */
+    bool intensityFilter_();
 
-  /**
-   * @brief returns the charge of the filter
-   */
-   Int getCharge();
+    /**
+     * @brief Checks peak form correlation between peaks of one isotope
+     */
+    bool correlationFilter1_(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
 
-  /**
-   * @brief returns the mass shifts of the filter in [Da]
-   */
-   std::vector<DoubleReal> getMassSeparations();
+    /**
+     * @brief Checks peak form correlation between peaks of different isotopes
+     */
+    bool correlationFilter2_(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
 
+    /**
+     * @brief Checks peak intensities against the averagine model
+     */
+    bool averageneFilter_(DoubleReal mz);
+
+public:
+    /**
+     * @brief detailed constructor for SILAC pair filtering
+     * @param mass_separations all mass shifts of the filter
+     * @param charge charge of the ions to search for
+     * @param model_deviation maximum deviation from the averagine model
+     * @param isotopes_per_peptide number of peaks per peptide to search for
+     * @param intensity_cutoff ...
+     * @param intensity_correlation minimal intensity correlation between regions of different peaks
+     * @param allow_missing_peaks flag for missing peaks
+     */
+    SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide,
+                DoubleReal intensity_cutoff, DoubleReal intensity_correlation, bool allow_missing_peaks);
+
+    /**
+     * @brief gets the m/z values of all peaks , which belong the last identified feature
+     */
+    std::vector<DoubleReal> getPeakPositions();
+
+    /**
+     * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
+     */
+    const std::vector<DoubleReal> & getExpectedMzShifts();
+
+    /**
+     * @brief returns all identified elements
+     */
+    std::vector<SILACPattern> & getElements();
+
+    /**
+     * @brief returns the charge of the filter
+     */
+    Int getCharge();
+
+    /**
+     * @brief returns the mass shifts of the filter in [Da]
+     */
+    std::vector<DoubleReal> & getMassSeparations();
   };
 }
 

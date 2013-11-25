@@ -19,28 +19,34 @@ FastaIterator.C
 FastaIteratorIntern.C
 FeatureXMLFile.C
 FileHandler.C
+FileTypes.C
 GzipIfstream.C
 GzipInputStream.C
 IdXMLFile.C
+IndexedMzMLFile.C
+IndexedMzMLFileLoader.C
 InspectInfile.C
 InspectOutfile.C
 KroenikFile.C
 LibSVMEncoder.C
 MS2File.C
+MSNumpressCoder.C
 MSPFile.C
 MascotInfile.C
 MascotGenericFile.C
-MascotOutfile.C
 MascotRemoteQuery.C
 MascotXMLFile.C
 MsInspectFile.C
 MzDataFile.C
+MzTab.C
+MzTabFile.C
 MzMLFile.C
+MzTabFile.C
 MzXMLFile.C
 OMSSACSVFile.C
 OMSSAXMLFile.C
+ParamXMLFile.C
 PTMXMLFile.C
-PeakFileOptions.C
 PeakTypeEstimator.C
 PepNovoInfile.C
 PepNovoOutfile.C
@@ -50,6 +56,7 @@ ProtXMLFile.C
 SequestInfile.C
 SequestOutfile.C
 SpecArrayFile.C
+SwathFile.C
 SVOutStream.C
 TextFile.C
 ToolDescriptionFile.C
@@ -60,12 +67,10 @@ XMLFile.C
 XTandemInfile.C
 XTandemXMLFile.C
 MzIdentMLFile.C
+MzQuantMLFile.C
+QcMLFile.C
 TraMLFile.C
 )
-
-if (USE_ANDIMS) 	 
-	list(APPEND sources_list ANDIFile.C) 	 
-endif()
 
 ### add path to the filenames
 set(sources)

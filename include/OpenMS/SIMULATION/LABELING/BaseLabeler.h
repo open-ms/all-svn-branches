@@ -1,28 +1,35 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche $
-// $Authors: Stephan Aiche$
+// $Authors: Stephan Aiche, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_SIMULATION_LABELING_BASELABELER_H
@@ -44,36 +51,34 @@ namespace OpenMS
   /**
   @brief Abstract base class for all kinds of labeling techniques
   */
-  class OPENMS_DLLAPI BaseLabeler
-    : public DefaultParamHandler
+  class OPENMS_DLLAPI BaseLabeler :
+    public DefaultParamHandler
   {
-  public:
+public:
 
     /// constructor
     BaseLabeler();
 
     /// destructor
-    virtual ~BaseLabeler()
-    {
-    }
+    virtual ~BaseLabeler();
 
     /// register all derived classes here (implemented in file BaseLabeler_impl.h)
-    static void registerChildren();    
-        
+    static void registerChildren();
+
     /**
-      @brief Returns the default parameters. Reimplement
+      @brief Returns the default parameters. Re-implement
 
-      Reimplement if you derive a class and have to incoorporate sub-algorithm default parameters.
+      Re-implement if you derive a class and have to incorporate sub-algorithm default parameters.
     */
-    virtual Param getDefaultParameters() const
-    {
-      return this->defaults_;
-    }
+    virtual Param getDefaultParameters() const;
 
-    virtual void setRnd(const SimRandomNumberGenerator& rng)
-    {
-      rng_ = &rng;
-    }
+    /**
+      @brief Set the random number generator
+
+      Internally a pointer to the RNG is stored.
+
+    */
+    virtual void setRnd(const SimRandomNumberGenerator & rng);
 
     /**
       @brief Checks the (simulation) params passed if they are consistent with
@@ -82,72 +87,55 @@ namespace OpenMS
       @param param Param object containing the simulation parameters
       @throws Exception::InvalidParameter if the given parameters are not consistent with the labeling technique
       */
-    virtual void preCheck(Param &) const
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void preCheck(Param & param) const = 0;
 
-    /** 
+    /**
     @name Labeling Hooks
     */
     //@{
-    
+
     /// Hook to prepare the simulation process
-    virtual void setUpHook(FeatureMapSimVector & /* features */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void setUpHook(FeatureMapSimVector & /* features */) = 0;
 
     /// Labeling between digestion and rt simulation
-    virtual void postDigestHook(FeatureMapSimVector & /* features_to_simulate */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void postDigestHook(FeatureMapSimVector & /* features_to_simulate */) = 0;
 
     /// Labeling after rt simulation
-    virtual void postRTHook(FeatureMapSimVector & /* features_to_simulate */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void postRTHook(FeatureMapSimVector & /* features_to_simulate */) = 0;
 
     /// Labeling after detectability simulation
-    virtual void postDetectabilityHook(FeatureMapSimVector & /* features_to_simulate */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void postDetectabilityHook(FeatureMapSimVector & /* features_to_simulate */) = 0;
 
     /// Labeling after ionization
-    virtual void postIonizationHook(FeatureMapSimVector & /* features_to_simulate */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void postIonizationHook(FeatureMapSimVector & /* features_to_simulate */) = 0;
 
     /// Labeling after raw signal generation
-    virtual void postRawMSHook(FeatureMapSimVector & /* features_to_simulate */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void postRawMSHook(FeatureMapSimVector & /* features_to_simulate */) = 0;
 
     /// Labeling after Tandem MS (e.g. iTRAQ)
-    virtual void postRawTandemMSHook(FeatureMapSimVector & /* features_to_simulate */, MSSimExperiment & /* simulated map */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void postRawTandemMSHook(FeatureMapSimVector & /* features_to_simulate */, MSSimExperiment & /* simulated map */) = 0;
 
     //@}
 
-    const ConsensusMap& getConsensus() const;
+    ConsensusMap & getConsensus();
 
     /**
-      @brief to ensure standardized metavalue names across labelers for channel intensity
+      @brief Get short description of the labeler (e.g., channels used)
 
-      Use this function to get the name of the metavalue which holds intensity for channel @p channel_index
+      Used to add a short description to the labeling section within the INI file.
+    */
+    const String & getDescription() const;
+
+    /**
+      @brief to ensure standardized meta value names across labelers for channel intensity
+
+      Use this function to get the name of the meta value which holds intensity for channel @p channel_index
 
     */
     String getChannelIntensityName(const Size channel_index) const;
 
 
-  protected:
+protected:
     /**
       @brief Creates an empty FeatureMap with the merged ProteinIdentifications from
       all FeatureMaps contained in @p maps
@@ -163,12 +151,10 @@ namespace OpenMS
       When merging peptides from different channels, the protein accessions should remain intact.
       Usually joining features is based on peptide sequence, so all protein hits should be valid.
 
+      @param target
+      @param source
     */
-    void mergeProteinAccessions_(Feature& target, const Feature& source) const;
-
-    ConsensusMap consensus_;
-
-    SimRandomNumberGenerator const * rng_;
+    void mergeProteinAccessions_(Feature & target, const Feature & source) const;
 
     /**
       @brief Based on the stored consensus recompute the associations for the passed features, assuming
@@ -178,6 +164,14 @@ namespace OpenMS
                                 consensus
     */
     void recomputeConsensus_(const FeatureMapSim & simulated_features);
+
+
+    ConsensusMap consensus_;
+
+    SimRandomNumberGenerator const * rng_;
+
+    String channel_description_;
+
   };
 } // namespace OpenMS
 

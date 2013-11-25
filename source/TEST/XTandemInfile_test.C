@@ -1,27 +1,34 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
+// --------------------------------------------------------------------------
+// $Maintainer: Stephan Aiche $
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
@@ -73,7 +80,8 @@ START_SECTION(void setFragmentMassTolerance(double tolerance))
 END_SECTION
  
 START_SECTION(double getFragmentMassTolerance() const)
-	NOT_TESTABLE
+  // will be filled by load -> see load test
+  NOT_TESTABLE
 END_SECTION
 
 START_SECTION(void setPrecursorMassTolerancePlus(double tol))
@@ -82,7 +90,8 @@ START_SECTION(void setPrecursorMassTolerancePlus(double tol))
 END_SECTION
 
 START_SECTION(double getPrecursorMassTolerancePlus() const)
-	NOT_TESTABLE
+  // will be filled by load -> see load test
+  NOT_TESTABLE
 END_SECTION
 
 START_SECTION(void setPrecursorMassToleranceMinus(double tol))
@@ -91,7 +100,8 @@ START_SECTION(void setPrecursorMassToleranceMinus(double tol))
 END_SECTION
 
 START_SECTION(double getPrecursorMassToleranceMinus() const)
-	NOT_TESTABLE
+  // will be filled by load -> see load test
+  NOT_TESTABLE
 END_SECTION
 
 START_SECTION(void setPrecursorMassErrorUnit(ErrorUnit unit))
@@ -111,7 +121,8 @@ START_SECTION(void setNumberOfThreads(UInt threads))
 END_SECTION
 
 START_SECTION(UInt getNumberOfThreads() const)
-	NOT_TESTABLE
+  // will be filled by load -> see load test
+  NOT_TESTABLE
 END_SECTION
 
 START_SECTION(void setModifications(const ModificationDefinitionsSet &mods))
@@ -126,6 +137,7 @@ START_SECTION(void setOutputFilename(const String &output))
 END_SECTION
 
 START_SECTION(const String& getOutputFilename() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -135,6 +147,7 @@ START_SECTION(void setInputFilename(const String &input_file))
 END_SECTION
 
 START_SECTION(const String& getInputFilename() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -144,6 +157,7 @@ START_SECTION(void setTaxonomyFilename(const String &filename))
 END_SECTION
 
 START_SECTION(const String& getTaxonomyFilename() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -153,6 +167,7 @@ START_SECTION(void setDefaultParametersFilename(const String &filename))
 END_SECTION
 
 START_SECTION(const String& getDefaultParametersFilename() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -162,6 +177,7 @@ START_SECTION(void setTaxon(const String &taxon))
 END_SECTION
 
 START_SECTION(const String& getTaxon() const)
+  // will be filled by load -> see load test    
 	NOT_TESTABLE
 END_SECTION
 
@@ -171,6 +187,7 @@ START_SECTION(void setMaxPrecursorCharge(Int max_charge))
 END_SECTION
 
 START_SECTION(Int getMaxPrecursorCharge() const)
+  // will be filled by load -> see load test    
 	NOT_TESTABLE
 END_SECTION
 
@@ -180,6 +197,7 @@ START_SECTION(void setNumberOfMissedCleavages(UInt missed_cleavages))
 END_SECTION
 
 START_SECTION(UInt getNumberOfMissedCleavages() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -189,6 +207,7 @@ START_SECTION(void setMaxValidEValue(double value))
 END_SECTION
 
 START_SECTION(double getMaxValidEValue() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -202,6 +221,7 @@ START_SECTION(void setPrecursorErrorType(MassType mono_isotopic))
 END_SECTION
 
 START_SECTION(MassType getPrecursorErrorType() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
@@ -215,30 +235,55 @@ START_SECTION(void setFragmentMassErrorUnit(ErrorUnit unit))
 END_SECTION
 
 START_SECTION(ErrorUnit getFragmentMassErrorUnit() const)
+  // will be filled by load -> see load test
 	NOT_TESTABLE
 END_SECTION
 
 START_SECTION(const ModificationDefinitionsSet& getModifications() const)
-	NOT_TESTABLE
+  ModificationDefinitionsSet sets("Oxidation (M)", "Carboxymethyl (C)");
+  ptr->setModifications(sets);
+  TEST_EQUAL(ptr->getModifications() == sets, true)
 END_SECTION
 
 START_SECTION(void write(const String &filename))
-	string filename("XTandemInfile_test.tmp");
+	String filename("XTandemInfile_test.tmp");
 	NEW_TMP_FILE(filename);
+  ModificationDefinitionsSet sets(StringList::create("Oxidation (M),Dimethyl (N-term)"), StringList::create("Ammonium (C-term),Carboxymethyl (C)"));
+  ptr->setModifications(sets);
 	ptr->write(filename);
 	XTandemInfile file;
 	file.load(filename);
-	NOT_TESTABLE
+  TEST_FILE_SIMILAR(filename.c_str(), OPENMS_GET_TEST_DATA_PATH("XTandemInfile_test_write.xml"))
 END_SECTION
 
 START_SECTION(void load(const String &filename))
-	ptr->load(OPENMS_GET_TEST_DATA_PATH("XTandemInfile_test.xml"));
-	NOT_TESTABLE
+{
+  XTandemInfile file;
+	file.load(OPENMS_GET_TEST_DATA_PATH("XTandemInfile_test.xml"));
+  NOT_TESTABLE
+  /*
+  TEST_STRING_EQUAL(file.getOutputFilename(), "/tmp/2008-07-29_214248_prejudice_30269_1_tandem_output_file.xml") 
+	TEST_EQUAL(file.getNumberOfThreads(), 1)
+  TEST_EQUAL(file.getPrecursorMassToleranceMinus(), 3)
+  TEST_EQUAL(file.getPrecursorMassTolerancePlus(), 3)
+  TEST_EQUAL(file.getFragmentMassTolerance(), 0.3)
+  TEST_STRING_EQUAL(file.getInputFilename(), "/tmp/2008-07-29_214248_prejudice_30269_1_tandem_input_file.mgf")
+  TEST_STRING_EQUAL(file.getTaxonomyFilename(), "/tmp/2008-07-29_214248_prejudice_30269_1_tandem_taxonomy_file.xml")
+  TEST_STRING_EQUAL(file.getDefaultParametersFilename(), "Software/tandem/current/bin/default_input.xml")
+  TEST_STRING_EQUAL(file.getTaxon(), "OpenMS_dummy_taxonomy")
+  TEST_EQUAL(file.getMaxPrecursorCharge(), 4)
+  TEST_EQUAL(file.getNumberOfMissedCleavages(), 2)
+  TEST_EQUAL(file.getMaxValidEValue(), 0.1)
+  TEST_EQUAL(file.getPrecursorErrorType(), XTandemInfile::MONOISOTOPIC)
+  TEST_EQUAL(file.getFragmentMassErrorUnit(), XTandemInfile::DALTONS)
+  */
+}
 END_SECTION
 
 START_SECTION(bool isRefining() const )
   XTandemInfile file;
   TEST_EQUAL(file.isRefining()==true, true)
+  
 END_SECTION
 
 START_SECTION(void setRefine(const bool refine))

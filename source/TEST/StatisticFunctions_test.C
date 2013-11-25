@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
 // $Authors: $
@@ -32,19 +39,8 @@
 // This one is going to be tested.
 #include <OpenMS/MATH/STATISTICS/StatisticFunctions.h>
 #include <OpenMS/MATH/MISC/MathFunctions.h>
+#include <OpenMS/DATASTRUCTURES/DoubleList.h>
 #include <boost/math/special_functions/fpclassify.hpp>
-
-///////////////////////////
-
-// More headers
-
-// #include <algorithm>
-// #include <functional>
-// #include <iostream>
-// #include <iterator>
-// #include <vector>
-// #include <string>
-
 
 ///////////////////////////
 
@@ -57,6 +53,54 @@ START_TEST( StatisticFunctions, "$Id$" );
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+
+START_SECTION([EXTRA](template <typename IteratorType> static DoubleReal sum(IteratorType begin, IteratorType end)))
+{
+	int x[] = {-1, 0, 1, 2, 3};
+	TEST_EQUAL(int(Math::sum(x, x + 5)), 5);
+	TEST_EQUAL(int(Math::sum(x, x)), 0);
+
+	DoubleList y;
+	y << -1.0 << -0.5 << 0.0 << 0.5 << 1.0 << 1.5 << 2.0;
+	TEST_REAL_SIMILAR(Math::sum(y.begin(), y.end()), 3.5);
+}
+END_SECTION
+
+START_SECTION([EXTRA](template <typename IteratorType> static DoubleReal mean(IteratorType begin, IteratorType end)))
+{
+	int x[] = {-1, 0, 1, 2, 3};
+	TEST_EQUAL(Math::mean(x, x + 5), 1);
+	TEST_EXCEPTION(Exception::InvalidRange, Math::mean(x, x));
+
+	DoubleList y;
+	y << -1.0 << -0.5 << 0.0 << 0.5 << 1.0 << 1.5 << 2.0;
+	TEST_REAL_SIMILAR(Math::mean(y.begin(), y.end()), 0.5);
+}
+END_SECTION
+
+START_SECTION([EXTRA](template <typename IteratorType> static DoubleReal median(IteratorType begin, IteratorType end)))
+{
+	int x[] = {-1, 0, 1, 2, 3};
+	TEST_EQUAL(Math::median(x, x + 5, TRUE), 1);
+	TEST_EXCEPTION(Exception::InvalidRange, Math::median(x, x));
+
+  // unsorted
+	DoubleList y;
+	y << 1.0 << -0.5 << 2.0 << 0.5 << -1.0 << 1.5 << 0.0;
+	TEST_REAL_SIMILAR(Math::median(y.begin(), y.end()), 0.5);
+	y << -1.5; // even length
+	TEST_REAL_SIMILAR(Math::median(y.begin(), y.end()), 0.25);
+
+  // sorted
+  DoubleList z_odd;
+  z_odd << -1.0 << -0.5 << 0.0 << 0.5 << 1.0 << 1.5 << 2.0;
+  TEST_REAL_SIMILAR(Math::median(z_odd.begin(), z_odd.end(), true), 0.5);
+  DoubleList z_even;
+  z_even << -1.5 << -1.0 << -0.5 << 0.0 << 0.5 << 1.0 << 1.5 << 2.0;
+  TEST_REAL_SIMILAR(Math::median(z_even.begin(), z_even.end(), true), 0.25);
+}
+END_SECTION
+
 
 START_SECTION([EXTRA](template< typename IteratorType1, typename IteratorType2 > static RealType meanSquareError( IteratorType1 begin_a, const IteratorType1 end_a, IteratorType2 begin_b, const IteratorType2 end_b )))
 {
@@ -270,15 +314,21 @@ START_SECTION([EXTRA](static void computeRank(std::vector<DoubleReal>& w)))
 
   TEST_REAL_SIMILAR(numbers1[0], 1.4);
   TEST_REAL_SIMILAR(numbers1[5], 2.2);
+  TEST_REAL_SIMILAR(numbers1[6], 1.5);
+  TEST_REAL_SIMILAR(numbers1[9], 1.5);
 
   Math::computeRank(numbers1);
 
-  TEST_REAL_SIMILAR(numbers1[0], 0);
-  TEST_REAL_SIMILAR(numbers1[1], 1);
-  TEST_REAL_SIMILAR(numbers1[2], 2);
-  TEST_REAL_SIMILAR(numbers1[3], 3);
-  TEST_REAL_SIMILAR(numbers1[4], 4);
-  TEST_REAL_SIMILAR(numbers1[5], 5);
+  TEST_REAL_SIMILAR(numbers1[0], 3);
+  TEST_REAL_SIMILAR(numbers1[1], 2);
+  TEST_REAL_SIMILAR(numbers1[2], 1);
+  TEST_REAL_SIMILAR(numbers1[3], 8);
+  TEST_REAL_SIMILAR(numbers1[4], 10);
+  TEST_REAL_SIMILAR(numbers1[5], 9);
+  TEST_REAL_SIMILAR(numbers1[6], 5.5);
+  TEST_REAL_SIMILAR(numbers1[7], 5.5);
+  TEST_REAL_SIMILAR(numbers1[8], 5.5);
+  TEST_REAL_SIMILAR(numbers1[9], 5.5);
 }
 END_SECTION
 
@@ -286,7 +336,14 @@ START_SECTION([EXTRA](template< typename IteratorType1, typename IteratorType2 >
 {
   std::vector<DoubleReal> numbers1(10, 1.5);
   std::vector<DoubleReal> numbers2(10, 1.3);
+  std::vector<DoubleReal> numbers3(10, 0.42);
+  std::vector<DoubleReal> numbers4(10, 0.0);
   DoubleReal result = 0;
+
+  for (Size i = 0; i < numbers4.size(); ++i)
+  {
+    numbers4[i] = (DoubleReal)(i+1);
+  }
 
   numbers1[0] = 0.4;
   numbers2[0] = 0.5;
@@ -302,7 +359,23 @@ START_SECTION([EXTRA](template< typename IteratorType1, typename IteratorType2 >
   numbers2[5] = 3.0;
 
   result = Math::rankCorrelationCoefficient(numbers1.begin(), numbers1.end(), numbers2.begin(), numbers2.end());
-  TEST_REAL_SIMILAR(result, 0.957142857142857);
+  TEST_REAL_SIMILAR(result, 0.858064516129032);
+	
+	result = Math::rankCorrelationCoefficient(numbers1.begin(), numbers1.end(), 
+																						numbers2.rbegin(), numbers2.rend());
+  TEST_REAL_SIMILAR(result, 0.303225806451613);	
+  
+  result = Math::rankCorrelationCoefficient(numbers3.begin(), numbers3.end(), numbers4.begin(), numbers4.end());
+  TEST_REAL_SIMILAR(result, 0.0);
+  
+  result = Math::rankCorrelationCoefficient(numbers3.begin(), numbers3.end(), numbers3.begin(), numbers3.end());
+  TEST_REAL_SIMILAR(result, 0.0);
+  
+  result = Math::rankCorrelationCoefficient(numbers4.begin(), numbers4.end(), numbers4.begin(), numbers4.end());
+  TEST_REAL_SIMILAR(result, 1.0);
+
+  result = Math::rankCorrelationCoefficient(numbers4.begin(), numbers4.end(), numbers4.rbegin(), numbers4.rend());
+  TEST_REAL_SIMILAR(result, -1.0);
 }
 END_SECTION
 

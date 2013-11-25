@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
 // $Authors: Eva Lange, Clemens Groepl $
@@ -67,7 +74,7 @@ START_SECTION((static const String getProductName()))
   TEST_EQUAL(pcat.getName() == "poseclustering_affine",true)
 END_SECTION
 
-START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::vector< TransformationDescription > &transformations)))
+START_SECTION((virtual void run(const ConsensusMap& map_model, const ConsensusMap& map_scene, TransformationDescription& transformation)))
   std::vector<ConsensusMap> input(2);
   Feature feat1;
   Feature feat2;
@@ -77,8 +84,8 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   feat1.setIntensity(100.0f);
   feat2.setPosition(pos2);
   feat2.setIntensity(100.0f);
-  input[0].push_back(feat1);
-  input[0].push_back(feat2);
+  input[0].push_back(ConsensusFeature(feat1));
+  input[0].push_back(ConsensusFeature(feat2));
   
   Feature feat3;
   Feature feat4;
@@ -88,8 +95,8 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   feat3.setIntensity(100.0f);
   feat4.setPosition(pos4);
   feat4.setIntensity(100.0f);
-  input[1].push_back(feat3);
-  input[1].push_back(feat4);
+  input[1].push_back(ConsensusFeature(feat3));
+  input[1].push_back(ConsensusFeature(feat4));
 
   Param parameters;
   parameters.setValue(String("scaling_bucket_size"), 0.01);
@@ -99,7 +106,7 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   //  parameters.setValue(String("dump_buckets"),"pcast_buckets");
   //  parameters.setValue(String("dump_pairs"),"pcast_pairs");
 
-  std::vector<TransformationDescription> transformations;  
+  TransformationDescription transformation;
   PoseClusteringAffineSuperimposer pcat;
   pcat.setParameters(parameters);
 
@@ -107,11 +114,10 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   input[0].updateRanges();
   input[1].updateRanges();
 
-  pcat.run(input, transformations);
+  pcat.run(input[0], input[1], transformation);
 
-	TEST_EQUAL(transformations.size(), 1)
-  TEST_STRING_EQUAL(transformations[0].getModelType(), "linear")
-	transformations[0].getModelParameters(parameters);
+  TEST_STRING_EQUAL(transformation.getModelType(), "linear")
+	transformation.getModelParameters(parameters);
 	TEST_EQUAL(parameters.size(), 2)    
   TEST_REAL_SIMILAR(parameters.getValue("slope"), 1.0)
   TEST_REAL_SIMILAR(parameters.getValue("intercept"), -0.4)

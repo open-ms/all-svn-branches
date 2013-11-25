@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Alexandra Zerck $
 // $Authors: Eva Lange $
@@ -55,6 +62,7 @@ START_SECTION((~LinearResampler()))
 END_SECTION
 
 START_SECTION((template<typename PeakType> void raster(MSSpectrum<PeakType>& spectrum)))
+{
   MSSpectrum< Peak1D > spec;
   spec.resize(5);
   spec[0].setMZ(0);
@@ -68,21 +76,60 @@ START_SECTION((template<typename PeakType> void raster(MSSpectrum<PeakType>& spe
   spec[4].setMZ(1.8);
   spec[4].setIntensity(1.0f);
 
-	LinearResampler lr;
-	Param param;
-	param.setValue("spacing",0.5);
+  LinearResampler lr;
+  Param param;
+  param.setValue("spacing",0.5);
   lr.setParameters(param);
   lr.raster(spec);
 
   DoubleReal sum = 0.0;
-	for (Size i=0; i<spec.size(); ++i)
+  for (Size i=0; i<spec.size(); ++i)
   {
     sum += spec[i].getIntensity();
   }
   TEST_REAL_SIMILAR(sum, 20);
+}
+
+/////////// test raster with a spacing of 0.75
+{
+  MSSpectrum< Peak1D > spec;
+  spec.resize(5);
+  spec[0].setMZ(0);
+  spec[0].setIntensity(3.0f);
+  spec[1].setMZ(0.5);
+  spec[1].setIntensity(6.0f);
+  spec[2].setMZ(1.);
+  spec[2].setIntensity(8.0f);
+  spec[3].setMZ(1.6);
+  spec[3].setIntensity(2.0f);
+  spec[4].setMZ(1.8);
+  spec[4].setIntensity(1.0f);
+
+  // A spacing of 0.75 will lead to a recalculation of intensities, each
+  // resampled point gets intensities from raw data points that are at most +/-
+  // spacing away.
+  LinearResampler lr;
+  Param param;
+  param.setValue("spacing",0.75);
+  lr.setParameters(param);
+  lr.raster(spec);
+
+  DoubleReal sum = 0.0;
+  for (Size i=0; i<spec.size(); ++i)
+  {
+    sum += spec[i].getIntensity();
+  }
+  TEST_REAL_SIMILAR(sum, 20);
+
+  TEST_REAL_SIMILAR(spec[0].getIntensity(), 3+2); 
+  TEST_REAL_SIMILAR(spec[1].getIntensity(), 4+2.0/3*8);
+  TEST_REAL_SIMILAR(spec[2].getIntensity(), 1.0/3*8+2+1.0/3);
+  TEST_REAL_SIMILAR(spec[3].getIntensity(), 2.0 / 3);
+}
 END_SECTION
 
 START_SECTION(( template <typename PeakType > void rasterExperiment(MSExperiment<PeakType>& exp)))
+{
   MSSpectrum< RichPeak1D > spec;
   spec.resize(5);
   spec[0].setMZ(0);
@@ -97,26 +144,27 @@ START_SECTION(( template <typename PeakType > void rasterExperiment(MSExperiment
   spec[4].setIntensity(1.0f);
 
   MSExperiment< RichPeak1D > exp;
-  exp.push_back(spec);
-  exp.push_back(spec);
+  exp.addSpectrum(spec);
+  exp.addSpectrum(spec);
 
   LinearResampler lr;
   Param param;
-	param.setValue("spacing",0.5);
+  param.setValue("spacing",0.5);
   lr.setParameters(param);
   lr.rasterExperiment(exp);
 
 
-	for (Size s=0; s<exp.size(); ++s)
+  for (Size s=0; s<exp.size(); ++s)
   {
-	  DoubleReal sum = 0.0;
-		for (Size i=0; i<exp[s].size(); ++i)
-	  {
-	    sum += exp[s][i].getIntensity();
-	  }
-	  TEST_REAL_SIMILAR(sum, 20);
-	}
+    DoubleReal sum = 0.0;
+    for (Size i=0; i<exp[s].size(); ++i)
+    {
+      sum += exp[s][i].getIntensity();
+    }
+    TEST_REAL_SIMILAR(sum, 20);
+  }
 
+}
 END_SECTION
 
 

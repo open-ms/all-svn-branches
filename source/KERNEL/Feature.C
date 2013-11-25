@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Erhan Kenar $
@@ -31,207 +38,179 @@ using namespace std;
 
 namespace OpenMS
 {
-
-	/** @name Constructors and Destructor
-	*/
-	//@{
-	/// Default constructor
-	Feature::Feature()
-		: BaseFeature(),
-			convex_hulls_(),
-			convex_hulls_modified_(true),
-			convex_hull_(),
-			subordinates_()
-	{
-		std::fill( qualities_, qualities_ + 2, QualityType(0.0) );
-	}
-
-	/// Copy constructor
-	Feature::Feature( const Feature& feature )
-		: BaseFeature( feature ),
-			model_desc_( feature.model_desc_ ),
-			convex_hulls_( feature.convex_hulls_ ),
-			convex_hulls_modified_(feature.convex_hulls_modified_),
-			convex_hull_( feature.convex_hull_ ),
-			subordinates_( feature.subordinates_ )
-	{
-		std::copy( feature.qualities_, feature.qualities_ + 2, qualities_ );
-	}
-
-	/// Destructor
-	Feature::~Feature()
-	{
-	}
-	//@}
-
-	/// @name Model and Quality methods
-	//@{
-	/// Non-mutable access to the overall quality
-	Feature::QualityType Feature::getOverallQuality() const
-	{
-		return quality_;
-	}
-	/// Set the overall quality
-	void Feature::setOverallQuality(Feature::QualityType q)
-	{
-		quality_ = q;
-	}
-
-	/// Non-mutable access to the quality in dimension c
-	Feature::QualityType Feature::getQuality(Size index) const
-	{
-		OPENMS_PRECONDITION(index < 2, "Feature<2>::getQuality(Size): index overflow!");
-		return qualities_[index];
-	}
-	/// Set the quality in dimension c
-	void Feature::setQuality(Size index, Feature::QualityType q)
-	{
-		OPENMS_PRECONDITION(index < 2, "Feature<2>::setQuality(Size): index overflow!");
-		qualities_[index] = q;
-	}
-
-	/// Non-mutable access to the model description
-	const ModelDescription<2>& Feature::getModelDescription() const
-	{
-		return model_desc_;
-	}
-	/// Mutable access to the model description
-	ModelDescription<2>& Feature::getModelDescription()
-	{
-		return model_desc_;
-	}
-	/// Set the model description
-	void Feature::setModelDescription( const ModelDescription<2>& q )
-	{
-		model_desc_ = q;
-	}
-	//@}
-
-	///@name Convex hulls and bounding box
-	//@{
-	/// Non-mutable access to the convex hulls
-	const std::vector<ConvexHull2D>& Feature::getConvexHulls() const
-	{
-		return convex_hulls_;
-	}
-	/// Mutable access to the convex hulls of single mass traces
-	std::vector<ConvexHull2D>& Feature::getConvexHulls()
-	{
-		convex_hulls_modified_ = true;
-		return convex_hulls_;
-	}
-	/// Set the convex hulls of single mass traces
-	void Feature::setConvexHulls( const std::vector<ConvexHull2D>& hulls )
-	{
-		convex_hulls_modified_ = true;
-		convex_hulls_ = hulls;
-	}
-	/**
-	@brief Returns the overall convex hull of the feature (calculated from the convex hulls of the mass traces)
-
-	@note the bounding box of the feature can be accessed through the returned convex hull
-	*/
-	ConvexHull2D& Feature::getConvexHull() const
+  Feature::Feature() :
+    BaseFeature(),
+    convex_hulls_(),
+    convex_hulls_modified_(true),
+    convex_hull_(),
+    subordinates_()
   {
-  	//recalculate convex hull if necessary
-  	if (convex_hulls_modified_)
-  	{
-  		//only one mass trace convex hull => use it as overall convex hull
-  		if (convex_hulls_.size()==1)
-  		{
-  			convex_hull_ = convex_hulls_[0];
-  		}
-  		else
-  		{
-				convex_hull_.clear();
-				if (convex_hulls_.size()>0)
-				{
-				/*
-				-- this does not work with our current approach of "non-convex"hull computation as the mass traces of features cannot be combined
-				-- meaningfully. We thus print only the bounding box of the traces (for now)
-				
-				for (Size hull=0; hull<convex_hulls_.size(); ++hull)
-				{
-					convex_hull_.addPoints(convex_hulls_[hull].getHullPoints());
-				}
-				*/
-
-					DBoundingBox<2> box;
-					for (Size hull=0; hull<convex_hulls_.size(); ++hull)
-					{
-						box.enlarge(convex_hulls_[hull].getBoundingBox().minPosition()[0],convex_hulls_[hull].getBoundingBox().minPosition()[1]);
-						box.enlarge(convex_hulls_[hull].getBoundingBox().maxPosition()[0],convex_hulls_[hull].getBoundingBox().maxPosition()[1]);
-					}
-					convex_hull_.addPoint(ConvexHull2D::PointType(box.minX(),box.minY()));
-					convex_hull_.addPoint(ConvexHull2D::PointType(box.maxX(),box.minY()));
-					convex_hull_.addPoint(ConvexHull2D::PointType(box.minX(),box.maxY()));
-					convex_hull_.addPoint(ConvexHull2D::PointType(box.maxX(),box.maxY()));
-				}
-
-  		}
-  		
-  		convex_hulls_modified_ = false;
-  	}
-
-  	return convex_hull_;
+    std::fill(qualities_, qualities_ + 2, QualityType(0.0));
   }
 
-	/// Returns if the mass trace convex hulls of the feature enclose the position specified by @p rt and @p mz
-	bool Feature::encloses(DoubleReal rt, DoubleReal mz) const
-	{
-		ConvexHull2D::PointType tmp(rt,mz);
-		for (vector<ConvexHull2D>::const_iterator	it=convex_hulls_.begin(); it!=convex_hulls_.end(); ++it)
-		{
-			if (it->encloses(tmp)) return true;
-		}
-		return false;
-	}
+  Feature::Feature(const Feature & feature) :
+    BaseFeature(feature),
+    model_desc_(feature.model_desc_),
+    convex_hulls_(feature.convex_hulls_),
+    convex_hulls_modified_(feature.convex_hulls_modified_),
+    convex_hull_(feature.convex_hull_),
+    subordinates_(feature.subordinates_)
+  {
+    std::copy(feature.qualities_, feature.qualities_ + 2, qualities_);
+  }
 
-	//@}
+  Feature::~Feature()
+  {
+  }
 
-	Feature& Feature::operator = (const Feature& rhs)
-	{
-		if (this==&rhs) return *this;
-		
-		BaseFeature::operator=(rhs);
-		copy(rhs.qualities_,rhs.qualities_+2,qualities_);
-		model_desc_							= rhs.model_desc_;
-		convex_hulls_						= rhs.convex_hulls_;
-		convex_hulls_modified_	= rhs.convex_hulls_modified_;
-		convex_hull_      			= rhs.convex_hull_;
-		subordinates_						= rhs.subordinates_;
-		
-		return *this;
-	}
+  Feature::QualityType Feature::getOverallQuality() const
+  {
+    return quality_;
+  }
 
-	bool Feature::operator == (const Feature& rhs) const
-	{
-		return (BaseFeature::operator == (rhs) 
-						&& equal(qualities_, qualities_+2, rhs.qualities_)
-						&& (model_desc_ == rhs.model_desc_)
-						&& (convex_hulls_ == rhs.convex_hulls_)
-						&& (subordinates_  == rhs.subordinates_));
-	}
+  void Feature::setOverallQuality(Feature::QualityType q)
+  {
+    quality_ = q;
+  }
 
+  Feature::QualityType Feature::getQuality(Size index) const
+  {
+    OPENMS_PRECONDITION(index < 2, "Feature<2>::getQuality(Size): index overflow!");
+    return qualities_[index];
+  }
 
-	/// immutable access to subordinate features
-	const std::vector<Feature>& Feature::getSubordinates() const
-	{
-		return subordinates_;
-	}
+  void Feature::setQuality(Size index, Feature::QualityType q)
+  {
+    OPENMS_PRECONDITION(index < 2, "Feature<2>::setQuality(Size): index overflow!");
+    qualities_[index] = q;
+  }
 
-	/// mutable access to subordinate features
-	std::vector<Feature>& Feature::getSubordinates()
-	{
-		return subordinates_;
-	}
+  const ModelDescription<2> & Feature::getModelDescription() const
+  {
+    return model_desc_;
+  }
 
-	/// mutable access to subordinate features
-	void Feature::setSubordinates(const std::vector<Feature>& rhs)
-	{
-		subordinates_ = rhs;
-	}
+  ModelDescription<2> & Feature::getModelDescription()
+  {
+    return model_desc_;
+  }
 
+  void Feature::setModelDescription(const ModelDescription<2> & q)
+  {
+    model_desc_ = q;
+  }
 
+  const std::vector<ConvexHull2D> & Feature::getConvexHulls() const
+  {
+    return convex_hulls_;
+  }
+
+  std::vector<ConvexHull2D> & Feature::getConvexHulls()
+  {
+    convex_hulls_modified_ = true;
+    return convex_hulls_;
+  }
+
+  void Feature::setConvexHulls(const std::vector<ConvexHull2D> & hulls)
+  {
+    convex_hulls_modified_ = true;
+    convex_hulls_ = hulls;
+  }
+
+  ConvexHull2D & Feature::getConvexHull() const
+  {
+    //recalculate convex hull if necessary
+    if (convex_hulls_modified_)
+    {
+      //only one mass trace convex hull => use it as overall convex hull
+      if (convex_hulls_.size() == 1)
+      {
+        convex_hull_ = convex_hulls_[0];
+      }
+      else
+      {
+        convex_hull_.clear();
+        if (convex_hulls_.size() > 0)
+        {
+          /*
+          -- this does not work with our current approach of "non-convex"hull computation as the mass traces of features cannot be combined
+          -- meaningfully. We thus print only the bounding box of the traces (for now)
+
+          for (Size hull=0; hull<convex_hulls_.size(); ++hull)
+          {
+              convex_hull_.addPoints(convex_hulls_[hull].getHullPoints());
+          }
+          */
+
+          DBoundingBox<2> box;
+          for (Size hull = 0; hull < convex_hulls_.size(); ++hull)
+          {
+            box.enlarge(convex_hulls_[hull].getBoundingBox().minPosition()[0], convex_hulls_[hull].getBoundingBox().minPosition()[1]);
+            box.enlarge(convex_hulls_[hull].getBoundingBox().maxPosition()[0], convex_hulls_[hull].getBoundingBox().maxPosition()[1]);
+          }
+          convex_hull_.addPoint(ConvexHull2D::PointType(box.minX(), box.minY()));
+          convex_hull_.addPoint(ConvexHull2D::PointType(box.maxX(), box.minY()));
+          convex_hull_.addPoint(ConvexHull2D::PointType(box.minX(), box.maxY()));
+          convex_hull_.addPoint(ConvexHull2D::PointType(box.maxX(), box.maxY()));
+        }
+
+      }
+
+      convex_hulls_modified_ = false;
+    }
+
+    return convex_hull_;
+  }
+
+  bool Feature::encloses(DoubleReal rt, DoubleReal mz) const
+  {
+    ConvexHull2D::PointType tmp(rt, mz);
+    for (vector<ConvexHull2D>::const_iterator   it = convex_hulls_.begin(); it != convex_hulls_.end(); ++it)
+    {
+      if (it->encloses(tmp))
+        return true;
+    }
+    return false;
+  }
+
+  Feature & Feature::operator=(const Feature & rhs)
+  {
+    if (this == &rhs)
+      return *this;
+
+    BaseFeature::operator=(rhs);
+    copy(rhs.qualities_, rhs.qualities_ + 2, qualities_);
+    model_desc_                         = rhs.model_desc_;
+    convex_hulls_                       = rhs.convex_hulls_;
+    convex_hulls_modified_  = rhs.convex_hulls_modified_;
+    convex_hull_                = rhs.convex_hull_;
+    subordinates_                       = rhs.subordinates_;
+
+    return *this;
+  }
+
+  bool Feature::operator==(const Feature & rhs) const
+  {
+    return BaseFeature::operator==(rhs)
+           && equal(qualities_, qualities_ + 2, rhs.qualities_)
+           && (model_desc_ == rhs.model_desc_)
+           && (convex_hulls_ == rhs.convex_hulls_)
+           && (subordinates_  == rhs.subordinates_);
+  }
+
+  const std::vector<Feature> & Feature::getSubordinates() const
+  {
+    return subordinates_;
+  }
+
+  std::vector<Feature> & Feature::getSubordinates()
+  {
+    return subordinates_;
+  }
+
+  void Feature::setSubordinates(const std::vector<Feature> & rhs)
+  {
+    subordinates_ = rhs;
+  }
 
 }

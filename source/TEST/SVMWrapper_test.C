@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Sandro Andreotti $
 // $Authors: Nico Pfeifer, Chris Bielow $
@@ -329,7 +336,7 @@ END_SECTION
 
 START_SECTION((DoubleReal performCrossValidation(svm_problem *problem_ul, const SVMData &problem_l, const bool is_labeled, const std::map< SVM_parameter_type, DoubleReal > &start_values_map, const std::map< SVM_parameter_type, DoubleReal > &step_sizes_map, const std::map< SVM_parameter_type, DoubleReal > &end_values_map, Size number_of_partitions, Size number_of_runs, std::map< SVM_parameter_type, DoubleReal > &best_parameters, bool additive_step_sizes=true, bool output=false, String performances_file_name="performances.txt", bool mcc_as_performance_measure=false) ))
  
-  {
+{
   map<SVMWrapper::SVM_parameter_type, DoubleReal> start_values;
 	map<SVMWrapper::SVM_parameter_type, DoubleReal> step_sizes;
 	map<SVMWrapper::SVM_parameter_type, DoubleReal> end_values;
@@ -374,6 +381,7 @@ START_SECTION((DoubleReal performCrossValidation(svm_problem *problem_ul, const 
   SVMData problem_2;
 	cv_quality = svm.performCrossValidation(problem, problem_2, false, start_values, step_sizes, end_values, 2, 1, parameters, true, false);
 	TEST_NOT_EQUAL(parameters.size(), 0)
+  TEST_REAL_SIMILAR(cv_quality, 1)
 }
   // CV, method 2
     
@@ -421,8 +429,11 @@ START_SECTION((DoubleReal performCrossValidation(svm_problem *problem_ul, const 
 	step_sizes.insert(make_pair(SVMWrapper::DEGREE, 1));
 	end_values.insert(make_pair(SVMWrapper::DEGREE, 3));
 
-	cv_quality = svm2.performCrossValidation(0, problem, true, start_values, step_sizes, end_values, 2, 1, parameters, true, false);
-	TEST_NOT_EQUAL(parameters.size(), 0)
+  cv_quality = svm2.performCrossValidation(0, problem, true, start_values, step_sizes, end_values, 2, 1, parameters, true, false);
+
+  TEST_NOT_EQUAL(parameters.size(), 0)
+  // cv_quality is nan
+  TEST_EQUAL(cv_quality != cv_quality, true)
 END_SECTION
 
 START_SECTION((void predict(struct svm_problem *problem, std::vector< DoubleReal > &predicted_labels)))

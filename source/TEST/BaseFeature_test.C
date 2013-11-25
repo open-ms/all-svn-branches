@@ -1,28 +1,35 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Hendrik Weisser $
-// $Authors: $
+// $Authors: Hendrik Weisser, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -166,6 +173,44 @@ START_SECTION((BaseFeature(const BaseFeature &feature)))
 	TEST_REAL_SIMILAR(q2, 0.9)
 END_SECTION
 
+START_SECTION((BaseFeature(const Peak2D& point)))
+{
+	Peak2D point;
+	point.setRT(1.23);
+	point.setMZ(4.56);
+	point.setIntensity(OpenMS::Peak2D::IntensityType(7.89));
+
+	BaseFeature copy(point);
+	TEST_REAL_SIMILAR(copy.getRT(), 1.23);
+	TEST_REAL_SIMILAR(copy.getMZ(), 4.56);
+	TEST_REAL_SIMILAR(copy.getIntensity(), 7.89);
+	TEST_EQUAL(copy.getQuality(), 0.0);
+	TEST_EQUAL(copy.getCharge(), 0);
+	TEST_EQUAL(copy.getWidth(), 0.0);
+	TEST_EQUAL(copy.getPeptideIdentifications().empty(), true);
+}
+END_SECTION
+
+START_SECTION((BaseFeature(const RichPeak2D& point)))
+{
+	RichPeak2D point;
+	point.setRT(1.23);
+	point.setMZ(4.56);
+	point.setIntensity(OpenMS::Peak2D::IntensityType(7.89));
+	point.setMetaValue("meta", "test");
+
+	BaseFeature copy(point);
+	TEST_REAL_SIMILAR(copy.getRT(), 1.23);
+	TEST_REAL_SIMILAR(copy.getMZ(), 4.56);
+	TEST_REAL_SIMILAR(copy.getIntensity(), 7.89);
+	TEST_EQUAL(copy.getMetaValue("meta"), "test");
+	TEST_EQUAL(copy.getQuality(), 0.0);
+	TEST_EQUAL(copy.getCharge(), 0);
+	TEST_EQUAL(copy.getWidth(), 0.0);
+	TEST_EQUAL(copy.getPeptideIdentifications().empty(), true);
+}
+END_SECTION
+
 START_SECTION((BaseFeature& operator=(const BaseFeature& rhs)))
 	BaseFeature::PositionType pos;
 	pos[0] = 21.21;
@@ -214,7 +259,7 @@ START_SECTION((bool operator==(const BaseFeature &rhs) const))
 }
 END_SECTION
 
-START_SECTION([EXTRA](BaseFeature& operator!=(const BaseFeature& rhs)))
+START_SECTION((bool operator!=(const BaseFeature& rhs) const))
 	BaseFeature p1;
 	BaseFeature p2(p1);
 	TEST_EQUAL(p1 != p2, false)
@@ -258,7 +303,7 @@ START_SECTION(([EXTRA]meta info with assignment))
 	TEST_EQUAL(p2.getMetaValue(2), "bla")
 END_SECTION
 
-START_SECTION(([BaseFeature::QualityLess] bool operator()(BaseFeature const &left, BaseFeature const &right) const ))
+START_SECTION(([BaseFeature::QualityLess] bool operator()(const BaseFeature &left, const BaseFeature &right) const ))
 	BaseFeature f1, f2;
   f1.setQuality((QualityType)0.94);
   f2.setQuality((QualityType)0.78);
@@ -268,7 +313,7 @@ START_SECTION(([BaseFeature::QualityLess] bool operator()(BaseFeature const &lef
 	TEST_EQUAL(oql(f2, f1), 1);
 END_SECTION
 
-START_SECTION(([BaseFeature::QualityLess] bool operator()(BaseFeature const &left, const QualityType &right) const ))
+START_SECTION(([BaseFeature::QualityLess] bool operator()(const BaseFeature &left, const QualityType &right) const ))
 	BaseFeature f1, f2;
   f1.setQuality((QualityType)0.94);
   f2.setQuality((QualityType)0.78);
@@ -324,12 +369,38 @@ END_SECTION
 
 START_SECTION((std::vector<PeptideIdentification>& getPeptideIdentifications()))
 	BaseFeature tmp;
-	vector<PeptideIdentification> vec;
 
 	tmp.getPeptideIdentifications().resize(1);
 	TEST_EQUAL(tmp.getPeptideIdentifications().size(), 1);
 END_SECTION
 
+START_SECTION((AnnotationState getAnnotationState() const))
+  BaseFeature tmp;
+	vector<PeptideIdentification> vec;
+
+
+  vector<PeptideIdentification>& ids = tmp.getPeptideIdentifications();
+
+  TEST_EQUAL(tmp.getAnnotationState(), BaseFeature::FEATURE_ID_NONE);
+	ids.resize(1);
+	TEST_EQUAL(tmp.getAnnotationState(), BaseFeature::FEATURE_ID_NONE);
+
+  PeptideHit hit;
+  hit.setSequence(AASequence("ABCDE"));
+  ids[0].setHits(std::vector<PeptideHit>(1, hit));
+	TEST_EQUAL(tmp.getAnnotationState(), BaseFeature::FEATURE_ID_SINGLE);
+
+  ids.resize(2);
+  ids[1].setHits(std::vector<PeptideHit>(1, hit)); // same as first hit
+  //tmp.setPeptideIdentifications(ids);
+	TEST_EQUAL(tmp.getAnnotationState(), BaseFeature::FEATURE_ID_MULTIPLE_SAME);
+  
+  hit.setSequence(AASequence("KRGH"));
+  ids[1].setHits(std::vector<PeptideHit>(1, hit)); // different to first hit
+	TEST_EQUAL(tmp.getAnnotationState(), BaseFeature::FEATURE_ID_MULTIPLE_DIVERGENT);
+
+
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

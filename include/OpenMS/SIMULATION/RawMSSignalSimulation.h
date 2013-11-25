@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
@@ -36,52 +43,53 @@
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
 
-namespace OpenMS {
+namespace OpenMS
+{
 
   class IsotopeModel;
 
   /**
-   @brief Simulates MS signales for a given set of peptides
+   @brief Simulates MS signals for a given set of peptides
 
-   Simulates MS signales for a given set of peptides, with charge annotation,
+   Simulates MS signals for a given set of peptides, with charge annotation,
    given detectabilities, predicted retention times and charge values.
 
    @htmlinclude OpenMS_RawMSSignalSimulation.parameters
 
    @ingroup Simulation
   */
-  class OPENMS_DLLAPI RawMSSignalSimulation
-    : public DefaultParamHandler,
-      public ProgressLogger
+  class OPENMS_DLLAPI RawMSSignalSimulation :
+    public DefaultParamHandler,
+    public ProgressLogger
   {
 
-  public:
+public:
     /** @name Constructors and Destructors
       */
     //@{
     /// Constructor taking a random generator
-    RawMSSignalSimulation(const SimRandomNumberGenerator& rng);
+    explicit RawMSSignalSimulation(const SimRandomNumberGenerator & rng);
 
     /// Copy constructor
-    RawMSSignalSimulation(const RawMSSignalSimulation& source);
+    RawMSSignalSimulation(const RawMSSignalSimulation & source);
 
     /// Destructor
     virtual ~RawMSSignalSimulation();
     //@}
 
-    RawMSSignalSimulation& operator = (const RawMSSignalSimulation& source);
+    RawMSSignalSimulation & operator=(const RawMSSignalSimulation & source);
 
     /// load the contaminants from contaminants:file param
-    /// You do not have to call this function before calling generateRawSignals(), but it might 
+    /// You do not have to call this function before calling generateRawSignals(), but it might
     /// be useful to check if the contaminant file is valid
     void loadContaminants();
 
     /// fill experiment with signals and noise
     void generateRawSignals(FeatureMapSim & features, MSSimExperiment & experiment, MSSimExperiment & experiment_ct, FeatureMapSim & contaminants);
 
-  protected:
+protected:
 
-    enum IONIZATIONMETHOD {IM_ESI=0,IM_MALDI=1,IM_ALL=2};
+    enum IONIZATIONMETHOD {IM_ESI = 0, IM_MALDI = 1, IM_ALL = 2};
     enum PROFILESHAPE {RT_RECTANGULAR, RT_GAUSSIAN};
     enum RESOLUTIONMODEL {RES_CONSTANT, RES_LINEAR, RES_SQRT};
 
@@ -90,7 +98,7 @@ namespace OpenMS {
     RawMSSignalSimulation();
 
     /// Synchronize members with param class
-		void updateMembers_();
+    void updateMembers_();
 
     /// Set default parameters
     void setDefaultParams_();
@@ -114,39 +122,37 @@ namespace OpenMS {
     void add2DSignal_(Feature & feature, MSSimExperiment & experiment, MSSimExperiment & experiment_ct);
 
     /**
-     @brief Samples signales for the given 1D model
+     @brief Samples signals for the given 1D model
 
-     @param iso The isotope model from which the signales will be sampled
+     @param iso The isotope model from which the signals will be sampled
      @param mz_start Start coordinate (in m/z dimension) of the region where the signals will be sampled
      @param mz_end End coordinate (in m/z dimension) of the region where the signals will be sampled
-     @param experiment Experiment to which the sampled signales will be added
-     @param experiment_ct Experiment to which the centroided Ground Truth sampled signales will be added
+     @param experiment Experiment to which the sampled signals will be added
+     @param experiment_ct Experiment to which the centroided Ground Truth sampled signals will be added
      @param activeFeature The current feature that is simulated
      */
     void samplePeptideModel1D_(const IsotopeModel & iso,
                                const SimCoordinateType mz_start,
                                const SimCoordinateType mz_end,
-                               const SimCoordinateType mz_sampling_rate,
                                MSSimExperiment & experiment,
                                MSSimExperiment & experiment_ct,
                                Feature & activeFeature);
 
     /**
-     @brief Samples signales for the given 2D model
+     @brief Samples signals for the given 2D model
 
-     @param pm The product model from which the signales will be sampled
+     @param pm The product model from which the signals will be sampled
      @param mz_start Start coordinate (in m/z dimension) of the region where the signals will be sampled
      @param mz_end End coordinate (in m/z dimension) of the region where the signals will be sampled
      @param rt_start Start coordinate (in rt dimension) of the region where the signals will be sampled
      @param rt_end End coordinate (in rt dimension) of the region where the signals will be sampled
-     @param experiment Experiment to which the sampled signales will be added
-     @param experiment_ct Experiment to which the centroided Ground Truth sampled signales will be added
+     @param experiment Experiment to which the sampled signals will be added
+     @param experiment_ct Experiment to which the centroided Ground Truth sampled signals will be added
      @param activeFeature The current feature that is simulated
      */
     void samplePeptideModel2D_(const ProductModel<2> & pm,
                                const SimCoordinateType mz_start,
                                const SimCoordinateType mz_end,
-                               const SimCoordinateType mz_sampling_rate,
                                SimCoordinateType rt_start,
                                SimCoordinateType rt_end,
                                MSSimExperiment & experiment,
@@ -156,38 +162,38 @@ namespace OpenMS {
     /**
      @brief Add the correct Elution profile to the passed ProductModel
      */
-    void chooseElutionProfile_(EGHModel* const elutionmodel, Feature & feature, const double scale, const DoubleReal rt_sampling_rate, const MSSimExperiment & experiment);
+    void chooseElutionProfile_(EGHModel * const elutionmodel, Feature & feature, const double scale, const DoubleReal rt_sampling_rate, const MSSimExperiment & experiment);
 
     /**
      @brief build contaminant feature map
     */
     void createContaminants_(FeatureMapSim & contaminants, MSSimExperiment & exp, MSSimExperiment & exp_ct);
 
-    /// Add shot noise to the experimet
+    /// Add shot noise to the experiment
     void addShotNoise_(MSSimExperiment & experiment, SimCoordinateType minimal_mz_measurement_limit, SimCoordinateType maximal_mz_measurement_limit);
 
     /// Add white noise to the experiment
     void addWhiteNoise_(MSSimExperiment & experiment);
 
     /// Add detector noise to the experiment
-    void addDetectorNoise_(MSSimExperiment &experiment);
+    void addDetectorNoise_(MSSimExperiment & experiment);
 
     /// Add a base line to the experiment
     void addBaseLine_(MSSimExperiment & experiment, SimCoordinateType minimal_mz_measurement_limit);
 
     /// get the mz grid where all m/z values will be mapped to
-    void getSamplingGrid_(std::vector<SimCoordinateType>& grid, const SimCoordinateType mz_min, const SimCoordinateType mz_max, const Int step_Da );
+    void getSamplingGrid_(std::vector<SimCoordinateType> & grid, const SimCoordinateType mz_min, const SimCoordinateType mz_max, const Int step_Da);
 
-    /// Compress signales in a single RT scan (to merge signals which were sampled overlapping)
+    /// Compress signals in a single RT scan (to merge signals which were sampled overlapping)
     void compressSignals_(MSSimExperiment & experiment);
 
-		/// number of points sampled per peak's FWHM
-		Int sampling_points_per_FWHM_;
+    /// number of points sampled per peak's FWHM
+    Int sampling_points_per_FWHM_;
 
-		/// Mean of peak m/z error
-		SimCoordinateType mz_error_mean_;
-		/// Standard deviation of peak m/z error
-		SimCoordinateType mz_error_stddev_;
+    /// Mean of peak m/z error
+    SimCoordinateType mz_error_mean_;
+    /// Standard deviation of peak m/z error
+    SimCoordinateType mz_error_stddev_;
 
     /**
      * @brief Computes a rescaled feature intensity based on the set parameters for feature intensity scaling and the passed parameter @p natural_scaling_factor.
@@ -214,7 +220,7 @@ namespace OpenMS {
     DoubleReal getResolution_(const DoubleReal query_mz, const DoubleReal resolution, const RESOLUTIONMODEL model) const;
 
     /**
-      @brief compute the peak's SD (gaussian) at a given m/z (internally the resolution model is used)
+      @brief compute the peak's SD (Gaussian) at a given m/z (internally the resolution model is used)
     */
     DoubleReal getPeakWidth_(const DoubleReal mz, const bool is_gaussian) const;
 
@@ -228,8 +234,10 @@ namespace OpenMS {
     RESOLUTIONMODEL res_model_;
     /// base resolution at 400 Th
     DoubleReal res_base_;
+    /// m/z sampling grid for all signals
+    std::vector<SimCoordinateType> grid_;
 
-		/// Random number generator
+    /// Random number generator
     SimRandomNumberGenerator const * rnd_gen_;
 
     struct ContaminantInfo
@@ -253,7 +261,7 @@ namespace OpenMS {
       Indicates which random numbers each thread has used already and if the random number pool
       should be rebuild.
       */
-    std::vector< Size > threaded_random_numbers_index_;
+    std::vector<Size> threaded_random_numbers_index_;
 
     static const Size THREADED_RANDOM_NUMBER_POOL_SIZE_ = 500;
 

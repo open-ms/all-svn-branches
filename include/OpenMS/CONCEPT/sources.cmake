@@ -9,6 +9,7 @@ Exception.h
 Factory.h
 FactoryBase.h
 FuzzyStringComparator.h
+GlobalExceptionHandler.h
 LogStream.h
 LogConfigHandler.h
 Macros.h
@@ -20,6 +21,8 @@ UniqueIdGenerator.h
 UniqueIdInterface.h
 UniqueIdIndexer.h
 VersionInfo.h
+BinaryComposeFunctionAdapter.h
+UnaryComposeFunctionAdapter.h
 )
 
 ### add path to the filenames

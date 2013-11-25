@@ -4,16 +4,15 @@ set(directory include/OpenMS/COMPARISON/CLUSTERING)
 ### list all header files of the directory here
 set(sources_list_h
 AverageLinkage.h
-CentroidLinkage.h
 ClusterAnalyzer.h
 ClusterFunctor.h
 ClusterHierarchical.h
-ClusteringMethod.h
 CompleteLinkage.h
 EuclideanSimilarity.h
-HashClustering.h
-QTClustering.h
+HashGrid.h
+HierarchicalClustering.h
 SingleLinkage.h
+SILACClustering.h
 )
 
 ### add path to the filenames

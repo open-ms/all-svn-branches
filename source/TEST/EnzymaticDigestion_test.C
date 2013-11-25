@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Chris Bielow $
 // $Authors: Marc Sturm, Chris Bielow $
@@ -51,12 +58,48 @@ START_SECTION([EXTRA] ~EnzymaticDigestion())
 	delete e_ptr;
 END_SECTION
 
+START_SECTION((EnzymaticDigestion(const EnzymaticDigestion& rhs) ))
+  EnzymaticDigestion ed;
+  ed.setMissedCleavages(1234);
+  ed.setEnzyme(EnzymaticDigestion::SIZE_OF_ENZYMES);
+  ed.setSpecificity(EnzymaticDigestion::SPEC_SEMI);
+  ed.setLogModelEnabled(true);
+  ed.setLogThreshold(81231);
+  
+  EnzymaticDigestion ed2(ed);
+
+  TEST_EQUAL(ed.getMissedCleavages(), ed2.getMissedCleavages());
+  TEST_EQUAL(ed.getEnzyme(), ed2.getEnzyme());
+  TEST_EQUAL(ed.getSpecificity(), ed2.getSpecificity());
+  TEST_EQUAL(ed.isLogModelEnabled(), ed2.isLogModelEnabled());
+  TEST_EQUAL(ed.getLogThreshold(), ed2.getLogThreshold());
+
+END_SECTION
+
+START_SECTION((EnzymaticDigestion& operator=(const EnzymaticDigestion& rhs) ))
+  EnzymaticDigestion ed;
+  ed.setMissedCleavages(1234);
+  ed.setEnzyme(EnzymaticDigestion::SIZE_OF_ENZYMES);
+  ed.setSpecificity(EnzymaticDigestion::SPEC_SEMI);
+  ed.setLogModelEnabled(true);
+  ed.setLogThreshold(81231);
+  
+  EnzymaticDigestion ed2=ed;
+
+  TEST_EQUAL(ed.getMissedCleavages(), ed2.getMissedCleavages());
+  TEST_EQUAL(ed.getEnzyme(), ed2.getEnzyme());
+  TEST_EQUAL(ed.getSpecificity(), ed2.getSpecificity());
+  TEST_EQUAL(ed.isLogModelEnabled(), ed2.isLogModelEnabled());
+  TEST_EQUAL(ed.getLogThreshold(), ed2.getLogThreshold());
+
+END_SECTION
+
 START_SECTION((SignedSize getMissedCleavages() const ))
 	TEST_EQUAL(EnzymaticDigestion().getMissedCleavages(),0)
 END_SECTION
 
 START_SECTION((Enzyme getEnzyme() const))
-	TEST_EQUAL(EnzymaticDigestion().getEnzyme(),EnzymaticDigestion::TRYPSIN)
+	TEST_EQUAL(EnzymaticDigestion().getEnzyme(),EnzymaticDigestion::ENZYME_TRYPSIN)
 END_SECTION
 
 START_SECTION((void setMissedCleavages(SignedSize missed_cleavages)))
@@ -67,16 +110,37 @@ END_SECTION
 
 START_SECTION((void setEnzyme(Enzyme enzyme)))
 	EnzymaticDigestion ed;
-  ed.setEnzyme(EnzymaticDigestion::TRYPSIN);
-  TEST_EQUAL(ed.getEnzyme(), EnzymaticDigestion::TRYPSIN);
+  ed.setEnzyme(EnzymaticDigestion::ENZYME_TRYPSIN);
+  TEST_EQUAL(ed.getEnzyme(), EnzymaticDigestion::ENZYME_TRYPSIN);
   ed.setEnzyme(EnzymaticDigestion::SIZE_OF_ENZYMES);
   TEST_EQUAL(ed.getEnzyme(), EnzymaticDigestion::SIZE_OF_ENZYMES);
 END_SECTION
 
-START_SECTION((Enzyme getEnzymeByName(const String& name)))
-	EnzymaticDigestion ed;
-	TEST_EQUAL(ed.getEnzymeByName("Trypsin"), EnzymaticDigestion::TRYPSIN);
-	TEST_EQUAL(ed.getEnzymeByName("DoesNotExist"), EnzymaticDigestion::SIZE_OF_ENZYMES);
+START_SECTION((static Enzyme getEnzymeByName(const String& name)))
+	TEST_EQUAL(EnzymaticDigestion::getEnzymeByName("Trypsin"), EnzymaticDigestion::ENZYME_TRYPSIN);
+	TEST_EQUAL(EnzymaticDigestion::getEnzymeByName("DoesNotExist"), EnzymaticDigestion::SIZE_OF_ENZYMES);
+END_SECTION
+
+START_SECTION(( Specificity getSpecificity() const ))
+  EnzymaticDigestion ed;
+  
+  TEST_EQUAL(ed.getSpecificity(), EnzymaticDigestion::SPEC_FULL);
+  ed.setSpecificity(EnzymaticDigestion::SPEC_NONE);
+  TEST_EQUAL(ed.getSpecificity(), EnzymaticDigestion::SPEC_NONE);
+  ed.setSpecificity(EnzymaticDigestion::SPEC_SEMI);
+  TEST_EQUAL(ed.getSpecificity(), EnzymaticDigestion::SPEC_SEMI);
+
+END_SECTION
+
+START_SECTION(( void setSpecificity(Specificity spec) ))
+  NOT_TESTABLE // tested above
+END_SECTION
+
+START_SECTION(( static Specificity getSpecificityByName(const String & name) ))
+	TEST_EQUAL(EnzymaticDigestion::getSpecificityByName(EnzymaticDigestion::NamesOfSpecificity[0]), EnzymaticDigestion::SPEC_FULL);
+	TEST_EQUAL(EnzymaticDigestion::getSpecificityByName(EnzymaticDigestion::NamesOfSpecificity[1]), EnzymaticDigestion::SPEC_SEMI);
+	TEST_EQUAL(EnzymaticDigestion::getSpecificityByName(EnzymaticDigestion::NamesOfSpecificity[2]), EnzymaticDigestion::SPEC_NONE);
+	TEST_EQUAL(EnzymaticDigestion::getSpecificityByName("DoesNotExist"), EnzymaticDigestion::SIZE_OF_SPECIFICITY);
 END_SECTION
 
 START_SECTION((bool isLogModelEnabled() const))
@@ -106,71 +170,72 @@ END_SECTION
 
 START_SECTION((Size peptideCount(const AASequence &protein)))
 	EnzymaticDigestion ed;
-	Size tmp = ed.peptideCount(String("ACDE"));
+	Size tmp = ed.peptideCount(AASequence("ACDE"));
 	TEST_EQUAL(tmp,1)
-	tmp = ed.peptideCount(String("ACKDE"));
+	tmp = ed.peptideCount(AASequence("ACKDE"));
 	TEST_EQUAL(tmp,2)
-	tmp = ed.peptideCount(String("ACRDE"));
+	tmp = ed.peptideCount(AASequence("ACRDE"));
 	TEST_EQUAL(tmp,2)
-	tmp = ed.peptideCount(String("ACKPDE"));
+	tmp = ed.peptideCount(AASequence("ACKPDE"));
 	TEST_EQUAL(tmp,1)
-	tmp = ed.peptideCount(String("ACRPDE"));
+	tmp = ed.peptideCount(AASequence("ACRPDE"));
 	TEST_EQUAL(tmp,1)
-	tmp = ed.peptideCount(String("ARCRDRE"));
+	tmp = ed.peptideCount(AASequence("ARCRDRE"));
 	TEST_EQUAL(tmp,4)
-	tmp = ed.peptideCount(String("RKR"));
+	tmp = ed.peptideCount(AASequence("RKR"));
 	TEST_EQUAL(tmp,3)
 	ed.setMissedCleavages(1);
-	TEST_EQUAL(ed.peptideCount(String("ACDE")),1)
-	TEST_EQUAL(ed.peptideCount(String("ACRDE")),3)
-	TEST_EQUAL(ed.peptideCount(String("ARCDRE")),5)
-	TEST_EQUAL(ed.peptideCount(String("RKR")),5)
+	TEST_EQUAL(ed.peptideCount(AASequence("ACDE")),1)
+	TEST_EQUAL(ed.peptideCount(AASequence("ACRDE")),3)
+	TEST_EQUAL(ed.peptideCount(AASequence("ARCDRE")),5)
+	TEST_EQUAL(ed.peptideCount(AASequence("RKR")),5)
 	ed.setMissedCleavages(3);
-	TEST_EQUAL(ed.peptideCount(String("ACDE")),1)
-	TEST_EQUAL(ed.peptideCount(String("ACRDE")),3)
-	TEST_EQUAL(ed.peptideCount(String("ARCDRE")),6)
-	TEST_EQUAL(ed.peptideCount(String("RKR")),6)
+	TEST_EQUAL(ed.peptideCount(AASequence("ACDE")),1)
+	TEST_EQUAL(ed.peptideCount(AASequence("ACRDE")),3)
+	TEST_EQUAL(ed.peptideCount(AASequence("ARCDRE")),6)
+	TEST_EQUAL(ed.peptideCount(AASequence("RKR")),6)
 
   // with log L model:
   ed.setLogModelEnabled(true);
-  TEST_EQUAL(ed.peptideCount(String("MKWVTFISLLLLFSSAYSRGVFRRDTHKSEIAHRFKDLGEEHFKGLVLIAFSQYLQQCPFDEHVKLVNELTEFAKTCVADESHAGCEKSLHTLFGDELCKVASLRETYGDMADCCEKQEPERNECFLSHKDDSPDLPKLKPDPNTLCDEFKADEKKFWGKYLYEIARRHPYFYAPELLYYANKYNGVFQECQAEDKGACLLPKIETMREKVLASSARQRLRCASIQKFGERALKAWSVARLSQKFPKAEFVEVTKLVTDLTKVHKECCHGDLLECADDRADLAKYICDNQDTISSKLKECCDKPLLEKSHCIAEVEKDAIPENLPPLTADFAEDKDVCKNYQEAKDAFLGSFLYEYSRRHPEYAVSVLLRLAKEYEATLEECCKDDPHACYSTVFDKLKHLVDEPQNLIKQNCDQFEKLGEYGFQNALIVRYTRKVPQVSTPTLVEVSRSLGKVGTRCCTKPESERMPCTEDYLSLILNRLCVLHEKTPVSEKVTKCCTESLVNRRPCFSALTPDETYVPKAFDEKLFTFHADICTLPDTEKQIKKQTALVELLKHKPKATEEQLKTVMENFVAFDKCCAADDKEACFAVEGPKLVVSTQTALA")),9+1+1) // K R + 1
-
+  TEST_EQUAL(ed.peptideCount(AASequence("MKWVTFISLLLLFSSAYSRGVFRRDTHKSEIAHRFKDLGEEHFKGLVLIAFSQYLQQCPFDEHVKLVNELTEFAKTCVADESHAGCEKSLHTLFGDELCKVASLRETYGDMADCCEKQEPERNECFLSHKDDSPDLPKLKPDPNTLCDEFKADEKKFWGKYLYEIARRHPYFYAPELLYYANKYNGVFQECQAEDKGACLLPKIETMREKVLASSARQRLRCASIQKFGERALKAWSVARLSQKFPKAEFVEVTKLVTDLTKVHKECCHGDLLECADDRADLAKYICDNQDTISSKLKECCDKPLLEKSHCIAEVEKDAIPENLPPLTADFAEDKDVCKNYQEAKDAFLGSFLYEYSRRHPEYAVSVLLRLAKEYEATLEECCKDDPHACYSTVFDKLKHLVDEPQNLIKQNCDQFEKLGEYGFQNALIVRYTRKVPQVSTPTLVEVSRSLGKVGTRCCTKPESERMPCTEDYLSLILNRLCVLHEKTPVSEKVTKCCTESLVNRRPCFSALTPDETYVPKAFDEKLFTFHADICTLPDTEKQIKKQTALVELLKHKPKATEEQLKTVMENFVAFDKCCAADDKEACFAVEGPKLVVSTQTALA")), 9 + 1 + 1) // K R + 1
+  // with non-standard amino-acids "O" and "U":
+  TEST_EQUAL(ed.peptideCount(AASequence("IITAQVUDRPONAIYMTY")), 2);
 END_SECTION
 
-START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& output)))
+START_SECTION((void digest(const AASequence& protein, std::vector< AASequence >& output) const))
 	EnzymaticDigestion ed;
 	vector<AASequence> out;
 	
-	ed.digest(String("ACDE"),out);
+	ed.digest(AASequence("ACDE"),out);
 	TEST_EQUAL(out.size(),1)
 	TEST_EQUAL(out[0].toString(),"ACDE")
 
-	ed.digest(String("ACKDE"),out);
+	ed.digest(AASequence("ACKDE"),out);
 	TEST_EQUAL(out.size(),2)
 	TEST_EQUAL(out[0].toString(),"ACK")
 	TEST_EQUAL(out[1].toString(),"DE")
 	
-	ed.digest(String("ACRDE"),out);
+	ed.digest(AASequence("ACRDE"),out);
 	TEST_EQUAL(out.size(),2)
 	TEST_EQUAL(out[0].toString(),"ACR")
 	TEST_EQUAL(out[1].toString(),"DE")
 
-	ed.digest(String("ACKPDE"),out);
+	ed.digest(AASequence("ACKPDE"),out);
 	TEST_EQUAL(out.size(),1)
 	TEST_EQUAL(out[0].toString(),"ACKPDE")
 	
-	ed.digest(String("ACRPDE"),out);
+	ed.digest(AASequence("ACRPDE"),out);
 	TEST_EQUAL(out.size(),1)
 	TEST_EQUAL(out[0].toString(),"ACRPDE")
 	
-	ed.digest(String("ARCRDRE"),out);
+	ed.digest(AASequence("ARCRDRE"),out);
 	TEST_EQUAL(out.size(),4)
 	TEST_EQUAL(out[0].toString(),"AR")
 	TEST_EQUAL(out[1].toString(),"CR")
 	TEST_EQUAL(out[2].toString(),"DR")
 	TEST_EQUAL(out[3].toString(),"E")
 
-	ed.digest(String("RKR"),out);
+	ed.digest(AASequence("RKR"),out);
 	TEST_EQUAL(out.size(),3)
 	TEST_EQUAL(out[0].toString(),"R")
 	TEST_EQUAL(out[1].toString(),"K")
@@ -178,17 +243,17 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
 
 	ed.setMissedCleavages(1);
 	
-	ed.digest(String("ACDE"),out);
+	ed.digest(AASequence("ACDE"),out);
 	TEST_EQUAL(out.size(),1)
 	TEST_EQUAL(out[0].toString(),"ACDE")
 	
-	ed.digest(String("ACRDE"),out);
+	ed.digest(AASequence("ACRDE"),out);
 	TEST_EQUAL(out.size(),3)
 	TEST_EQUAL(out[0].toString(),"ACR")
 	TEST_EQUAL(out[1].toString(),"DE")
 	TEST_EQUAL(out[2].toString(),"ACRDE")
 	
-	ed.digest(String("ARCDRE"),out);
+	ed.digest(AASequence("ARCDRE"),out);
 	TEST_EQUAL(out.size(),5)
 	TEST_EQUAL(out[0].toString(),"AR")
 	TEST_EQUAL(out[1].toString(),"CDR")
@@ -196,7 +261,7 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
 	TEST_EQUAL(out[3].toString(),"ARCDR")
 	TEST_EQUAL(out[4].toString(),"CDRE")
 	
-	ed.digest(String("RKR"),out);
+	ed.digest(AASequence("RKR"),out);
 	TEST_EQUAL(out.size(),5)
 	TEST_EQUAL(out[0].toString(),"R")
 	TEST_EQUAL(out[1].toString(),"K")
@@ -205,7 +270,7 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
 	TEST_EQUAL(out[4].toString(),"KR")
 
 
-  ed.digest(String("(ICPL:2H(4))ARCDRE"),out);
+  ed.digest(AASequence("(ICPL:2H(4))ARCDRE"),out);
   TEST_EQUAL(out.size(),5)
   TEST_EQUAL(out[0].toString(),"(ICPL:2H(4))AR")
   TEST_EQUAL(out[1].toString(),"CDR")
@@ -213,7 +278,7 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
   TEST_EQUAL(out[3].toString(),"(ICPL:2H(4))ARCDR")
   TEST_EQUAL(out[4].toString(),"CDRE")
 
-  ed.digest(String("ARCDRE(Amidated)"),out);
+  ed.digest(AASequence("ARCDRE(Amidated)"),out);
   TEST_EQUAL(out.size(),5)
   TEST_EQUAL(out[0].toString(),"AR")
   TEST_EQUAL(out[1].toString(),"CDR")
@@ -223,7 +288,7 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
 
   // with log L model:
   ed.setLogModelEnabled(true);
-  ed.digest(String("MKWVTFISLLLLFSSAYSRGVFRRDTHKSEIAHRFKDLGEEHFKGLVLIAFSQYLQQCPFDEHVKLVNELTEFAKTCVADESHAGCEKSLHTLFGDELCKVASLRETYGDMADCCEKQEPERNECFLSHKDDSPDLPKLKPDPNTLCDEFKADEKKFWGKYLYEIARRHPYFYAPELLYYANKYNGVFQECQAEDKGACLLPKIETMREKVLASSARQRLRCASIQKFGERALKAWSVARLSQKFPKAEFVEVTKLVTDLTKVHKECCHGDLLECADDRADLAKYICDNQDTISSKLKECCDKPLLEKSHCIAEVEKDAIPENLPPLTADFAEDKDVCKNYQEAKDAFLGSFLYEYSRRHPEYAVSVLLRLAKEYEATLEECCKDDPHACYSTVFDKLKHLVDEPQNLIKQNCDQFEKLGEYGFQNALIVRYTRKVPQVSTPTLVEVSRSLGKVGTRCCTKPESERMPCTEDYLSLILNRLCVLHEKTPVSEKVTKCCTESLVNRRPCFSALTPDETYVPKAFDEKLFTFHADICTLPDTEKQIKKQTALVELLKHKPKATEEQLKTVMENFVAFDKCCAADDKEACFAVEGPKLVVSTQTALA"), out);
+  ed.digest(AASequence("MKWVTFISLLLLFSSAYSRGVFRRDTHKSEIAHRFKDLGEEHFKGLVLIAFSQYLQQCPFDEHVKLVNELTEFAKTCVADESHAGCEKSLHTLFGDELCKVASLRETYGDMADCCEKQEPERNECFLSHKDDSPDLPKLKPDPNTLCDEFKADEKKFWGKYLYEIARRHPYFYAPELLYYANKYNGVFQECQAEDKGACLLPKIETMREKVLASSARQRLRCASIQKFGERALKAWSVARLSQKFPKAEFVEVTKLVTDLTKVHKECCHGDLLECADDRADLAKYICDNQDTISSKLKECCDKPLLEKSHCIAEVEKDAIPENLPPLTADFAEDKDVCKNYQEAKDAFLGSFLYEYSRRHPEYAVSVLLRLAKEYEATLEECCKDDPHACYSTVFDKLKHLVDEPQNLIKQNCDQFEKLGEYGFQNALIVRYTRKVPQVSTPTLVEVSRSLGKVGTRCCTKPESERMPCTEDYLSLILNRLCVLHEKTPVSEKVTKCCTESLVNRRPCFSALTPDETYVPKAFDEKLFTFHADICTLPDTEKQIKKQTALVELLKHKPKATEEQLKTVMENFVAFDKCCAADDKEACFAVEGPKLVVSTQTALA"), out);
 	TEST_EQUAL(out.size(), 11)
 	TEST_EQUAL(out[0].toString(),"MKWVTFISLLLLFSSAYSRGVFRRDTHK")
 	TEST_EQUAL(out[1].toString(),"SEIAHRFKDLGEEHFKGLVLIAFSQYLQQCPFDEHVKLVNELTEFAKTCVADESHAGCEKSLHTLFGDELCKVASLRETYGDMADCCEKQEPERNECFLSHKDDSPDLPKLK")
@@ -236,6 +301,82 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
 	TEST_EQUAL(out[8].toString(),"PESERMPCTEDYLSLILNRLCVLHEKTPVSEKVTKCCTESLVNRR")
 	TEST_EQUAL(out[9].toString(),"PCFSALTPDETYVPKAFDEKLFTFHADICTLPDTEKQIKKQTALVELLKHK")
 	TEST_EQUAL(out[10].toString(),"PKATEEQLKTVMENFVAFDKCCAADDKEACFAVEGPKLVVSTQTALA")
+
+END_SECTION
+
+
+START_SECTION(( bool isValidProduct(const AASequence& protein, Size pep_pos, Size pep_length) ))
+  EnzymaticDigestion ed;
+  ed.setEnzyme(EnzymaticDigestion::ENZYME_TRYPSIN);
+  ed.setSpecificity(EnzymaticDigestion::SPEC_FULL); // require both sides
+
+  AASequence prot = AASequence("ABCDEFGKABCRAAAKAARPBBBB");
+  TEST_EQUAL(ed.isValidProduct(prot, 100, 3), false);  // invalid position
+  TEST_EQUAL(ed.isValidProduct(prot, 10, 300), false);  // invalid length
+  TEST_EQUAL(ed.isValidProduct(prot, 10, 0), false);  // invalid size
+  TEST_EQUAL(ed.isValidProduct(AASequence(""), 10, 0), false);  // invalid size
+
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 3), false);  // invalid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 8), true);   //   valid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 4), true);   //   valid fully-tryptic 
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 8), true);   //   valid fully-tryptic 
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 19), false);  // invalid C-term - followed by proline
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 3), false);  // invalid C-term
+  TEST_EQUAL(ed.isValidProduct(prot, 3, 6), false);  // invalid C+N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 1, 7), false);  // invalid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 0, prot.size()), true);  // the whole thing
+
+  prot = AASequence("MBCDEFGKABCRAAAKAA"); // starts with Met - we assume the cleaved form without Met occurs in vivo
+  TEST_EQUAL(ed.isValidProduct(prot, 1, 7), true);  // valid N-term (since protein starts with Met)
+  TEST_EQUAL(ed.isValidProduct(prot, 0, prot.size()), true);  // the whole thing
+
+  //################################################
+  // same as above, just with other specificity
+
+  ed.setSpecificity(EnzymaticDigestion::SPEC_SEMI); // require one special cleavage site
+  prot = AASequence("ABCDEFGKABCRAAAKAARPBBBB");
+  TEST_EQUAL(ed.isValidProduct(prot, 100, 3), false);  // invalid position
+  TEST_EQUAL(ed.isValidProduct(prot, 10, 300), false);  // invalid length
+  TEST_EQUAL(ed.isValidProduct(prot, 10, 0), false);  // invalid size
+  TEST_EQUAL(ed.isValidProduct(AASequence(""), 10, 0), false);  // invalid size
+
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 3), true);   // invalid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 8), true);   //   valid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 4), true);   //   valid fully-tryptic 
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 8), true);   //   valid fully-tryptic 
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 19), true);  // invalid C-term - followed by proline
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 3), true);  // invalid C-term
+  TEST_EQUAL(ed.isValidProduct(prot, 3, 6), false);  // invalid C+N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 1, 7), true);  // invalid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 0, prot.size()), true);  // the whole thing
+
+  prot = AASequence("MBCDEFGKABCRAAAKAA"); // starts with Met - we assume the cleaved form without Met occurs in vivo
+  TEST_EQUAL(ed.isValidProduct(prot, 1, 7), true);  // valid N-term (since protein starts with Met)
+  TEST_EQUAL(ed.isValidProduct(prot, 0, prot.size()), true);  // the whole thing
+
+  //################################################
+  // same as above, just with other specificity
+
+  ed.setSpecificity(EnzymaticDigestion::SPEC_NONE); // require no special cleavage site
+  prot = AASequence("ABCDEFGKABCRAAAKAARPBBBB");
+  TEST_EQUAL(ed.isValidProduct(prot, 100, 3), false);  // invalid position
+  TEST_EQUAL(ed.isValidProduct(prot, 10, 300), false);  // invalid length
+  TEST_EQUAL(ed.isValidProduct(prot, 10, 0), false);  // invalid size
+  TEST_EQUAL(ed.isValidProduct(AASequence(""), 10, 0), false);  // invalid size
+
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 3), true);   // invalid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 8), true);   //   valid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 4), true);   //   valid fully-tryptic 
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 8), true);   //   valid fully-tryptic 
+  TEST_EQUAL(ed.isValidProduct(prot, 0, 19), true);  // invalid C-term - followed by proline
+  TEST_EQUAL(ed.isValidProduct(prot, 8, 3), true);  // invalid C-term
+  TEST_EQUAL(ed.isValidProduct(prot, 3, 6), true);  // invalid C+N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 1, 7), true);  // invalid N-term
+  TEST_EQUAL(ed.isValidProduct(prot, 0, prot.size()), true);  // the whole thing
+
+  prot = AASequence("MBCDEFGKABCRAAAKAA"); // starts with Met - we assume the cleaved form without Met occurs in vivo
+  TEST_EQUAL(ed.isValidProduct(prot, 1, 7), true);  // valid N-term (since protein starts with Met)
+  TEST_EQUAL(ed.isValidProduct(prot, 0, prot.size()), true);  // the whole thing
 
 END_SECTION
 

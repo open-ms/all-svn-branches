@@ -3,12 +3,14 @@ set(directory source/ANALYSIS/ID)
 
 ### list all filenames of the directory here
 set(sources_list
+AccurateMassSearchEngine.C
 AScore.C
 ConsensusID.C
 FalseDiscoveryRate.C
 HiddenMarkovModel.C
-IDDecoyProbability.C
 IDMapper.C
+IDRipper.C
+IDDecoyProbability.C
 PILISIdentification.C
 PILISModel.C
 PILISModelGenerator.C

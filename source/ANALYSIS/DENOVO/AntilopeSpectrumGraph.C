@@ -128,7 +128,7 @@ namespace OpenMS
     }
     else
     {
-      DoubleReal factor = 0.0;      
+      DoubleReal factor = 0.0;
       if (seqan::getProperty(edges_, ed).length >= 2)
       {
         factor = 2;
@@ -237,7 +237,7 @@ namespace OpenMS
         if (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1)))
         {
           nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index,
-              IdSetup::BIon, it->getIntensity()));//b-ion
+                               IdSetup::BIon, it->getIntensity()));//b-ion
         }
 
         //add node for Y-Ions
@@ -330,7 +330,7 @@ namespace OpenMS
       {
         //debug info
         std::cout << "joined nodes " << ln << ": " << nodes[ln].real_mass << " and " << rn << " : "
-            << nodes[rn].real_mass << std::endl;
+                  << nodes[rn].real_mass << std::endl;
 
         nodes[ln].int_mass = (UInt) floor(0.5 * (nodes[ln].int_mass + nodes[rn].int_mass) + 0.5);
         nodes[ln].real_mass = 0.5 * (nodes[ln].real_mass + nodes[rn].real_mass);
@@ -388,7 +388,7 @@ namespace OpenMS
       {
         nodes.push_back(*it);
         ordering_.push_back(pos);
-      }      
+      }
     }
 
     tmp_nodes.clear();
@@ -471,7 +471,7 @@ namespace OpenMS
       if(tmp_vertices[i].score >= threshold ||
          tryptic && i >= tmp_vertices.size() - 3)
       {
-        vertices_.push_back(tmp_vertices[i]);        
+        vertices_.push_back(tmp_vertices[i]);
       }
     }
 
@@ -505,7 +505,7 @@ namespace OpenMS
 
 
     //list of all nodes that have a mass difference to the current node which equals one or several amino acid masses. is a candidate for a new edge if not redundant
-    std::vector<VertexDescriptor> target_candidates;   
+    std::vector<VertexDescriptor> target_candidates;
 
     String tryptic_flag = param_.getValue("tryptic");
     bool tryptic = tryptic_flag == "true" ? true : false;
@@ -557,16 +557,16 @@ namespace OpenMS
 
           if (A[mass_diff_index] && A_len[mass_diff_index] == len)
           {
-           target_candidates.push_back(target_node);
+            target_candidates.push_back(target_node);
           }
         }
 
         Node& source = seqan::property(vertices_, source_node);
 
         if (len == 1)
-        {          
+        {
           for (std::vector<VertexDescriptor>::iterator target_cand_it = target_candidates.begin(); target_cand_it
-              != target_candidates.end(); ++target_cand_it)
+               != target_candidates.end(); ++target_cand_it)
           {
             if(!conflict_edge_matrix_[source_node][*target_cand_it])
             {
@@ -589,14 +589,14 @@ namespace OpenMS
           //compute shortest path from node i to the last candidate and simlultaniously also to all other preceding candidates
           //for nodes that are already reachable no edge is added as it would be redundant
           std::cerr<<"weight map legnth:  " << seqan::length(weight_map)<<std::endl;
-          seqan::dagShortestPathST(graph, (VertexDescriptor)source_node, target_candidates.back(), weight_map, pred_map, dist_map, vertex_order);
+          dagShortestPathST(graph, (VertexDescriptor)source_node, target_candidates.back(), weight_map, pred_map, dist_map, vertex_order);
 
           //for all nodes not reached we can add the edge to the graph. it is not redundant
           for (std::vector<VertexDescriptor>::iterator target_cand_it = target_candidates.begin(); target_cand_it
-              != target_candidates.end(); ++target_cand_it)
+               != target_candidates.end(); ++target_cand_it)
           {
             if (pred_map[*target_cand_it] == seqan::getNil<VertexDescriptor>() && !conflict_edge_matrix_[source_node][*target_cand_it])
-            {              
+            {
               Node& target = seqan::property(vertices_, *target_cand_it);
               Edge tmp_edge;
               tmp_edge.length = len;
@@ -670,7 +670,7 @@ namespace OpenMS
       for(it1 = conflict_index[i].begin(); it1 != conflict_index[i].end(); ++it1)
       {
         for(it2 = it1 + 1; it2 < conflict_index[i].end(); ++it2)
-        {          
+        {
           if(!conflict_edge_matrix_[*it1][*it2] && (seqan::property(vertices_, *it2).real_mass - seqan::property(vertices_, *it1).real_mass > 57.0) )
           {
             ConflictEdge c_edge;

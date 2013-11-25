@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
@@ -34,45 +41,45 @@
 
 namespace OpenMS
 {
-	/**
-		@brief Validator for XML files.
-		
-		Validates an XML file against a given schema.
-	
-  	@ingroup FileIO
-	*/
-  class OPENMS_DLLAPI XMLValidator
-  	: private xercesc::ErrorHandler
+  /**
+      @brief Validator for XML files.
+
+      Validates an XML file against a given schema.
+
+  @ingroup FileIO
+  */
+  class OPENMS_DLLAPI XMLValidator :
+    private xercesc::ErrorHandler
   {
-    public:
-    	/// Constructor
-    	XMLValidator();
+public:
+    /// Constructor
+    XMLValidator();
 
-			/**
-			  @brief Returns if an XML file is valid for given a schema file
-				
-				Error messages are printed to the error stream, unless redirected with the attribute @p os .
-				
-			  @exception Exception::FileNotFound is thrown if the file cannot be found
-			  @exception Exception::ParseError is thrown if the parser could not be initialized
-			*/
-			bool isValid(const String& filename, const String& schema,  std::ostream& os = std::cerr);
+    /**
+      @brief Returns if an XML file is valid for given a schema file
 
-  	protected:
-  		/// Flag if the validated file is valid
-  		bool valid_;
-  		/// File name of validated file (for error messages)
-  		String filename_;
-  		//output stream reference (for error messages)
-  		std::ostream* os_;
-  		
-  		/// @name Implementation of Xerces ErrorHandler methods
-  		//@{
-  		virtual void warning(const xercesc::SAXParseException& exception);
-			virtual void error(const xercesc::SAXParseException& exception);
-			virtual void fatalError(const xercesc::SAXParseException& exception);
-			virtual void resetErrors();
-  		//@}
+        Error messages are printed to the error stream, unless redirected with the attribute @p os .
+
+      @exception Exception::FileNotFound is thrown if the file cannot be found
+      @exception Exception::ParseError is thrown if the parser could not be initialized
+    */
+    bool isValid(const String & filename, const String & schema, std::ostream & os = std::cerr);
+
+protected:
+    /// Flag if the validated file is valid
+    bool valid_;
+    /// File name of validated file (for error messages)
+    String filename_;
+    //output stream reference (for error messages)
+    std::ostream * os_;
+
+    /// @name Implementation of Xerces ErrorHandler methods
+    //@{
+    virtual void warning(const xercesc::SAXParseException & exception);
+    virtual void error(const xercesc::SAXParseException & exception);
+    virtual void fatalError(const xercesc::SAXParseException & exception);
+    virtual void resetErrors();
+    //@}
   };
 
 } // namespace OpenMS

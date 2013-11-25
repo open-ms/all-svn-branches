@@ -5,10 +5,14 @@ set(directory source/FORMAT/HANDLERS)
 set(sources_list
 	AcqusHandler.C
 	FidHandler.C
+  IndexedMzMLDecoder.C
 	MascotXMLHandler.C
 	MzDataHandler.C
 	MzIdentMLHandler.C
+	MzQuantMLHandler.C
 	MzMLHandler.C
+  MzMLHandlerHelper.C
+  MzMLSpectrumDecoder.C
 	MzXMLHandler.C
 	PTMXMLHandler.C
 	ParamXMLHandler.C
@@ -18,10 +22,6 @@ set(sources_list
 	XMLHandler.C
 	XTandemInfileXMLHandler.C
 )
-
-if (USE_ANDIMS) 	 
-	list(APPEND sources_list ANDIHandler.C) 	 
-endif()
 
 ### add path to the filenames
 set(sources)

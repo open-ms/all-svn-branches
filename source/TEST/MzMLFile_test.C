@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
@@ -30,9 +37,8 @@
 ///////////////////////////
 
 #include <OpenMS/FORMAT/MzMLFile.h>
-#include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
-
 
 using namespace OpenMS;
 using namespace std;
@@ -219,7 +225,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 
 	//test DocumentIdentifier addition
 	TEST_STRING_EQUAL(exp.getLoadedFilePath(), OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"));
-	TEST_STRING_EQUAL(FileHandler::typeToName(exp.getLoadedFileType()),"mzML");
+	TEST_STRING_EQUAL(FileTypes::typeToName(exp.getLoadedFileType()),"mzML");
 
 	//-------------------------- general information --------------------------
 
@@ -291,7 +297,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	//instrument software
 	TEST_EQUAL(exp.getInstrument().getSoftware().getName(),"Bioworks")
 	TEST_EQUAL(exp.getInstrument().getSoftware().getVersion(),"3.3.1 sp1")
-	
+
 	//-------------------------- spectrum 0 --------------------------
 	{
 		const MSSpectrum<>& spec = exp[0];
@@ -304,7 +310,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MS1SPECTRUM)
 		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.1)
@@ -354,7 +360,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),2)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MSNSPECTRUM)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.2)
 		TEST_EQUAL(spec.getInstrumentSettings().getPolarity(),IonSource::POSITIVE)
@@ -446,7 +452,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MS1SPECTRUM)
 		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.3)
@@ -494,7 +500,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
 		TEST_REAL_SIMILAR(spec.getRT(),5.4)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MS1SPECTRUM)
 		TEST_EQUAL(spec.getInstrumentSettings().getZoomScan(),true)
 		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::RAWDATA)
@@ -628,21 +634,25 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	//load minimal file
 	MSExperiment<> exp3;
 	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_2_minimal.mzML"),exp3);
-	TEST_EQUAL(exp3.size(),0)
+	TEST_EQUAL(exp3.size(), 0)
 
 	//load file with huge CDATA and whitespaces in CDATA
 	MSExperiment<> exp4;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_5_long.mzML"),exp4);
-	TEST_EQUAL(exp4.size(),1)
-	TEST_EQUAL(exp4[0].size(),997530)
-	
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_5_long.mzML"), exp4);
+	TEST_EQUAL(exp4.size(), 1)
+	TEST_EQUAL(exp4[0].size(), 997530)
+
 	//test 32/64 bit floats, 32/64 bit integer, null terminated strings, zlib compression
 	MSExperiment<> exp_ucomp;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML"),exp_ucomp);
+	STATUS("Reading uncompressed...")
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML"), exp_ucomp);
+	STATUS("Reading uncompressed done.")
 	MSExperiment<> exp_comp;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_compressed.mzML"),exp_comp);
-	TEST_EQUAL(exp_ucomp.size(),exp_comp.size())
-	for (Size s=0; s< exp_ucomp.size(); ++s)
+	STATUS("Reading compressed...")
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_compressed.mzML"), exp_comp);
+	STATUS("Reading compressed done.")
+	TEST_EQUAL(exp_ucomp.size(), exp_comp.size())
+	for (Size s = 0; s < exp_ucomp.size(); ++s)
 	{
 		//check if the same number of peak and meta data arrays is present
 		TEST_EQUAL(exp_ucomp[s].size(),exp_comp[s].size())
@@ -650,31 +660,31 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_EQUAL(exp_ucomp[s].getIntegerDataArrays().size(),exp_comp[s].getIntegerDataArrays().size())
 		TEST_EQUAL(exp_ucomp[s].getStringDataArrays().size(),exp_comp[s].getStringDataArrays().size())
 		//check content of peak array
-		for (Size p=0; p< exp_ucomp[s].size(); ++p)
+		for (Size p = 0; p < exp_ucomp[s].size(); ++p)
 		{
 			TEST_REAL_SIMILAR(exp_ucomp[s][p].getMZ(),exp_comp[s][p].getMZ())
 			TEST_REAL_SIMILAR(exp_ucomp[s][p].getIntensity(),exp_comp[s][p].getIntensity())
 		}
 		//check content of float arrays
-		for (Size a=0; a<exp_ucomp[s].getFloatDataArrays().size(); ++a)
+		for (Size a = 0; a < exp_ucomp[s].getFloatDataArrays().size(); ++a)
 		{
-			for (Size m=0; m< exp_ucomp[s].getFloatDataArrays()[a].size(); ++m)
+			for (Size m = 0; m < exp_ucomp[s].getFloatDataArrays()[a].size(); ++m)
 			{
 				TEST_REAL_SIMILAR(exp_ucomp[s].getFloatDataArrays()[a][m],exp_comp[s].getFloatDataArrays()[a][m])
 			}
 		}
 		//check content of integer arrays
-		for (Size a=0; a<exp_ucomp[s].getIntegerDataArrays().size(); ++a)
+		for (Size a = 0; a < exp_ucomp[s].getIntegerDataArrays().size(); ++a)
 		{
-			for (Size m=0; m< exp_ucomp[s].getIntegerDataArrays()[a].size(); ++m)
+			for (Size m = 0; m < exp_ucomp[s].getIntegerDataArrays()[a].size(); ++m)
 			{
 				TEST_EQUAL(exp_ucomp[s].getIntegerDataArrays()[a][m],exp_comp[s].getIntegerDataArrays()[a][m])
 			}
 		}
 		//check content of string arrays
-		for (Size a=0; a<exp_ucomp[s].getStringDataArrays().size(); ++a)
+		for (Size a = 0; a < exp_ucomp[s].getStringDataArrays().size(); ++a)
 		{
-			for (Size m=0; m< exp_ucomp[s].getStringDataArrays()[a].size(); ++m)
+			for (Size m = 0; m < exp_ucomp[s].getStringDataArrays()[a].size(); ++m)
 			{
 				TEST_STRING_EQUAL(exp_ucomp[s].getStringDataArrays()[a][m],exp_comp[s].getStringDataArrays()[a][m])
 			}
@@ -723,7 +733,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 			}
 		}
 	}
-	
+
 	//Testing bzip2 compression of a whole file
 	MSExperiment<> exp_bz;
 	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML.bz2"),exp_bz);
@@ -766,7 +776,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 			}
 		}
 	}
-	//Testing corrupted files	
+	//Testing corrupted files
 		MSExperiment<> exp_cor;
 	TEST_EXCEPTION(Exception::ParseError,file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompresscor.MzML.gz"),exp_cor))
 			MSExperiment<> exp_cor2;
@@ -851,9 +861,20 @@ START_SECTION([EXTRA] load intensity range)
 	TEST_EQUAL(exp[3].size(),0)
 END_SECTION
 
+START_SECTION((Size loadSize(const String & filename, Size& scount, Size& ccount)))
+{
+  MzMLFile file;
+  file.getOptions().setSizeOnly(true);
+  Size spectra_count, chrom_count;
+  file.loadSize(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"), spectra_count, chrom_count);
+  TEST_EQUAL(spectra_count, 4);
+  TEST_EQUAL(chrom_count, 2);
+}
+END_SECTION
+
 START_SECTION((template <typename MapType> void store(const String& filename, const MapType& map) const))
 	MzMLFile file;
-	
+
 	//test with full file
 	{
 		//load map
@@ -882,39 +903,39 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 		TEST_EQUAL(exp.getChromatograms().size(), exp_original.getChromatograms().size());
 		TEST_EQUAL(exp.getChromatograms() == exp_original.getChromatograms(), true);
 	}
-	
+
 	//test with empty map
 	{
-		
+
 		MSExperiment<> empty, exp;
-				
+
 		std::string tmp_filename;
 		NEW_TMP_FILE(tmp_filename);
 		file.store(tmp_filename,empty);
 		file.load(tmp_filename,exp);
 		TEST_EQUAL(exp==empty,true)
 	}
-	
+
 	//test with one empty spectrum
 	{
 		MSExperiment<> empty, exp;
 		empty.resize(1);
 		empty[0].setRT(17.1234);
-		
+
 		//this will be set when writing (forced by mzML)
 		empty[0].setNativeID("spectrum=0");
-		empty[0].getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
+		empty[0].getInstrumentSettings().setScanMode(InstrumentSettings::MS1SPECTRUM);
 		empty[0].getDataProcessing().resize(1);
 		empty[0].getDataProcessing()[0].getProcessingActions().insert(DataProcessing::CONVERSION_MZML);
 		empty[0].getAcquisitionInfo().setMethodOfCombination("no combination");
 		empty[0].getAcquisitionInfo().resize(1);
-		
+
 		std::string tmp_filename;
 		NEW_TMP_FILE(tmp_filename);
 		file.store(tmp_filename,empty);
 		file.load(tmp_filename,exp);
 		TEST_EQUAL(exp==empty,true)
-		
+
 		//NOTE: If it does not work, use this code to find out where the difference is
 //		TEST_EQUAL(exp.size()==empty.size(),true)
 //		TEST_EQUAL(exp.ExperimentalSettings::operator==(empty),true)
@@ -980,20 +1001,20 @@ START_SECTION(bool isSemanticallyValid(const String& filename, StringList& error
   file.store(tmp_filename,e);
   TEST_EQUAL(file.isSemanticallyValid(tmp_filename, errors, warnings),true);
 	TEST_EQUAL(errors.size(),0)
-	TEST_EQUAL(warnings.size(),10) // add mappings for chromatogram/precursor/activation and selectedIon to reduce that count
+	TEST_EQUAL(warnings.size(),8) // add mappings for chromatogram/precursor/activation and selectedIon to reduce that count
 
 	//valid file
 	TEST_EQUAL(file.isSemanticallyValid(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"), errors, warnings),true)
 	TEST_EQUAL(errors.size(),0)
 	TEST_EQUAL(warnings.size(),0)
-//	for (Size i=0; i<errors.size(); ++i)
-//	{
-//		cout << "ERROR: " << errors[i] << endl;
-//	}
-//	for (Size i=0; i<warnings.size(); ++i)
-//	{
-//		cout << "WARNING: " << warnings[i] << endl;
-//	}
+ 	for (Size i=0; i<errors.size(); ++i)
+ 	{
+ 		cout << "ERROR: " << errors[i] << endl;
+ 	}
+ 	for (Size i=0; i<warnings.size(); ++i)
+ 	{
+ 		cout << "WARNING: " << warnings[i] << endl;
+ 	}
 
 	//indexed MzML
 	TEST_EQUAL(file.isSemanticallyValid(OPENMS_GET_TEST_DATA_PATH("MzMLFile_4_indexed.mzML"), errors, warnings),true)

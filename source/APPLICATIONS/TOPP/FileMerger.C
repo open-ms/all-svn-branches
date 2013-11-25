@@ -1,35 +1,44 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
+// --------------------------------------------------------------------------
+//                   OpenMS -- Open-Source Mass Spectrometry
+// --------------------------------------------------------------------------
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+//
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
-// --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch, Chris Bielow $
-// $Authors: Marc Sturm $
+// $Maintainer: Chris Bielow $
+// $Authors: Marc Sturm, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
+#include <OpenMS/FORMAT/TraMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -42,27 +51,28 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page TOPP_FileMerger FileMerger
+  @page TOPP_FileMerger FileMerger
 
-	@brief Merges several files into an mzML file.
-<CENTER>
-	<table>
-		<tr>
-			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. predecessor tools </td>
-			<td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ FileMerger \f$ \longrightarrow \f$</td>
-			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
-		</tr>
-		<tr>
-			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> any tool/instrument producing mergeable files </td>
-			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> any tool operating merged files (e.g. @ref TOPP_XTandemAdapter) </td>
-		</tr>
-	</table>
-</CENTER>
+  @brief Merges several files. Multiple output format supported, depending on input format.
 
-	The meta information that is valid for the whole experiment (e.g. MS instrument and sample)
-	is taken from the first file.
+  <center>
+  <table>
+  <tr>
+  <td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. predecessor tools </td>
+  <td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ FileMerger \f$ \longrightarrow \f$</td>
+  <td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
+  </tr>
+  <tr>
+  <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> any tool/instrument producing merge able files </td>
+  <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> any tool operating merged files (e.g. @ref TOPP_XTandemAdapter) </td>
+  </tr>
+  </table>
+  </center>
 
-	The retention times for the individual scans are taken from either:
+  The meta information that is valid for the whole experiment (e.g. MS instrument and sample)
+  is taken from the first file.
+
+  The retention times for the individual scans are taken from either:
   <ul>
   <li>the input file meta data (e.g. mzML)
   <li>from the input file names (name must contain 'rt' directly followed by a number, e.g. 'myscan_rt3892.98_MS2.dta')
@@ -70,267 +80,333 @@ using namespace std;
   <li>or are auto-generated (starting at 1 with 1 second increment).
   </ul>
 
-	<B>The command line parameters of this tool are:</B>
-	@verbinclude TOPP_FileMerger.cli
-*/
+  <B>The command line parameters of this tool are:</B>
+  @verbinclude TOPP_FileMerger.cli
+  <B>INI file documentation of this tool:</B>
+  @htmlinclude TOPP_FileMerger.html
+ */
 
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-class TOPPFileMerger
-	: public TOPPBase
+class TOPPFileMerger :
+  public TOPPBase
 {
- public:
+public:
 
-	TOPPFileMerger()
-		: TOPPBase("FileMerger","Merges several MS files into one file.")
-	{
-	}
+  TOPPFileMerger() :
+    TOPPBase("FileMerger", "Merges several MS files into one file.")
+  {
+  }
 
- protected:
+protected:
 
-	void registerOptionsAndFlags_()
-	{
-		registerInputFileList_("in","<files>",StringList(),"Input files separated by blank");
-#ifdef USE_ANDIMS
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,fid"));
-#else
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,fid"));
-#endif
-		registerStringOption_("in_type","<type>","","input file type (default: determined from file extension or content)\n", false);
-#ifdef USE_ANDIMS
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,fid"));
-#else
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,fid"));
-#endif
-		registerOutputFile_("out","<file>","","output file");
-		setValidFormats_("out",StringList::create("mzML,featureXML"));
+  void registerOptionsAndFlags_()
+  {
+    StringList valid_in = StringList::create("mzData,mzXML,mzML,dta,dta2d,mgf,featureXML,consensusXML,fid,traML");
+    registerInputFileList_("in", "<files>", StringList(), "Input files separated by blank");
+    setValidFormats_("in", valid_in);
+    registerStringOption_("in_type", "<type>", "", "Input file type (default: determined from file extension or content)", false);
+    setValidStrings_("in_type", valid_in);
+    registerOutputFile_("out", "<file>", "", "Output file");
+    setValidFormats_("out", StringList::create("mzML,featureXML,consensusXML,traML"));
 
-    registerFlag_("annotate_file_origin","Store the original filename in each feature (MetaValue: file_origin).");
+    registerFlag_("annotate_file_origin", "Store the original filename in each feature using meta value \"file_origin\" (for featureXML and consensusXML only).");
 
-		addEmptyLine_();
-		addText_ ("Flags for non-FeatureXML input/output:");
-		registerFlag_("rt_auto","Assign retention times automatically (integers starting at 1)");
-		registerDoubleList_("rt_custom","<rt>",DoubleList(),"List of custom retention times that are assigned to the files.\n"
-		                                "The number of given retention times must be equal to the number of given input file.", false);
-		registerFlag_("rt_filename", "If this flag is set FileMerger tries to guess the rt of the file name.\n"
-																 "This option is useful for merging DTA file, which should contain the string\n"
-																 "'rt' directly followed by a floating point number:\n"
-																 "i.e. my_spectrum_rt2795.15.dta");
-		registerIntOption_("ms_level", "<num>", 2, "this option is useful for use with DTA files which does not \n"
-																								"contain MS level information. The given level is assigned to the spectra.", false);
-		registerFlag_("user_ms_level", "If this flag is set, the MS level given above is used");
-		addEmptyLine_();
-		addText_("Note: Meta data about the whole experiment is taken from the first file in the list!");
-	}
+    addEmptyLine_();
+    registerTOPPSubsection_("raw", "Flags for non-featureXML input/output");
+    registerFlag_("raw:rt_auto", "Assign retention times automatically (integers starting at 1)");
+    registerDoubleList_("raw:rt_custom", "<rt>", DoubleList(), "List of custom retention times that are assigned to the files. The number of given retention times must be equal to the number of given input file.", false);
+    registerFlag_("raw:rt_filename", "If this flag is set FileMerger tries to guess the rt of the file name.\n"
+                                     "This option is useful for merging DTA file, which should contain the string\n"
+                                     "'rt' directly followed by a floating point number:\n"
+                                     "i.e. my_spectrum_rt2795.15.dta");
+    registerIntOption_("raw:ms_level", "<num>", 2, "This option is useful for use with DTA files which does not contain MS level information. The given level is assigned to the spectra.", false);
+    registerFlag_("raw:user_ms_level", "If this flag is set, the MS level given above is used");
+  }
 
-	ExitCodes main_(int , const char**)
-	{
+  ExitCodes main_(int, const char**)
+  {
 
-		//-------------------------------------------------------------
-		// parameter handling
-		//-------------------------------------------------------------
-		//file list
-		StringList file_list = getStringList_("in");
+    //-------------------------------------------------------------
+    // parameter handling
+    //-------------------------------------------------------------
+    //file list
+    StringList file_list = getStringList_("in");
 
-		//file type
-		FileHandler fh;
-		FileTypes::Type force_type;
-		if (getStringOption_("in_type").size()>0)
-		{ 
-			force_type= fh.nameToType(getStringOption_("in_type"));
-		}
-		else
-		{
-			force_type= fh.getType(file_list[0]);
-		}
+    //file type
+    FileHandler fh;
+    FileTypes::Type force_type;
+    if (getStringOption_("in_type").size() > 0)
+    {
+      force_type = FileTypes::nameToType(getStringOption_("in_type"));
+    }
+    else
+    {
+      force_type = fh.getType(file_list[0]);
+    }
 
-		//output file names and types
-		String out_file = getStringOption_("out");
+    //output file names and types
+    String out_file = getStringOption_("out");
 
-		//-------------------------------------------------------------
-		// calculations
-		//-------------------------------------------------------------
+    //-------------------------------------------------------------
+    // calculations
+    //-------------------------------------------------------------
 
     bool annotate_file_origin =  getFlag_("annotate_file_origin");
 
-		if (force_type == FileTypes::FEATUREXML)
-		{
-			FeatureMap<> out;
+    if (force_type == FileTypes::FEATUREXML)
+    {
+      FeatureMap<> out;
       for (Size i = 0; i < file_list.size(); ++i)
-			{
-				FeatureMap<> map;
-				FeatureXMLFile fh;
-				fh.load(file_list[i], map);
+      {
+        FeatureMap<> map;
+        FeatureXMLFile fh;
+        fh.load(file_list[i], map);
 
-        if(annotate_file_origin)
+        if (annotate_file_origin)
         {
-          for(FeatureMap<>::iterator it = map.begin(); it != map.end(); ++it)
+          for (FeatureMap<>::iterator it = map.begin(); it != map.end(); ++it)
           {
             it->setMetaValue("file_origin", DataValue(file_list[i]));
           }
         }
-				out += map;
-			}
+        out += map;
+      }
 
-			//-------------------------------------------------------------
-			// writing output
-			//-------------------------------------------------------------
+      //-------------------------------------------------------------
+      // writing output
+      //-------------------------------------------------------------
 
-			//annotate output with data processing info
-			addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+      //annotate output with data processing info
+      addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
 
-			FeatureXMLFile f;
-			f.store(out_file,out);
-						
-		}
-		else
-		{
-		  // we might want to combine different types, thus we only
-		  // query in_type (which applies to all files)
-		  // and not the suffix or content of a single file
-			force_type = fh.nameToType(getStringOption_("in_type"));
+      FeatureXMLFile f;
+      f.store(out_file, out);
 
-			//rt
-			bool rt_auto_number = getFlag_("rt_auto");
-			bool rt_filename = getFlag_("rt_filename");
-			bool rt_custom = false;
-			DoubleList custom_rts = getDoubleList_("rt_custom");
-			if (custom_rts.size()!=0)
-			{
-				rt_custom = true;
-				if (custom_rts.size()!=file_list.size())
-				{
-					writeLog_("Custom retention time list must have as many elements as there are input files!");
-					printUsage_();
-					return ILLEGAL_PARAMETERS;
-				}
-			}
+    }
+    else if (force_type == FileTypes::CONSENSUSXML)
+    {
+      ConsensusMap out;
+      ConsensusXMLFile fh;
+      fh.load(file_list[0], out);
+      //skip first file
+      for (Size i = 1; i < file_list.size(); ++i)
+      {
+        ConsensusMap map;
+        ConsensusXMLFile fh;
+        fh.load(file_list[i], map);
 
-			//ms level
-			bool user_ms_level = getFlag_("user_ms_level");
+        if (annotate_file_origin)
+        {
+          for (ConsensusMap::iterator it = map.begin(); it != map.end(); ++it)
+          {
+            it->setMetaValue("file_origin", DataValue(file_list[i]));
+          }
+        }
+        out += map;
+      }
 
-			
-			MSExperiment<> out;
-			out.reserve(file_list.size());
-			UInt rt_auto = 0;
-			UInt native_id = 0;
-			for (Size i = 0; i < file_list.size();++i)
-			{
-				String filename = file_list[i];
+      //-------------------------------------------------------------
+      // writing output
+      //-------------------------------------------------------------
 
-				//load file
-				MSExperiment<> in;
-				fh.loadExperiment(filename,in,force_type,log_type_);
-				if (in.size()==0)
-				{
-					writeLog_(String("Warning: Empty file '") + filename +"'!");
-					continue;
-				}
-				out.reserve(out.size()+in.size());
+      //annotate output with data processing info
+      addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
 
-				//warn if custom RT and more than one scan in input file
-				if (rt_custom && in.size()>1)
-				{
-					writeLog_(String("Warning: More than one scan in file '") + filename +"'! All scans will have the same retention time!");
-				}
+      ConsensusXMLFile f;
+      f.store(out_file, out);
+    }
+    else if (force_type == FileTypes::TRAML)
+    {
+      TargetedExperiment out;
+      for (Size i = 0; i < file_list.size(); ++i)
+      {
+        TargetedExperiment map;
+        TraMLFile fh;
+        fh.load(file_list[i], map);
+        out += map;
+      }
 
-				for (MSExperiment<>::const_iterator it2 = in.begin(); it2!=in.end(); ++it2)
-				{
-					//handle rt
-					Real rt_final = it2->getRT();
-					if (rt_auto_number)
-					{
-						rt_final = ++rt_auto;
-					}
-					else if (rt_custom)
-					{
-						rt_final = custom_rts[i];
-					}
-					else if (rt_filename)
-					{
-						if (!filename.hasSubstring("rt"))
-						{
-							writeLog_(String("Warning: cannot guess retention time from filename as it does not contain 'rt'"));
-						}
-						for (Size i = 0; i < filename.size(); ++i)
-						{
-							if (filename[i] == 'r' && ++i != filename.size() && filename[i] == 't' && ++i != filename.size() && isdigit(filename[i]))
-							{
-								String rt;
-								while (i != filename.size() && (filename[i] == '.' || isdigit(filename[i])))
-								{
-									rt += filename[i++];
-								}
-								if (rt.size() > 0)
-								{
-									// remove dot from rt3892.98.dta
-									//                          ^
-									if (rt[rt.size() - 1] == '.')
-									{
-										// remove last character
-										rt.erase(rt.end() - 1);
-									}
-								}
-								try
-								{
-									float tmp = rt.toFloat();
-									rt_final = tmp;
-								}
-								catch (Exception::ConversionError)
-								{
-									 writeLog_(String("Warning: cannot convert the found retention time in a value '" + rt + "'."));
-								}
-							}
-						}
-					}
+      //-------------------------------------------------------------
+      // writing output
+      //-------------------------------------------------------------
 
-					// none of the rt methods were successful
-					if(rt_final == -1)
-					{
-						writeLog_(String("Warning: No valid retention time for output scan '") + rt_auto +"' from file '" + filename + "'");
-					}
+      //annotate output with data processing info
+      Software software;
+      software.setName("FileMerger");
+      software.setVersion(VersionInfo::getVersion());
+      out.addSoftware(software);
 
-					out.push_back(*it2);
-					out.back().setRT(rt_final);
-					out.back().setNativeID(native_id);
-					if (user_ms_level)
-					{
-						out.back().setMSLevel((int)getIntOption_("ms_level"));
-					}
-					++native_id;
-				}
+      TraMLFile f;
+      f.store(out_file, out);
+    }
+    else
+    {
+      // we might want to combine different types, thus we only
+      // query in_type (which applies to all files)
+      // and not the suffix or content of a single file
+      force_type = FileTypes::nameToType(getStringOption_("in_type"));
 
-				// copy experimental settings from first file
-				if (i==0)
-				{
-					out.ExperimentalSettings::operator=(in);
-				}
-			}
+      //rt
+      bool rt_auto_number = getFlag_("raw:rt_auto");
+      bool rt_filename = getFlag_("raw:rt_filename");
+      bool rt_custom = false;
+      DoubleList custom_rts = getDoubleList_("raw:rt_custom");
+      if (custom_rts.size() != 0)
+      {
+        rt_custom = true;
+        if (custom_rts.size() != file_list.size())
+        {
+          writeLog_("Custom retention time list must have as many elements as there are input files!");
+          printUsage_();
+          return ILLEGAL_PARAMETERS;
+        }
+      }
 
-			//-------------------------------------------------------------
-			// writing output
-			//-------------------------------------------------------------
+      //ms level
+      bool user_ms_level = getFlag_("raw:user_ms_level");
 
-			//annotate output with data processing info
-			addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+      MSExperiment<> out;
+      out.reserve(file_list.size());
+      UInt rt_auto = 0;
+      UInt native_id = 0;
+      std::vector<MSChromatogram<ChromatogramPeak> > all_chromatograms;
+      for (Size i = 0; i < file_list.size(); ++i)
+      {
+        String filename = file_list[i];
 
-			MzMLFile f;
-			f.setLogType(log_type_);
-			f.store(out_file,out);
+        //load file
+        MSExperiment<> in;
+        fh.loadExperiment(filename, in, force_type, log_type_);
+        if (in.empty() && in.getChromatograms().empty())
+        {
+          writeLog_(String("Warning: Empty file '") + filename + "'!");
+          continue;
+        }
+        out.reserve(out.size() + in.size());
 
-		}
-		
+        //warn if custom RT and more than one scan in input file
+        if (rt_custom && in.size() > 1)
+        {
+          writeLog_(String("Warning: More than one scan in file '") + filename + "'! All scans will have the same retention time!");
+        }
 
-		return EXECUTION_OK;
-	}
+        for (MSExperiment<>::const_iterator it2 = in.begin(); it2 != in.end(); ++it2)
+        {
+          //handle rt
+          Real rt_final = it2->getRT();
+          if (rt_auto_number)
+          {
+            rt_final = ++rt_auto;
+          }
+          else if (rt_custom)
+          {
+            rt_final = custom_rts[i];
+          }
+          else if (rt_filename)
+          {
+            if (!filename.hasSubstring("rt"))
+            {
+              writeLog_(String("Warning: cannot guess retention time from filename as it does not contain 'rt'"));
+            }
+            for (Size i = 0; i < filename.size(); ++i)
+            {
+              if (filename[i] == 'r' && ++i != filename.size() && filename[i] == 't' && ++i != filename.size() && isdigit(filename[i]))
+              {
+                String rt;
+                while (i != filename.size() && (filename[i] == '.' || isdigit(filename[i])))
+                {
+                  rt += filename[i++];
+                }
+                if (rt.size() > 0)
+                {
+                  // remove dot from rt3892.98.dta
+                  //                          ^
+                  if (rt[rt.size() - 1] == '.')
+                  {
+                    // remove last character
+                    rt.erase(rt.end() - 1);
+                  }
+                }
+                try
+                {
+                  float tmp = rt.toFloat();
+                  rt_final = tmp;
+                }
+                catch (Exception::ConversionError)
+                {
+                  writeLog_(String("Warning: cannot convert the found retention time in a value '" + rt + "'."));
+                }
+              }
+            }
+          }
+
+          // none of the rt methods were successful
+          if (rt_final == -1)
+          {
+            writeLog_(String("Warning: No valid retention time for output scan '") + rt_auto + "' from file '" + filename + "'");
+          }
+
+          out.addSpectrum(*it2);
+          out.getSpectra().back().setRT(rt_final);
+          out.getSpectra().back().setNativeID(native_id);
+
+          if (user_ms_level)
+          {
+            out.getSpectra().back().setMSLevel((int)getIntOption_("raw:ms_level"));
+          }
+          ++native_id;
+        }
+
+        // if we had only one spectrum, we can annotate it directly, for more spectra, we just name the source file leaving the spectra unannotated (to avoid a long and redundant list of sourceFiles)
+        if (in.size() == 1)
+        {
+          out.getSpectra().back().setSourceFile(in.getSourceFiles()[0]);
+          in.getSourceFiles().clear();   // delete source file annotated from source file (its in the spectrum anyways)
+        }
+        // copy experimental settings from first file
+        if (i == 0)
+        {
+          out.ExperimentalSettings::operator=(in);
+        }
+        else // otherwise append
+        {
+          out.getSourceFiles().insert(out.getSourceFiles().end(), in.getSourceFiles().begin(), in.getSourceFiles().end()); // could be emtpty if spectrum was annotated above, but that's ok then
+        }
+
+        // also add the chromatograms
+        for (std::vector<MSChromatogram<ChromatogramPeak> >::const_iterator it2 = in.getChromatograms().begin(); it2 != in.getChromatograms().end(); ++it2)
+        {
+          all_chromatograms.push_back(*it2);
+        }
+
+      }
+      // set the chromatograms
+      out.setChromatograms(all_chromatograms);
+
+      //-------------------------------------------------------------
+      // writing output
+      //-------------------------------------------------------------
+
+      //annotate output with data processing info
+      addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+
+      MzMLFile f;
+      f.setLogType(log_type_);
+      f.store(out_file, out);
+
+    }
+
+    return EXECUTION_OK;
+  }
+
 };
 
-
-int main( int argc, const char** argv )
+int main(int argc, const char** argv)
 {
-	TOPPFileMerger tool;
-	return tool.main(argc,argv);
+  TOPPFileMerger tool;
+  return tool.main(argc, argv);
 }
 
 /// @endcond

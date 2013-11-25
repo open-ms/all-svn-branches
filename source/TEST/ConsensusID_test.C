@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Sven Nahnsen $
 // $Authors: Marc Sturm, Andreas Bertsch, Sven Nahnsen $
@@ -59,64 +66,64 @@ cout<<"HELLO"<<endl;
 // the first ID has 5 hits
 hits.resize(5);
 hits[0].setRank(1);
-hits[0].setSequence("A");
+hits[0].setSequence(AASequence("A"));
 hits[0].setScore(31);
 hits[1].setRank(2);
-hits[1].setSequence("B");
+hits[1].setSequence(AASequence("B"));
 hits[1].setScore(28);
 hits[2].setRank(3);
-hits[2].setSequence("C");
+hits[2].setSequence(AASequence("C"));
 hits[2].setScore(17);
 hits[3].setRank(4);
-hits[3].setSequence("D");
+hits[3].setSequence(AASequence("D"));
 hits[3].setScore(7);
 hits[4].setRank(5);
-hits[4].setSequence("E");
+hits[4].setSequence(AASequence("E"));
 hits[4].setScore(3);
 ids[0].setHits(hits);
 // the second ID has 3 hits
 hits.resize(3);
 hits[0].setRank(1);
-hits[0].setSequence("C");
+hits[0].setSequence(AASequence("C"));
 hits[0].setScore(32);
 hits[1].setRank(2);
-hits[1].setSequence("A");
+hits[1].setSequence(AASequence("A"));
 hits[1].setScore(30);
 hits[2].setRank(3);
-hits[2].setSequence("B");
+hits[2].setSequence(AASequence("B"));
 hits[2].setScore(29);
 ids[1].setHits(hits);
 // the third ID has 10 hits
 hits.resize(10);
 hits[0].setRank(1);
-hits[0].setSequence("F");
+hits[0].setSequence(AASequence("F"));
 hits[0].setScore(81);
 hits[1].setRank(2);
-hits[1].setSequence("C");
+hits[1].setSequence(AASequence("C"));
 hits[1].setScore(60);
 hits[2].setRank(3);
-hits[2].setSequence("G");
+hits[2].setSequence(AASequence("G"));
 hits[2].setScore(50);
 hits[3].setRank(4);
-hits[3].setSequence("D");
+hits[3].setSequence(AASequence("D"));
 hits[3].setScore(40);
 hits[4].setRank(5);
-hits[4].setSequence("B");
+hits[4].setSequence(AASequence("B"));
 hits[4].setScore(25);
 hits[5].setRank(6);
-hits[5].setSequence("E");
+hits[5].setSequence(AASequence("E"));
 hits[5].setScore(5);
 hits[6].setRank(7);
-hits[6].setSequence("H");
+hits[6].setSequence(AASequence("H"));
 hits[6].setScore(4);
 hits[7].setRank(8);
-hits[7].setSequence("I");
+hits[7].setSequence(AASequence("I"));
 hits[7].setScore(3);
 hits[8].setRank(9);
-hits[8].setSequence("J");
+hits[8].setSequence(AASequence("J"));
 hits[8].setScore(2);
 hits[9].setRank(10);
-hits[9].setSequence("K");
+hits[9].setSequence(AASequence("K"));
 hits[9].setScore(1);
 ids[2].setHits(hits);
 

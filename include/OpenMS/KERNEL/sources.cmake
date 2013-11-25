@@ -15,6 +15,9 @@ DRichPeak.h
 Feature.h
 FeatureHandle.h
 FeatureMap.h
+MassTrace.h
+MRMFeature.h
+MRMTransitionGroup.h
 MSChromatogram.h
 MSExperiment.h
 MSSpectrum.h

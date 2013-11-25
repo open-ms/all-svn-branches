@@ -4,6 +4,7 @@ set(directory source/VISUAL)
 ### list all filenames of the directory here
 set(sources_list
 AxisTickCalculator.C
+AxisPainter.C
 AxisWidget.C
 ColorSelector.C
 EnhancedTabBar.C
@@ -25,6 +26,7 @@ Spectrum3DWidget.C
 SpectrumCanvas.C
 SpectrumWidget.C
 ListEditor.C
+TOPPASLogWindow.C
 TOPPASWidget.C
 TOPPASScene.C
 TOPPASVertex.C

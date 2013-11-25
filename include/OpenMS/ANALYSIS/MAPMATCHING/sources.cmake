@@ -5,7 +5,9 @@ set(directory include/OpenMS/ANALYSIS/MAPMATCHING)
 set(sources_list_h
 BaseGroupFinder.h
 BaseSuperimposer.h
-ConsensusMapNormalizerAlgorithm.h
+ConsensusMapNormalizerAlgorithmThreshold.h
+ConsensusMapNormalizerAlgorithmMedian.h
+ConsensusMapNormalizerAlgorithmQuantile.h
 FeatureDistance.h
 FeatureGroupingAlgorithm.h
 FeatureGroupingAlgorithmIdentification.h
@@ -17,10 +19,10 @@ MapAlignmentAlgorithm.h
 MapAlignmentAlgorithmIdentification.h
 MapAlignmentAlgorithmPoseClustering.h
 MapAlignmentAlgorithmSpectrumAlignment.h
-MapAlignmentAlgorithmApplyGivenTrafo.h
 MapAlignmentEvaluationAlgorithm.h
 MapAlignmentEvaluationAlgorithmPrecision.h
 MapAlignmentEvaluationAlgorithmRecall.h
+MapAlignmentTransformer.h
 PoseClusteringAffineSuperimposer.h
 PoseClusteringShiftSuperimposer.h
 QTClusterFinder.h

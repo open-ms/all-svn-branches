@@ -1,17 +1,27 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <mzML xmlns="http://psi.hupo.org/ms/mzml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd" accession="" version="1.1.0">
-	<cvList count="2">
+	<cvList count="5">
 		<cv id="MS" fullName="Proteomics Standards Initiative Mass Spectrometry Ontology" URI="http://psidev.cvs.sourceforge.net/*checkout*/psidev/psi/psi-ms/mzML/controlledVocabulary/psi-ms.obo"/>
 		<cv id="UO" fullName="Unit Ontology" URI="http://obo.cvs.sourceforge.net/obo/obo/ontology/phenotype/unit.obo"/>
+		<cv id="BTO" fullName="BrendaTissue545" version="unknown" URI="http://www.brenda-enzymes.info/ontology/tissue/tree/update/update_files/BrendaTissueOBO"/>
+		<cv id="GO" fullName="Gene Ontology - Slim Versions" version="unknown" URI="http://www.geneontology.org/GO_slims/goslim_goa.obo"/>
+		<cv id="PATO" fullName="Quality ontology" version="unknown" URI="http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/phenotype/quality.obo"/>
 	</cvList>
 	<fileDescription>
 		<fileContent>
 			<cvParam cvRef="MS" accession="MS:1000294" name="mass spectrum" />
 		</fileContent>
+		<sourceFileList count="1">
+			<sourceFile id="sf_ru_0" name="FileConverter_2_input.someInputDTA2D" location="<TEST_DATA_PATH>">
+				<cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="ceb081c5241c5cc9aedf0dd9f705b7620a7c2267" />
+				<cvParam cvRef="MS" accession="MS:1000613" name="DTA file" />
+				<cvParam cvRef="MS" accession="MS:1000777" name="spectrum identifier nativeID format" />
+			</sourceFile>
+		</sourceFileList>
 	</fileDescription>
 	<sampleList count="1">
 		<sample id="sa_0" name="">
-			<cvParam cvRef="MS" accession="MS:1000004" name="sample mass" value="0"  unitAccession="UO:0000021" unitName="gram" unitCvRef="UO" />
+			<cvParam cvRef="MS" accession="MS:1000004" name="sample mass" value="0" unitAccession="UO:0000021" unitName="gram" unitCvRef="UO" />
 			<cvParam cvRef="MS" accession="MS:1000005" name="sample volume" value="0" unitAccession="UO:0000098" unitName="milliliter" unitCvRef="UO" />
 			<cvParam cvRef="MS" accession="MS:1000006" name="sample concentration" value="0" unitAccession="UO:0000175" unitName="gram per liter" unitCvRef="UO" />
 		</sample>
@@ -42,7 +52,7 @@
 			</processingMethod>
 		</dataProcessing>
 	</dataProcessingList>
-	<run id="ru_0" defaultInstrumentConfigurationRef="ic_0" sampleRef="sa_0">
+	<run id="ru_0" defaultInstrumentConfigurationRef="ic_0" sampleRef="sa_0" defaultSourceFileRef="sf_ru_0">
 		<spectrumList count="8" defaultDataProcessingRef="dp_sp_0">
 			<spectrum id="index=0" index="0" defaultArrayLength="1" dataProcessingRef="dp_sp_0">
 				<cvParam cvRef="MS" accession="MS:1000525" name="spectrum representation" />

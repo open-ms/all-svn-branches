@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Hendrik Weisser $
 // $Authors: Hendrik Weisser $
@@ -82,13 +89,13 @@ START_SECTION((void run(const std::vector<FeatureMap<> >& input_maps, ConsensusM
   feat1.setUniqueId(0);
   feat2.setPosition(pos2);
   feat2.setUniqueId(1);
-	PeptideHit hit;
-	hit.setSequence("AAA");
-	feat1.getPeptideIdentifications().resize(1);
-	feat1.getPeptideIdentifications()[0].insertHit(hit);
-	hit.setSequence("CCC");
-	feat2.getPeptideIdentifications().resize(1);
-	feat2.getPeptideIdentifications()[0].insertHit(hit);
+  PeptideHit hit;
+  hit.setSequence(AASequence("AAA"));
+  feat1.getPeptideIdentifications().resize(1);
+  feat1.getPeptideIdentifications()[0].insertHit(hit);
+  hit.setSequence(AASequence("CCC"));
+  feat2.getPeptideIdentifications().resize(1);
+  feat2.getPeptideIdentifications()[0].insertHit(hit);
   input[0].push_back(feat1);
   input[0].push_back(feat2);
 
@@ -104,20 +111,23 @@ START_SECTION((void run(const std::vector<FeatureMap<> >& input_maps, ConsensusM
   feat4.setUniqueId(1);
   feat5.setPosition(pos5);
   feat5.setUniqueId(2);
-	hit.setSequence("DDD");
-	feat3.getPeptideIdentifications().resize(1);
-	feat3.getPeptideIdentifications()[0].insertHit(hit);
-	hit.setSequence("AAA");
-	feat4.getPeptideIdentifications().resize(1);
-	feat4.getPeptideIdentifications()[0].insertHit(hit);
-	// no peptide ID for "feat5"
+  hit.setSequence(AASequence("DDD"));
+  feat3.getPeptideIdentifications().resize(1);
+  feat3.getPeptideIdentifications()[0].insertHit(hit);
+  hit.setSequence(AASequence("AAA"));
+  feat4.getPeptideIdentifications().resize(1);
+  feat4.getPeptideIdentifications()[0].insertHit(hit);
+  // no peptide ID for "feat5"
   input[1].push_back(feat3);
   input[1].push_back(feat4);
   input[1].push_back(feat5);
 
+  input[0].updateRanges();
+  input[1].updateRanges();
+
   QTClusterFinder finder;
 	Param param = finder.getDefaults();
-	param.setValue("distance_RT:max_difference", 5.0);
+	param.setValue("distance_RT:max_difference", 5.1);
 	param.setValue("distance_MZ:max_difference", 0.1);
 	finder.setParameters(param);
 	ConsensusMap result;
@@ -208,12 +218,12 @@ START_SECTION((void run(const std::vector<FeatureMap<> >& input_maps, ConsensusM
   feat6.setUniqueId(0);
   feat7.setPosition(pos7);
   feat7.setUniqueId(1);
-	hit.setSequence("EEE");
-	feat6.getPeptideIdentifications().resize(1);
-	feat6.getPeptideIdentifications()[0].insertHit(hit);
-	hit.setSequence("CCC");
-	feat7.getPeptideIdentifications().resize(1);
-	feat7.getPeptideIdentifications()[0].insertHit(hit);
+  hit.setSequence(AASequence("EEE"));
+  feat6.getPeptideIdentifications().resize(1);
+  feat6.getPeptideIdentifications()[0].insertHit(hit);
+  hit.setSequence(AASequence("CCC"));
+  feat7.getPeptideIdentifications().resize(1);
+  feat7.getPeptideIdentifications()[0].insertHit(hit);
   input[2].push_back(feat6);
   input[2].push_back(feat7);
 

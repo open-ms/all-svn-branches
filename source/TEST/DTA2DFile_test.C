@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
 // $Authors: Marc Sturm $
@@ -30,10 +37,11 @@
 ///////////////////////////
 
 #include <OpenMS/FORMAT/DTA2DFile.h>
-#include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/KERNEL/Peak2D.h>
+#include <OpenMS/KERNEL/RichPeak1D.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -87,7 +95,7 @@ START_SECTION((template<typename MapType> void load(const String& filename, MapT
 
 	//test DocumentIdentifier addition
 	TEST_STRING_EQUAL(e.getLoadedFilePath(), OPENMS_GET_TEST_DATA_PATH("DTA2DFile_test_1.dta2d"));
-	TEST_STRING_EQUAL(FileHandler::typeToName(e.getLoadedFileType()),"DTA2D");
+  TEST_STRING_EQUAL(FileTypes::typeToName(e.getLoadedFileType()),"dta2d");
 
 	TEST_EQUAL(e.size(), 9);
 	ABORT_IF(e.size() != 9)
@@ -421,6 +429,70 @@ START_SECTION((template<typename MapType> void store(const String& filename, con
 	TEST_REAL_SIMILAR(it3->getIntensity(), 73629.98)
 
 
+END_SECTION
+
+START_SECTION((template<typename MapType> void storeTIC(const String& filename, const MapType& map) const ))
+	TOLERANCE_ABSOLUTE(0.1)
+	std::string tmp_filename;
+  MSExperiment<> e;
+  DTA2DFile f;
+
+  NEW_TMP_FILE(tmp_filename);
+  f.load(OPENMS_GET_TEST_DATA_PATH("DTA2DFile_test_1.dta2d"),e);
+	f.storeTIC(tmp_filename,e);
+
+	MSExperiment<> e2;
+	f.load(tmp_filename,e2);
+	std::vector<Peak2D> array;
+	e2.get2DData(array);
+	TEST_EQUAL(array.size(), 9);
+	ABORT_IF(array.size() != 9)
+
+	std::vector<Peak2D>::const_iterator it2 = array.begin();
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.1)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 141650)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.2)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 89935.22)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.3)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 318.52)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.4)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 61870.99)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.5)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 62074.22)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.6)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 53737.85)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.7)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 49410.25)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.8)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 17038.71)
+	++it2;
+
+	TEST_REAL_SIMILAR(it2->getMZ(), 0)
+	TEST_REAL_SIMILAR(it2->getRT(), 4711.9)
+	TEST_REAL_SIMILAR(it2->getIntensity(), 73629.98)
 END_SECTION
 
 START_SECTION(([EXTRA] load with RT range))

@@ -1,27 +1,34 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
 // --------------------------------------------------------------------------
-// $Maintainer: Chris Bielow, Clemens Groepl $
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
+// --------------------------------------------------------------------------
+// $Maintainer: Chris Bielow $
 // $Authors: Marc Sturm, Chris Bielow, Clemens Groepl $
 // --------------------------------------------------------------------------
 
@@ -64,20 +71,32 @@ START_SECTION((virtual ~FeatureMap()))
 	delete pl_ptr;
 END_SECTION
 
+std::vector<PeptideIdentification> ids(1);
+PeptideHit hit;
+hit.setSequence(AASequence("ABCDE"));
+ids[0].setHits(std::vector<PeptideHit>(1, hit));
+
 Feature feature1;
 feature1.getPosition()[0] = 2.0;
 feature1.getPosition()[1] = 3.0;
 feature1.setIntensity(1.0f);
+feature1.setPeptideIdentifications(ids);  // single hit
 
 Feature feature2;
 feature2.getPosition()[0] = 0.0;
 feature2.getPosition()[1] = 2.5;
 feature2.setIntensity(0.5f);
+ids.resize(2);
+ids[1].setHits(std::vector<PeptideHit>(1, hit)); // same as first hit
+feature2.setPeptideIdentifications(ids);
 
 Feature feature3;
 feature3.getPosition()[0] = 10.5;
 feature3.getPosition()[1] = 0.0;
 feature3.setIntensity(0.01f);
+hit.setSequence(AASequence("KRGH"));
+ids[1].setHits(std::vector<PeptideHit>(1, hit)); // different to first hit
+feature3.setPeptideIdentifications(ids);
 
 //feature with convex hulls
 Feature feature4;
@@ -458,7 +477,8 @@ START_SECTION((void sortByRT()))
 END_SECTION
 
 START_SECTION((void swap(FeatureMap& from)))
-	FeatureMap<> map1, map2;
+{
+  FeatureMap<> map1, map2;
 	map1.setIdentifier("stupid comment");
 	map1.push_back(feature1);
 	map1.push_back(feature2);
@@ -482,7 +502,36 @@ START_SECTION((void swap(FeatureMap& from)))
   TEST_EQUAL(map2.getDataProcessing().size(),1)
 	TEST_EQUAL(map2.getProteinIdentifications().size(),1);
 	TEST_EQUAL(map2.getUnassignedPeptideIdentifications().size(),1);
+}
+END_SECTION
 
+START_SECTION((void swapFeaturesOnly(FeatureMap& from)))
+{
+  FeatureMap<> map1, map2;
+	map1.setIdentifier("stupid comment");
+	map1.push_back(feature1);
+	map1.push_back(feature2);
+	map1.updateRanges();
+	map1.getDataProcessing().resize(1);
+	map1.getProteinIdentifications().resize(1);
+	map1.getUnassignedPeptideIdentifications().resize(1);
+
+	map1.swapFeaturesOnly(map2);
+
+	TEST_EQUAL(map1.getIdentifier(),"stupid comment")
+	TEST_EQUAL(map1.size(),0)
+	TEST_REAL_SIMILAR(map1.getMinInt(),DRange<1>().minPosition()[0])
+  TEST_EQUAL(map1.getDataProcessing().size(),1)
+	TEST_EQUAL(map1.getProteinIdentifications().size(),1);
+	TEST_EQUAL(map1.getUnassignedPeptideIdentifications().size(),1);
+
+	TEST_EQUAL(map2.getIdentifier(),"")
+	TEST_EQUAL(map2.size(),2)
+	TEST_REAL_SIMILAR(map2.getMinInt(),0.5)
+  TEST_EQUAL(map2.getDataProcessing().size(),0)
+	TEST_EQUAL(map2.getProteinIdentifications().size(),0);
+	TEST_EQUAL(map2.getUnassignedPeptideIdentifications().size(),0);
+}
 END_SECTION
 
 START_SECTION((void sortByOverallQuality(bool reverse=false)))
@@ -609,7 +658,7 @@ START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*m
   fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
   TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),4);
   TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),0);
-  fm.front().clearUniqueId();
+  fm.begin()->clearUniqueId();
   TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),3);
   TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),1);
 }
@@ -629,12 +678,51 @@ START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*m
   fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
   TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),4);
   TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),0);
-  fm.front().clearUniqueId();
+  fm.begin()->clearUniqueId();
   TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),3);
   TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),1);
 }
 END_SECTION
 
+START_SECTION((  AnnotationStatistics getAnnotationStatistics() const ))
+  FeatureMap<> fm;
+
+  AnnotationStatistics stats, res;
+  stats = fm.getAnnotationStatistics();
+  TEST_EQUAL(stats == res, true)
+
+  fm.push_back(feature1); // single hit
+  stats = fm.getAnnotationStatistics();
+  ++res.states[BaseFeature::FEATURE_ID_SINGLE];
+  std::cout << res;
+  TEST_EQUAL(stats == res, true)
+
+  fm.push_back(feature4); // single hit + no hit
+  stats = fm.getAnnotationStatistics();
+  ++res.states[BaseFeature::FEATURE_ID_NONE];
+  std::cout << res;
+  TEST_EQUAL(stats == res, true)
+
+  fm.push_back(feature4); // single hit + 2x no hit
+  stats = fm.getAnnotationStatistics();
+  ++res.states[BaseFeature::FEATURE_ID_NONE];
+  std::cout << res;
+  TEST_EQUAL(stats == res, true)
+
+  fm.push_back(feature2); // single hit + 2x no hit + multi-hit (same)
+  stats = fm.getAnnotationStatistics();
+  ++res.states[BaseFeature::FEATURE_ID_MULTIPLE_SAME];
+  std::cout << res;
+  TEST_EQUAL(stats == res, true)
+
+  fm.push_back(feature3); // single hit + 2x no hit + multi-hit (same) + multi (divergent)
+  stats = fm.getAnnotationStatistics();
+  ++res.states[BaseFeature::FEATURE_ID_MULTIPLE_DIVERGENT];
+  std::cout << res;
+  std::cout << stats;
+  TEST_EQUAL(stats == res, true)
+
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

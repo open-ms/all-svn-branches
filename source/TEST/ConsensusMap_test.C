@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Erhan Kenar $
 // $Authors: $
@@ -186,6 +193,48 @@ START_SECTION((void updateRanges()))
 
 END_SECTION
 
+START_SECTION((ConsensusMap& operator+=(const ConsensusMap &rhs)))
+{
+  ConsensusMap m1, m2, m3;
+  // adding empty maps has no effect:
+  m1+=m2;
+  TEST_EQUAL(m1, m3);
+
+  // with content:
+  ConsensusFeature f1;
+  f1.setMZ(100.12);
+  m1.push_back(f1);
+  m3 = m1;
+  m1+=m2;
+  TEST_EQUAL(m1, m3);
+
+  // test basic classes
+  m1.setIdentifier ("123");
+  m1.getDataProcessing().resize(1);
+  m1.getProteinIdentifications().resize(1);
+  m1.getUnassignedPeptideIdentifications().resize(1);
+  m1.ensureUniqueId();
+  m1.getFileDescriptions()[0].filename = "m1";
+
+  m2.setIdentifier ("321");
+  m2.getDataProcessing().resize(2);
+  m2.getProteinIdentifications().resize(2);
+  m2.getUnassignedPeptideIdentifications().resize(2);
+  m2.push_back(ConsensusFeature());
+  m2.push_back(ConsensusFeature());
+  m2.getFileDescriptions()[1].filename = "m2";
+
+  m1+=m2;
+  TEST_EQUAL(m1.getIdentifier(), "");
+  TEST_EQUAL(UniqueIdInterface::isValid(m1.getUniqueId()), false);
+  TEST_EQUAL(m1.getDataProcessing().size(), 3);
+  TEST_EQUAL(m1.getProteinIdentifications().size(),3);
+  TEST_EQUAL(m1.getUnassignedPeptideIdentifications().size(),3);
+  TEST_EQUAL(m1.size(),3);
+  TEST_EQUAL(m1.getFileDescriptions().size(), 2);
+}
+END_SECTION
+
 START_SECTION((ConsensusMap& operator = (const ConsensusMap& source)))
   ConsensusMap map1;
   map1.setMetaValue("meta",String("value"));
@@ -257,7 +306,7 @@ START_SECTION((ConsensusMap(Base::size_type n)))
 END_SECTION
 
 
-START_SECTION((template < typename FeatureT > static void convert(UInt64 const input_map_index, FeatureMap< FeatureT > const &input_map, ConsensusMap &output_map)))
+START_SECTION((template < typename FeatureT > static void convert(UInt64 const input_map_index, FeatureMap< FeatureT > const &input_map, ConsensusMap &output_map, Size n=-1)))
 
   FeatureMap<> fm;
   Feature f;
@@ -282,10 +331,15 @@ START_SECTION((template < typename FeatureT > static void convert(UInt64 const i
     TEST_REAL_SIMILAR(cm[i].begin()->getMZ(),i+100.35);
   }
 
+cm.clear();
+ConsensusMap::convert(33,fm,cm,2);
+TEST_EQUAL(cm.size(),2);
+TEST_EQUAL(cm.getFileDescriptions()[33].size,3);
+
 END_SECTION
 
-START_SECTION((static void convert(UInt64 const input_map_index, MSExperiment<> &input_map, ConsensusMap &output_map, Size n)))
-{
+/////
+
   MSExperiment<Peak1D> mse;
   MSSpectrum<Peak1D> mss;
   Peak1D p;
@@ -298,11 +352,16 @@ START_SECTION((static void convert(UInt64 const input_map_index, MSExperiment<> 
       p.setIntensity( 900 + 7*m + 5*i );
       mss.push_back(p);
     }
-    mse.push_back(mss);
-    mse.back().setRT(m*5);
+    mse.addSpectrum(mss);
+    mse.getSpectra().back().setRT(m*5);
   }
 
+
+START_SECTION((static void convert(UInt64 const input_map_index, MSExperiment<> & input_map, ConsensusMap& output_map, Size n = -1)))
+{
+
   ConsensusMap cm;
+
   ConsensusMap::convert(33,mse,cm,8);
 
   TEST_EQUAL(cm.size(),8);
@@ -318,9 +377,48 @@ START_SECTION((static void convert(UInt64 const input_map_index, MSExperiment<> 
 END_SECTION
 
 
+/////
 
+ConsensusMap cm;
+ConsensusMap::convert(33,mse,cm,8);
 
+START_SECTION((template < typename FeatureT > static void convert(ConsensusMap const &input_map, const bool keep_uids, FeatureMap< FeatureT > &output_map)))
+{
+    FeatureMap<> out_fm;
+    ConsensusMap::convert(cm, true, out_fm);
 
+    TEST_EQUAL(cm.getUniqueId(), out_fm.getUniqueId());
+    TEST_EQUAL(cm.getProteinIdentifications().size(), out_fm.getProteinIdentifications().size());
+    TEST_EQUAL(cm.getUnassignedPeptideIdentifications().size(), out_fm.getUnassignedPeptideIdentifications().size());
+    TEST_EQUAL(cm.size(), out_fm.size());
+
+    for (Size i = 0; i < cm.size(); ++i)
+    {
+        TEST_EQUAL(cm[i], out_fm[i]);
+    }
+
+    out_fm.clear();
+    ConsensusMap::convert(cm, false, out_fm);
+    TEST_NOT_EQUAL(cm.getUniqueId(), out_fm.getUniqueId());
+
+    for (Size i = 0; i < cm.size(); ++i)
+    {
+        TEST_REAL_SIMILAR(cm[i].getRT(), out_fm[i].getRT());
+        TEST_REAL_SIMILAR(cm[i].getMZ(), out_fm[i].getMZ());
+        TEST_REAL_SIMILAR(cm[i].getIntensity(), out_fm[i].getIntensity());
+
+        TEST_NOT_EQUAL(cm[i].getUniqueId(), out_fm[i].getUniqueId());
+    }
+}
+END_SECTION
+
+ConsensusMap::FileDescription* fd_ptr = 0;
+ConsensusMap::FileDescription* fd_nullPointer = 0;
+
+START_SECTION(([ConsensusMap::FileDescription] FileDescription()))
+fd_ptr = new ConsensusMap::FileDescription();
+TEST_NOT_EQUAL(fd_ptr, fd_nullPointer)
+END_SECTION
 
 START_SECTION((const FileDescriptions& getFileDescriptions() const))
   ConsensusMap cons_map;
@@ -345,39 +443,6 @@ START_SECTION((void setExperimentType(const String& experiment_type)))
 	cons_map.setExperimentType("itraq");
   TEST_EQUAL(cons_map.getExperimentType(),"itraq")
 END_SECTION
-
-#if 0
-START_SECTION((bool isValid(String& error_message) const))
-	String error_message;
-	ConsensusMap cm;
-	//empty map
-	TEST_EQUAL(cm.isValid(error_message),true)
-	//one, valid feature
-	ConsensusFeature f;
-	f.insert(1,1,Feature());
-	cm.push_back(f);
-  cm.getFileDescriptions()[1].filename = "bla";
-	cm.getFileDescriptions()[1].size = 5;
-	TEST_EQUAL(cm.isValid(error_message),true)
-	TEST_EQUAL(error_message,"")
-	//two valid features
-	f.insert(1,4,Feature());
-	cm.push_back(f);
-	TEST_EQUAL(cm.isValid(error_message),true)
-	TEST_EQUAL(error_message,"")
-	//two valid and one invalid feature (map index)
-	f.insert(2,1,Feature());
-	cm.push_back(f);
-	TEST_EQUAL(cm.isValid(error_message),false)
-	TEST_NOT_EQUAL(error_message,"")
-	//one invalid feature (element index)
-	cm.clear(false);
-	ConsensusFeature f2;
-	f2.insert(2,1,Feature());
-	cm.push_back(f2);
-
-END_SECTION
-#endif
 
 START_SECTION((void swap(ConsensusMap& from)))
 	ConsensusMap map1, map2;
@@ -419,7 +484,7 @@ START_SECTION((bool operator == (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty==edit, false);
 
 	edit = empty;
-	edit.push_back(feature1);
+	edit.push_back(ConsensusFeature(feature1));
 	TEST_EQUAL(empty==edit, false);
 
 	edit = empty;
@@ -451,8 +516,8 @@ START_SECTION((bool operator == (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty==edit, false);
 
 	edit = empty;
-	edit.push_back(feature1);
-	edit.push_back(feature2);
+	edit.push_back(ConsensusFeature(feature1));
+	edit.push_back(ConsensusFeature(feature2));
 	edit.updateRanges();
 	edit.clear(false);
 	TEST_EQUAL(empty==edit, false);
@@ -467,7 +532,7 @@ START_SECTION((bool operator != (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty!=edit, true);
 
 	edit = empty;
-	edit.push_back(feature1);
+	edit.push_back(ConsensusFeature(feature1));
 	TEST_EQUAL(empty!=edit, true);
 
 	edit = empty;
@@ -495,8 +560,8 @@ START_SECTION((bool operator != (const ConsensusMap& rhs) const))
 	TEST_EQUAL(empty!=edit, true);
 
 	edit = empty;
-	edit.push_back(feature1);
-	edit.push_back(feature2);
+	edit.push_back(ConsensusFeature(feature1));
+	edit.push_back(ConsensusFeature(feature2));
 	edit.updateRanges();
 	edit.clear(false);
 	TEST_EQUAL(empty!=edit, true);
@@ -545,7 +610,7 @@ START_SECTION((void sortByMaps()))
 }
 END_SECTION
 
-START_SECTION((void clear(bool clear_meta_data)))
+START_SECTION((void clear(bool clear_meta_data = true)))
 {
   ConsensusMap map1;
 	ConsensusFeature f;
@@ -581,7 +646,7 @@ START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*m
   cm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
   TEST_EQUAL(cm.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),4);
   TEST_EQUAL(cm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),0);
-  cm.front().clearUniqueId();
+  cm.begin()->clearUniqueId();
   TEST_EQUAL(cm.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),3);
   TEST_EQUAL(cm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),1);
 }
@@ -601,7 +666,7 @@ START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*m
   cm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
   TEST_EQUAL(cmc.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),4);
   TEST_EQUAL(cm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),0);
-  cm.front().clearUniqueId();
+  cm.begin()->clearUniqueId();
   TEST_EQUAL(cmc.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),3);
   TEST_EQUAL(cmc.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),1);
 }

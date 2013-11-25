@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Chris Bielow, Hendrik Weisser $ 
 // $Authors: Chris Bielow, Hendrik Weisser $
@@ -53,7 +60,7 @@ START_SECTION(~PepXMLFile())
 	delete ptr;
 END_SECTION
 
-START_SECTION(void load(const String &filename, std::vector<ProteinIdentification>& proteins, std::vector<PeptideIdentification>& peptides, const String& experiment_name, MSExperiment<>& experiment))
+START_SECTION(void load(const String &filename, std::vector<ProteinIdentification>& proteins, std::vector<PeptideIdentification>& peptides, const String& experiment_name, const MSExperiment<>& experiment, bool use_precursor_data = false))
 {
 	vector<ProteinIdentification> proteins, proteins2;
 	vector<PeptideIdentification> peptides, peptides2;
@@ -62,14 +69,16 @@ START_SECTION(void load(const String &filename, std::vector<ProteinIdentificatio
 	String exp_name = "PepXMLFile_test";
 	MSExperiment<> experiment;
 	MzMLFile().load(mz_file, experiment);
-	file.load(pep_file, proteins, peptides, exp_name, experiment);
+	// load with precursor information:
+	file.load(pep_file, proteins, peptides, exp_name, experiment, true);
 	PeptideIdentification first = peptides[0];
 	TEST_EQUAL(first.getMetaValue("RT"), 0.5927);
 	TEST_EQUAL(first.getMetaValue("MZ"), 538.605);
-	// check that only RT and m/z changes compared to the other "load" method:
+	// load without precursor information (tested more thoroughly below):
 	file.load(pep_file, proteins2, peptides2);
 	TEST_EQUAL(peptides.size(), peptides2.size());
 	TEST_EQUAL(proteins.size(), proteins2.size());
+	// check that only m/z and RT differ between "load" methods:
 	for (Size i = 0; i < peptides.size(); ++i)
 	{
 		peptides[i].clearMetaInfo();
@@ -179,10 +188,8 @@ false);
 	//TEST_EQUAL(find(var_mods.begin(), var_mods.end(), "Gln->pyro-Glu (Q)") != var_mods.end(), true)	
 	//TEST_EQUAL(find(var_mods.begin(), var_mods.end(), "Glu->pyro-Glu (E)") != var_mods.end(), true)	
 
-	// with the wrong "experiment_name", there are no results:
-	file.load(filename, proteins, peptides, "abcxyz");
-	TEST_EQUAL(proteins.empty(), true);
-	TEST_EQUAL(peptides.empty(), true);
+	// wrong "experiment_name" produces an exception:
+	TEST_EXCEPTION(Exception::ParseError, file.load(filename, proteins, peptides, "abcxyz"));
 
 	// throw an exception if the pepXML file does not exist:
 	TEST_EXCEPTION(Exception::FileNotFound, file.load("this_file_does_not_exist_but_should_be_a_pepXML_file.pepXML", proteins, peptides, exp_name));

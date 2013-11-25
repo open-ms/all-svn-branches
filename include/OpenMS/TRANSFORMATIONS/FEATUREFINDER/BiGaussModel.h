@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
@@ -34,64 +41,64 @@
 
 namespace OpenMS
 {
-  /** 
-		@brief Bigaussian distribution approximated using linear interpolation.
+  /**
+        @brief BiGaussian distribution approximated using linear interpolation.
 
-		Asymmetric distribution realized via two normal distributions with
-		different variances combined at the mean.
+        Asymmetric distribution realized via two normal distributions with
+        different variances combined at the mean.
 
     @htmlinclude OpenMS_BiGaussModel.parameters
-	*/
-	class OPENMS_DLLAPI BiGaussModel
-  : public InterpolationModel
+    */
+  class OPENMS_DLLAPI BiGaussModel :
+    public InterpolationModel
   {
-		public:
-		typedef InterpolationModel::CoordinateType CoordinateType;
+public:
+    typedef InterpolationModel::CoordinateType CoordinateType;
 
     /// Default constructor
     BiGaussModel();
 
     /// copy constructor
-  	BiGaussModel(const BiGaussModel& source);
+    BiGaussModel(const BiGaussModel & source);
 
     /// destructor
     virtual ~BiGaussModel();
 
     /// assignment operator
-    virtual BiGaussModel& operator = (const BiGaussModel& source);
+    virtual BiGaussModel & operator=(const BiGaussModel & source);
 
-		/// create new BiGaussModel object (function needed by Factory)
-		static BaseModel<1>* create()
+    /// create new BiGaussModel object (function needed by Factory)
+    static BaseModel<1> * create()
     {
-	     return new BiGaussModel();
-  	}
+      return new BiGaussModel();
+    }
 
-		/// name of the model (needed by Factory)
+    /// name of the model (needed by Factory)
     static const String getProductName()
     {
-	     return "BiGaussModel";
-  	}
+      return "BiGaussModel";
+    }
 
-		/** @brief set the offset of the model
+    /** @brief set the offset of the model
 
-			The whole model will be shifted to the new offset without being computing all over.
-			and without any discrepancy.
-		*/
+        The whole model will be shifted to the new offset without being computing all over
+        and without any discrepancy.
+    */
     void setOffset(CoordinateType offset);
 
-		/// set sample/supporting points of interpolation
-		void setSamples();
+    /// set sample/supporting points of interpolation
+    void setSamples();
 
-		/// get the center of the BiGaussian model i.e. the position of the maximum
-		CoordinateType getCenter() const;
+    /// get the center of the BiGaussian model i.e. the position of the maximum
+    CoordinateType getCenter() const;
 
-		protected:
-			CoordinateType min_;
-			CoordinateType max_;
-			Math::BasicStatistics<> statistics1_;
-			Math::BasicStatistics<> statistics2_;
+protected:
+    CoordinateType min_;
+    CoordinateType max_;
+    Math::BasicStatistics<> statistics1_;
+    Math::BasicStatistics<> statistics2_;
 
-			void updateMembers_();
+    void updateMembers_();
   };
 }
 

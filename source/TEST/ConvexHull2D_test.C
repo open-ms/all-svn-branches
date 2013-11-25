@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
 // $Authors: Marc Sturm $
@@ -284,6 +291,71 @@ START_SECTION((Size compress()))
   TEST_EQUAL(tmp.encloses(DPosition<2>(5.1, 5.)), true)
   TEST_EQUAL(tmp.encloses(DPosition<2>(5.1, 1.)), false)
   TEST_EQUAL(tmp.encloses(DPosition<2>(5.9, 5.)), true)
+}
+END_SECTION
+
+
+START_SECTION((void expandToBoundingBox()))
+{
+  ConvexHull2D tmp;
+
+  tmp.addPoint(DPosition<2>(1.,1.));
+  tmp.addPoint(DPosition<2>(1.,10.));
+  tmp.addPoint(DPosition<2>(2.,1.));
+  tmp.addPoint(DPosition<2>(2.,10.));
+  tmp.addPoint(DPosition<2>(3.,1.));
+  tmp.addPoint(DPosition<2>(3.,10.));
+  tmp.addPoint(DPosition<2>(4.,1.));
+  tmp.addPoint(DPosition<2>(4.,10.));
+  tmp.addPoint(DPosition<2>(5.,2.));
+  tmp.addPoint(DPosition<2>(5.,10.));
+  tmp.addPoint(DPosition<2>(6.,1.));
+  tmp.addPoint(DPosition<2>(6.,10.));
+
+  ConvexHull2D original(tmp);
+
+	// Make sure we are left with only four points afterwards.
+	tmp.expandToBoundingBox();
+	TEST_EQUAL(tmp.getHullPoints().size(), 4)
+
+  // second call should remove no points
+	tmp.expandToBoundingBox();
+	TEST_EQUAL(tmp.getHullPoints().size(), 4)
+
+	// Check that values agree with min/max of the 
+	// enclosed points.
+	Real min_x, min_y, max_x, max_y;
+	min_x = tmp.getHullPoints()[0][0];
+	min_y = tmp.getHullPoints()[0][1];
+	max_x = min_x;
+	max_y = min_y;
+	for (Size i = 0; i < tmp.getHullPoints().size(); ++i)
+	{
+		Real x = tmp.getHullPoints()[i][0];
+		Real y = tmp.getHullPoints()[i][1];
+		min_x = std::min(min_x, x);
+		max_x = std::max(max_x, x);
+		min_y = std::min(min_y, y);
+		max_y = std::max(max_y, y);
+	}
+	Real o_min_x, o_min_y, o_max_x, o_max_y;
+	o_min_x = original.getHullPoints()[0][0];
+	o_min_y = original.getHullPoints()[0][1];
+	o_max_x = o_min_x;
+	o_max_y = o_min_y;
+	for (Size i = 0; i < original.getHullPoints().size(); ++i)
+	{
+		Real x = original.getHullPoints()[i][0];
+		Real y = original.getHullPoints()[i][1];
+		o_min_x = std::min(o_min_x, x);
+		o_max_x = std::max(o_max_x, x);
+		o_min_y = std::min(o_min_y, y);
+		o_max_y = std::max(o_max_y, y);
+	}
+	TEST_REAL_SIMILAR(min_x, o_min_x)
+	TEST_REAL_SIMILAR(min_y, o_min_y)
+	TEST_REAL_SIMILAR(max_x, o_max_x)
+	TEST_REAL_SIMILAR(max_y, o_max_y)
 }
 END_SECTION
 

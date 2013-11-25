@@ -3,8 +3,11 @@ set(directory source/APPLICATIONS)
 
 ### list all filenames of the directory here
 set(sources_list
+INIUpdater.C
 ToolHandler.C
 TOPPBase.C
+ParameterInformation.C
+ConsoleUtils.C
 )
 
 ### add path to the filenames

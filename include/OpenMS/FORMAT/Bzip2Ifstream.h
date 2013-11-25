@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: David Wojnar $
@@ -26,7 +33,7 @@
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_BZIP2IFSTREAM_H
-#define	OPENMS_FORMAT_BZIP2IFSTREAM_H
+#define OPENMS_FORMAT_BZIP2IFSTREAM_H
 
 #include <OpenMS/config.h>
 #include <bzlib.h>
@@ -35,80 +42,80 @@
 namespace OpenMS
 {
 /**
-	@brief Decompresses files which are compressed in the bzip2 format (*.bz2)
+    @brief Decompresses files which are compressed in the bzip2 format (*.bz2)
 */
-	class OPENMS_DLLAPI Bzip2Ifstream 
-	{
-		public: 
-			///Default Constructor
-			Bzip2Ifstream();
-			/// Detailed constructor with filename
-			Bzip2Ifstream(const char * filename);
-			///Destructor
-			virtual ~Bzip2Ifstream();
-			
-			/**
-					@brief reads n bytes from the bzip2 compressed file into buffer s
-					
-					@param s will be filled with bytes
-					@param n is the size of the buffer s
-					@return the number of actually read bytes. If it is 0 the end of the file was reached and the stream is closed
-					
-					@exception Exception::ConversionError is thrown if decompression fails
-					@exception Exception::IllegalArgument is thrown if no file for decompression is given. This can happen even happen if a file was already open but read until the end.
-					@note it is undefined what will happen if parameter n is bigger than the length of the buffer
-			*/
-			size_t read(char* s, size_t n);
-			
-			/**
-				@brief indicates whether the read function can be used safely
-				
-				@return true if end of file was reached. Otherwise false.
-			*/
-			bool streamEnd() const;
-			
-			/**
-				@brief returns whether a file is open. 
-			*/
-			bool isOpen() const;
-			
-			/**
-				@brief opens a file for reading (decompression)
-				@note any previous open files will be closed first!
-			*/
-			void open(const char* filename);
-			
-			/**
-				@brief closes current file.
-			*/
-			void close();
-		protected:
-			/// pointer to a FILE object. Necessary for opening the file
-			FILE*   file_;
-			/// a pointer to a BZFILE object. Necessary for decompression
-			BZFILE* bzip2file_;
-			///counts the last read buffer
-			size_t     n_buffer_;
-			///saves the last returned error by the read function
-			int     bzerror_;
-			///true if end of file is reached
-			bool stream_at_end_;
-			
-			//not implemented
-			Bzip2Ifstream(const Bzip2Ifstream& bzip2);
-			Bzip2Ifstream& operator=(const Bzip2Ifstream& bzip2);
-	};
-	
-	//return bzip2file???!!!!????
-	inline bool Bzip2Ifstream::isOpen() const
-	{
-		return (file_ != NULL);
-	}
-	
-	inline bool Bzip2Ifstream::streamEnd() const
-	{
-		return stream_at_end_;
-	}
+  class OPENMS_DLLAPI Bzip2Ifstream
+  {
+public:
+    ///Default Constructor
+    Bzip2Ifstream();
+    /// Detailed constructor with filename
+    explicit Bzip2Ifstream(const char * filename);
+    ///Destructor
+    virtual ~Bzip2Ifstream();
+
+    /**
+            @brief reads n bytes from the bzip2 compressed file into buffer s
+
+            @param s will be filled with bytes
+            @param n is the size of the buffer s
+            @return the number of actually read bytes. If it is 0 the end of the file was reached and the stream is closed
+
+            @exception Exception::ConversionError is thrown if decompression fails
+            @exception Exception::IllegalArgument is thrown if no file for decompression is given. This can happen even happen if a file was already open but read until the end.
+            @note it is undefined what will happen if parameter n is bigger than the length of the buffer
+    */
+    size_t read(char * s, size_t n);
+
+    /**
+        @brief indicates whether the read function can be used safely
+
+        @return true if end of file was reached. Otherwise false.
+    */
+    bool streamEnd() const;
+
+    /**
+        @brief returns whether a file is open.
+    */
+    bool isOpen() const;
+
+    /**
+        @brief opens a file for reading (decompression)
+        @note any previous open files will be closed first!
+    */
+    void open(const char * filename);
+
+    /**
+        @brief closes current file.
+    */
+    void close();
+protected:
+    /// pointer to a FILE object. Necessary for opening the file
+    FILE * file_;
+    /// a pointer to a BZFILE object. Necessary for decompression
+    BZFILE * bzip2file_;
+    ///counts the last read buffer
+    size_t     n_buffer_;
+    ///saves the last returned error by the read function
+    int     bzerror_;
+    ///true if end of file is reached
+    bool stream_at_end_;
+
+    //not implemented
+    Bzip2Ifstream(const Bzip2Ifstream & bzip2);
+    Bzip2Ifstream & operator=(const Bzip2Ifstream & bzip2);
+  };
+
+  //return bzip2file???!!!!????
+  inline bool Bzip2Ifstream::isOpen() const
+  {
+    return file_ != NULL;
+  }
+
+  inline bool Bzip2Ifstream::streamEnd() const
+  {
+    return stream_at_end_;
+  }
 
 } //namespace OpenMS
 #endif //OPENMS_FORMAT_BZIP2IFSTREAM_H

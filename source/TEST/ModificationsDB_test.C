@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche $
 // $Authors: Andreas Bertsch $
@@ -35,6 +42,14 @@
 
 using namespace OpenMS;
 using namespace std;
+
+struct ResidueModificationOriginCmp
+{
+  bool operator() (const ResidueModification* a, const ResidueModification* b)
+  {
+    return a->getOrigin() < b->getOrigin();
+  }
+};
 
 START_TEST(ModificationsDB, "$Id$")
 
@@ -80,9 +95,25 @@ START_SECTION((void searchModifications(std::set< const ResidueModification * > 
   TEST_EQUAL(mods.size(), 4)
   ABORT_IF(mods.size() != 4)
 
-  set<const ResidueModification*>::const_iterator mod_it = mods.begin();
+  // Create a sorted set (sorted by getOrigin) instead of sorted by pointer
+  // value -> this is more robust on different platforms.
+  set<const ResidueModification*, ResidueModificationOriginCmp> mods_sorted;
 
-  TEST_STRING_EQUAL((*mod_it)->getOrigin(), "Y")
+  // Copy the mods into our sorted container
+  set<const ResidueModification*>::const_iterator mod_it_ = mods.begin();
+  for (; mod_it_ != mods.end(); mod_it_++)
+  {
+    mods_sorted.insert((*mod_it_));
+  }
+
+  set<const ResidueModification*, ResidueModificationOriginCmp>::const_iterator mod_it = mods_sorted.begin();
+
+  TEST_STRING_EQUAL((*mod_it)->getOrigin(), "C-term")
+  TEST_STRING_EQUAL((*mod_it)->getId(), "Label:18O(1)")
+  TEST_EQUAL((*mod_it)->getTermSpecificity(), ResidueModification::C_TERM)
+  ++mod_it;
+
+  TEST_STRING_EQUAL((*mod_it)->getOrigin(), "S")
   TEST_STRING_EQUAL((*mod_it)->getId(), "Label:18O(1)")
   TEST_EQUAL((*mod_it)->getTermSpecificity(), ResidueModification::ANYWHERE)
   ++mod_it;
@@ -92,31 +123,34 @@ START_SECTION((void searchModifications(std::set< const ResidueModification * > 
   TEST_EQUAL((*mod_it)->getTermSpecificity(), ResidueModification::ANYWHERE)
   ++mod_it;
 
-  TEST_STRING_EQUAL((*mod_it)->getOrigin(), "S")
+  TEST_STRING_EQUAL((*mod_it)->getOrigin(), "Y")
   TEST_STRING_EQUAL((*mod_it)->getId(), "Label:18O(1)")
   TEST_EQUAL((*mod_it)->getTermSpecificity(), ResidueModification::ANYWHERE)
-  ++mod_it;
 
-  TEST_STRING_EQUAL((*mod_it)->getOrigin(), "C-term")
-  TEST_STRING_EQUAL((*mod_it)->getId(), "Label:18O(1)")
-  TEST_EQUAL((*mod_it)->getTermSpecificity(), ResidueModification::C_TERM)
-
-  mods.clear();
   ptr->searchTerminalModifications(mods, "Label:18O(1)", ResidueModification::C_TERM);
 
   TEST_EQUAL(mods.size(), 1)
   ABORT_IF(mods.size() != 1)
 
-  mod_it = mods.begin();
+  // Copy the mods into our sorted container
+  mods_sorted.clear();
+  for (mod_it_ = mods.begin(); mod_it_ != mods.end(); mod_it_++)
+  {
+    mods_sorted.insert((*mod_it_));
+  }
+
+  mod_it = mods_sorted.begin();
   TEST_STRING_EQUAL((*mod_it)->getOrigin(), "C-term")
   TEST_STRING_EQUAL((*mod_it)->getId(), "Label:18O(1)")
   TEST_EQUAL((*mod_it)->getTermSpecificity(), ResidueModification::C_TERM)
 
-  mods.clear();
+  // this will find one match
+  ptr->searchTerminalModifications(mods, "Label:18O(1)", ResidueModification::C_TERM);
+  // no match, thus mods should be empty
   ptr->searchTerminalModifications(mods, "Label:18O(1)", ResidueModification::N_TERM);
 
   TEST_EQUAL(mods.size(), 0)
-  ABORT_IF(mods.size() != 0)
+  ABORT_IF( !mods.empty() )
 }
 END_SECTION
 
@@ -132,6 +166,10 @@ START_SECTION((void getTerminalModificationsByDiffMonoMass(std::vector< String >
 	TEST_EQUAL(mods.size(), 16)
 	TEST_EQUAL(uniq_mods.size(), 16)
 	TEST_EQUAL(uniq_mods.find("Acetyl (N-term)") != uniq_mods.end(), true)
+
+  // something exotic.. mods should return empty (without clearing it before)
+  ptr->getTerminalModificationsByDiffMonoMass(mods, 4200000, 0.1, ResidueModification::N_TERM);
+  TEST_EQUAL(mods.size(), 0)
 
 END_SECTION
 
@@ -164,6 +202,10 @@ START_SECTION(void getModificationsByDiffMonoMass(std::vector< String > &mods, D
 	TEST_EQUAL(uniq_mods.find("Phospho (T)") != uniq_mods.end(), true)
 	TEST_EQUAL(uniq_mods.find("Phospho (Y)") != uniq_mods.end(), true)
 	TEST_EQUAL(uniq_mods.find("Sulfo (S)") != uniq_mods.end(), true)
+
+  // something exotic.. mods should return empty (without clearing it before)
+  ptr->getModificationsByDiffMonoMass(mods, 800000000.0, 0.1);
+  TEST_EQUAL(mods.size(), 0)
 END_SECTION
 
 START_SECTION(void readFromOBOFile(const String &filename))
@@ -187,6 +229,10 @@ START_SECTION((void getModificationsByDiffMonoMass(std::vector< String > &mods, 
 	ptr->getModificationsByDiffMonoMass(mods, "S", 80.0, 0.1);
 	TEST_EQUAL(find(mods.begin(), mods.end(), "Phospho (S)") != mods.end(), true)
 	TEST_EQUAL(find(mods.begin(), mods.end(), "Sulfo (S)") != mods.end(), true)
+  
+  // something exotic.. mods should return empty (without clearing it before)
+  ptr->getModificationsByDiffMonoMass(mods, "S", 800000000.0, 0.1);
+  TEST_EQUAL(mods.size(), 0)
 END_SECTION
 
 START_SECTION((void getAllSearchModifications(std::vector< String > &modifications)))
@@ -197,6 +243,11 @@ START_SECTION((void getAllSearchModifications(std::vector< String > &modificatio
 	TEST_EQUAL(find(mods.begin(), mods.end(), "NIC (N-term)") != mods.end(), true)
 	TEST_EQUAL(find(mods.begin(), mods.end(), "Phospho") != mods.end(), false)
 	TEST_EQUAL(find(mods.begin(), mods.end(), "Dehydrated (N-term C)") != mods.end(), true)
+
+  // repeat search .. return size should be the same
+  Size old_size=mods.size();
+  ptr->getAllSearchModifications(mods);
+  TEST_EQUAL(mods.size(), old_size)
 END_SECTION
 
 

@@ -9,6 +9,8 @@ OptimizePeakDeconvolution.h
 OptimizePick.h
 PeakPickerCWT.h
 PeakPickerHiRes.h
+PeakPickerIterative.h
+PeakPickerSH.h
 PeakShape.h
 TwoDOptimization.h
 )

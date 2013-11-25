@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Alexandra Zerck $
@@ -32,6 +39,7 @@
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/CONCEPT/Constants.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
+#include <OpenMS/FILTERING/SMOOTHING/GaussFilterAlgorithm.h>
 
 #include <cmath>
 
@@ -54,312 +62,135 @@ namespace OpenMS
           Use a gaussian filter kernel which has approximately the same width as your mass peaks,
           whereas the gaussian peak width corresponds approximately to 8*sigma.
 
-		@note The data must be sorted according to ascending m/z!
+        @note The data must be sorted according to ascending m/z!
 
-		@htmlinclude OpenMS_GaussFilter.parameters
+        @htmlinclude OpenMS_GaussFilter.parameters
 
     @ingroup SignalProcessing
   */
 //#define DEBUG_FILTERING
 
-  class OPENMS_DLLAPI GaussFilter
-  	: public ProgressLogger,
-  		public DefaultParamHandler
+  class OPENMS_DLLAPI GaussFilter :
+    public ProgressLogger,
+    public DefaultParamHandler
   {
-    public:
-      /// Constructor
-      GaussFilter();
+public:
+    /// Constructor
+    GaussFilter();
 
-      /// Destructor
-      virtual ~GaussFilter();
+    /// Destructor
+    virtual ~GaussFilter();
 
-      /**
-      	@brief Smoothes an MSSpectrum containing profile data.
+    /**
+      @brief Smoothes an MSSpectrum containing profile data.
 
-        Convolutes the filter and the profile data and writes the result back to the spectrum.
+      Convolutes the filter and the profile data and writes the result back to the spectrum.
 
-	      @exception Exception::IllegalArgument is thrown, if the @em gaussian_width parameter is too small.
-      */
-      template <typename PeakType>
-      void filter(MSSpectrum<PeakType>& spectrum)
+        @exception Exception::IllegalArgument is thrown, if the @em gaussian_width parameter is too small.
+    */
+    template <typename PeakType>
+    void filter(MSSpectrum<PeakType> & spectrum)
+    {
+      typedef std::vector<double> ContainerT;
+
+      // make sure the right data type is set
+      spectrum.setType(SpectrumSettings::RAWDATA);
+      bool found_signal = false;
+      Size data_size = spectrum.size();
+      ContainerT mz_in(data_size), int_in(data_size), mz_out(data_size), int_out(data_size);
+
+      // copy spectrum to container
+      for (Size p = 0; p < spectrum.size(); ++p)
       {
-        // make sure the right data type is set
-        spectrum.setType(SpectrumSettings::RAWDATA);
-        //create container for output peaks
-        std::vector<DoubleReal> output(spectrum.size());
-
-				bool use_ppm_tolerance(param_.getValue("use_ppm_tolerance").toBool());
-				DoubleReal ppm_tolerance((DoubleReal)param_.getValue("ppm_tolerance"));
-
-        bool found_signal = false;
-        for (Size p=0; p<spectrum.size(); ++p)
-        {
-        	// if ppm tolerance is used, calculate a reasonable width value for this m/z
-					if (use_ppm_tolerance)
-          {
-						param_.setValue("gaussian_width", spectrum[p].getMZ() * ppm_tolerance * 10e-6);
-            updateMembers_();
-          }
-
-          DoubleReal new_int = integrate_(spectrum.begin()+p,spectrum.begin(),spectrum.end());
-          output[p] = std::max(new_int, 0.0);
-          if (fabs(new_int) > 0) found_signal = true;
-        }
-
-        // If all intensities are zero in the scan and the scan has a reasonable size, throw an exception.
-        // This is the case if the gaussian filter is smaller than the spacing of raw data
-        if (!found_signal && spectrum.size()>=3)
-        {
-        	String error_message = "Found no signal. The gaussian width is probably smaller than the spacing in your profile data. Try to use a bigger width.";
-        	if (spectrum.getRT()>0.0)
-        	{
-        		error_message += String(" The error occured in the spectrum with retention time ") + spectrum.getRT() + ".\n";
-        	}
-          std::cerr << error_message;
-        }
-				else
-				{
-					// copy the new data into the spectrum
-					for (Size p=0; p<spectrum.size(); ++p)
-					{
-        		spectrum[p].setIntensity(output[p]);
-					}
-				}
+        mz_in[p] = spectrum[p].getMZ();
+        int_in[p] = spectrum[p].getIntensity();
       }
 
+      // apply filter
+      ContainerT::iterator mz_out_it = mz_out.begin();
+      ContainerT::iterator int_out_it = int_out.begin();
+      found_signal = gauss_algo_.filter(mz_in.begin(), mz_in.end(), int_in.begin(), mz_out_it, int_out_it);
 
-      /**
-      	@brief Smoothes an MSExperiment containing profile data.
- 
-	      @exception Exception::IllegalArgument is thrown, if the @em gaussian_width parameter is too small.
-			*/
-      template <typename PeakType>
-      void filterExperiment(MSExperiment<PeakType>& map)
+      // If all intensities are zero in the scan and the scan has a reasonable size, throw an exception.
+      // This is the case if the gaussian filter is smaller than the spacing of raw data
+      if (!found_signal && spectrum.size() >= 3)
       {
-        startProgress(0,map.size(),"smoothing data");
-        for (Size i = 0; i < map.size(); ++i)
+        String error_message = "Found no signal. The gaussian width is probably smaller than the spacing in your profile data. Try to use a bigger width.";
+        if (spectrum.getRT() > 0.0)
         {
-          filter(map[i]);
-          setProgress(i);
+          error_message += String(" The error occured in the spectrum with retention time ") + spectrum.getRT() + ".\n";
         }
-        endProgress();
+        std::cerr << error_message;
       }
-
-    protected:
-
-			///Coefficients
-			std::vector<DoubleReal> coeffs_;
-      /// The standard derivation  \f$ \sigma \f$.
-      DoubleReal sigma_;
-      /// The spacing of the pre-tabulated kernel coefficients
-      DoubleReal spacing_;
-
-     	// Docu in base class
-      virtual void updateMembers_();
-
-      /// Computes the convolution of the raw data at position x and the gaussian kernel
-      template < typename InputPeakIterator >
-      DoubleReal integrate_(InputPeakIterator x, InputPeakIterator first, InputPeakIterator last)
+      else
       {
-        DoubleReal v = 0.;
-        // norm the gaussian kernel area to one
-        DoubleReal norm = 0.;
-        Size middle = coeffs_.size();
-
-        DoubleReal start_pos = ((x->getMZ()-(middle*spacing_)) > first->getMZ()) ? (x->getMZ()-(middle*spacing_))
-                           : first->getMZ();
-        DoubleReal end_pos = ((x->getMZ()+(middle*spacing_)) < (last-1)->getMZ()) ? (x->getMZ()+(middle*spacing_))
-                         : (last-1)->getMZ();
-
-
-        InputPeakIterator help = x;
-#ifdef DEBUG_FILTERING
-
-        std::cout << "integrate from middle to start_pos "<< help->getMZ() << " until " << start_pos << std::endl;
-#endif
-
-        //integrate from middle to start_pos
-        while ((help != first) && ((help-1)->getMZ() > start_pos))
+        // copy the new data into the spectrum
+        ContainerT::iterator mz_it = mz_out.begin();
+        ContainerT::iterator int_it = int_out.begin();
+        for (Size p = 0; mz_it != mz_out.end(); mz_it++, int_it++, p++)
         {
-          // search for the corresponding datapoint of help in the gaussian (take the left most adjacent point)
-          DoubleReal distance_in_gaussian = fabs(x->getMZ() - help->getMZ());
-          Size left_position = (Size)floor(distance_in_gaussian / spacing_);
-
-          // search for the true left adjacent data point (because of rounding errors)
-          for (int j=0; ((j<3) &&  (distance(first,help-j) >= 0)); ++j)
-          {
-            if (((left_position-j)*spacing_ <= distance_in_gaussian) && ((left_position-j+1)*spacing_ >= distance_in_gaussian))
-            {
-              left_position -= j;
-              break;
-            }
-
-            if (((left_position+j)*spacing_ < distance_in_gaussian) && ((left_position+j+1)*spacing_ < distance_in_gaussian))
-            {
-              left_position +=j;
-              break;
-            }
-          }
-
-          // interpolate between the left and right data points in the gaussian to get the true value at position distance_in_gaussian
-          Size right_position = left_position+1;
-          DoubleReal d = fabs((left_position*spacing_)-distance_in_gaussian) / spacing_;
-          // check if the right data point in the gaussian exists
-          DoubleReal coeffs_right = (right_position < middle) ? (1-d)*coeffs_[left_position]+d*coeffs_[right_position]
-                                : coeffs_[left_position];
-#ifdef DEBUG_FILTERING
-
-          std::cout << "distance_in_gaussian " << distance_in_gaussian << std::endl;
-          std::cout << " right_position " << right_position << std::endl;
-          std::cout << " left_position " << left_position << std::endl;
-          std::cout << "coeffs_ at left_position "  <<  coeffs_[left_position] << std::endl;
-          std::cout << "coeffs_ at right_position "  <<  coeffs_[right_position] << std::endl;
-          std::cout << "interpolated value left " << coeffs_right << std::endl;
-#endif
-
-
-          // search for the corresponding datapoint for (help-1) in the gaussian (take the left most adjacent point)
-          distance_in_gaussian = fabs(x->getMZ() - (help-1)->getMZ());
-          left_position = (Size)floor(distance_in_gaussian / spacing_);
-
-          // search for the true left adjacent data point (because of rounding errors)
-          for (UInt j=0; ((j<3) && (distance(first,help-j) >= 0)); ++j)
-          {
-            if (((left_position-j)*spacing_ <= distance_in_gaussian) && ((left_position-j+1)*spacing_ >= distance_in_gaussian))
-            {
-              left_position -= j;
-              break;
-            }
-
-            if (((left_position+j)*spacing_ < distance_in_gaussian) && ((left_position+j+1)*spacing_ < distance_in_gaussian))
-            {
-              left_position +=j;
-              break;
-            }
-          }
-
-          // start the interpolation for the true value in the gaussian
-          right_position = left_position+1;
-          d = fabs((left_position*spacing_)-distance_in_gaussian) / spacing_;
-          DoubleReal coeffs_left= (right_position < middle) ? (1-d)*coeffs_[left_position]+d*coeffs_[right_position]
-                              : coeffs_[left_position];
-#ifdef DEBUG_FILTERING
-
-          std::cout << " help-1 " << (help-1)->getMZ() << " distance_in_gaussian " << distance_in_gaussian << std::endl;
-          std::cout << " right_position " << right_position << std::endl;
-          std::cout << " left_position " << left_position << std::endl;
-          std::cout << "coeffs_ at left_position " <<  coeffs_[left_position]<<std::endl;
-          std::cout << "coeffs_ at right_position " <<   coeffs_[right_position]<<std::endl;
-          std::cout << "interpolated value right " << coeffs_left << std::endl;
-
-          std::cout << " intensity " << fabs((help-1)->getMZ()-help->getMZ()) / 2. << " * " << (help-1)->getIntensity() << " * " << coeffs_left <<" + " << (help)->getIntensity()<< "* " << coeffs_right
-          << std::endl;
-#endif
-
-
-          norm += fabs((help-1)->getMZ()-help->getMZ()) / 2. * (coeffs_left + coeffs_right);
-
-          v+= fabs((help-1)->getMZ()-help->getMZ()) / 2. * ((help-1)->getIntensity()*coeffs_left + help->getIntensity()*coeffs_right);
-          --help;
-        }
-
-
-        //integrate from middle to end_pos
-        help = x;
-#ifdef DEBUG_FILTERING
-
-        std::cout << "integrate from middle to endpos "<< (help)->getMZ() << " until " << end_pos << std::endl;
-#endif
-
-        while ((help != (last-1)) && ((help+1)->getMZ() < end_pos))
-        {
-          // search for the corresponding datapoint for help in the gaussian (take the left most adjacent point)
-          DoubleReal distance_in_gaussian = fabs(x->getMZ() - help->getMZ());
-          int left_position = (UInt)floor(distance_in_gaussian / spacing_);
-
-          // search for the true left adjacent data point (because of rounding errors)
-          for (int j=0; ((j<3) && (distance(help+j,last-1) >= 0)); ++j)
-          {
-            if (((left_position-j)*spacing_ <= distance_in_gaussian) && ((left_position-j+1)*spacing_ >= distance_in_gaussian))
-            {
-              left_position -= j;
-              break;
-            }
-
-            if (((left_position+j)*spacing_ < distance_in_gaussian) && ((left_position+j+1)*spacing_ < distance_in_gaussian))
-            {
-              left_position +=j;
-              break;
-            }
-          }
-          // start the interpolation for the true value in the gaussian
-          Size right_position = left_position+1;
-          DoubleReal d = fabs((left_position*spacing_)-distance_in_gaussian) / spacing_;
-          DoubleReal coeffs_left= (right_position < middle) ? (1-d)*coeffs_[left_position]+d*coeffs_[right_position]
-                              : coeffs_[left_position];
-
-#ifdef DEBUG_FILTERING
-
-          std::cout << " help " << (help)->getMZ() << " distance_in_gaussian " << distance_in_gaussian << std::endl;
-          std::cout << " left_position " << left_position << std::endl;
-          std::cout << "coeffs_ at right_position " <<  coeffs_[left_position]<<std::endl;
-          std::cout << "coeffs_ at left_position " <<  coeffs_[right_position]<<std::endl;
-          std::cout << "interpolated value left " << coeffs_left << std::endl;
-#endif
-
-          // search for the corresponding datapoint for (help+1) in the gaussian (take the left most adjacent point)
-          distance_in_gaussian = fabs(x->getMZ() - (help+1)->getMZ());
-          left_position = (UInt)floor(distance_in_gaussian / spacing_);
-
-          // search for the true left adjacent data point (because of rounding errors)
-          for (int j=0; ((j<3) && (distance(help+j,last-1) >= 0)); ++j)
-          {
-            if (((left_position-j)*spacing_ <= distance_in_gaussian) && ((left_position-j+1)*spacing_ >= distance_in_gaussian))
-            {
-              left_position -= j;
-              break;
-            }
-
-            if (((left_position+j)*spacing_ < distance_in_gaussian) && ((left_position+j+1)*spacing_ < distance_in_gaussian))
-            {
-              left_position +=j;
-              break;
-            }
-          }
-
-          // start the interpolation for the true value in the gaussian
-          right_position = left_position+1;
-          d = fabs((left_position*spacing_)-distance_in_gaussian) / spacing_;
-          DoubleReal coeffs_right = (right_position < middle) ? (1-d)*coeffs_[left_position]+d*coeffs_[right_position]
-                                : coeffs_[left_position];
-#ifdef DEBUG_FILTERING
-
-          std::cout << " (help + 1) " << (help+1)->getMZ() << " distance_in_gaussian " << distance_in_gaussian << std::endl;
-          std::cout << " left_position " << left_position << std::endl;
-          std::cout << "coeffs_ at right_position " <<   coeffs_[left_position]<<std::endl;
-          std::cout << "coeffs_ at left_position " <<  coeffs_[right_position]<<std::endl;
-          std::cout << "interpolated value right " << coeffs_right << std::endl;
-
-          std::cout << " intensity " <<  fabs(help->getMZ() - (help+1)->getMZ()) / 2.
-          << " * " << help->getIntensity() << " * " << coeffs_left <<" + " << (help+1)->getIntensity()
-          << "* " << coeffs_right
-          << std::endl;
-#endif
-          norm += fabs(help->getMZ() - (help+1)->getMZ()) / 2. * (coeffs_left + coeffs_right);
-
-          v+= fabs(help->getMZ() - (help+1)->getMZ()) / 2. * (help->getIntensity()*coeffs_left + (help+1)->getIntensity()*coeffs_right);
-          ++help;
-        }
-
-        if (v > 0)
-        {
-          return v / norm;
-        }
-        else
-        {
-          return 0;
+          spectrum[p].setIntensity(*int_it);
+          spectrum[p].setMZ(*mz_it);
         }
       }
+    }
+
+    template <typename PeakType>
+    void filter(MSChromatogram<PeakType> & chromatogram)
+    {
+
+      if (param_.getValue("use_ppm_tolerance").toBool())
+      {
+        throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, 
+          "GaussFilter: Cannot use ppm tolerance on chromatograms");
+      }
+
+      MSSpectrum<PeakType> filter_spectra;
+      for (typename MSChromatogram<PeakType>::const_iterator it = chromatogram.begin(); it != chromatogram.end(); ++it)
+      {
+        filter_spectra.push_back(*it);
+      }
+      filter(filter_spectra);
+      chromatogram.clear(false);
+      for (typename MSSpectrum<PeakType>::const_iterator it = filter_spectra.begin(); it != filter_spectra.end(); ++it)
+      {
+        chromatogram.push_back(*it);
+      }
+
+    }
+
+    /**
+      @brief Smoothes an MSExperiment containing profile data.
+
+        @exception Exception::IllegalArgument is thrown, if the @em gaussian_width parameter is too small.
+          */
+    template <typename PeakType>
+    void filterExperiment(MSExperiment<PeakType> & map)
+    {
+      Size progress = 0;
+      startProgress(0, map.size() + map.getChromatograms().size(), "smoothing data");
+      for (Size i = 0; i < map.size(); ++i)
+      {
+        filter(map[i]);
+        setProgress(++progress);
+      }
+      for (Size i = 0; i < map.getChromatograms().size(); ++i)
+      {
+        filter(map.getChromatogram(i));
+        setProgress(++progress);
+      }
+      endProgress();
+    }
+
+protected:
+
+    GaussFilterAlgorithm gauss_algo_;
+
+    /// The spacing of the pre-tabulated kernel coefficients
+    DoubleReal spacing_;
+
+    // Docu in base class
+    virtual void updateMembers_();
   };
 
 } // namespace OpenMS

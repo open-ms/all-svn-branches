@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Alexandra Zerck $
 // $Authors: Alexandra Zerck $
@@ -69,7 +76,7 @@ param.setValue("precursor_mass_tolerance_unit","Da");
 param.setValue("missed_cleavages",0);
 std::string tmp_filename;
 NEW_TMP_FILE(tmp_filename);
-param.setValue("preprocessing:preprocessed_db_path",tmp_filename);
+param.setValue("preprocessed_db_path",tmp_filename);
 ptr->setParameters(param);
 ptr->dbPreprocessing(OPENMS_GET_TEST_DATA_PATH("PrecursorIonSelectionPreprocessing_db.fasta"),true);
 	
@@ -134,10 +141,6 @@ START_SECTION(DoubleReal getPT(String prot_id,Size peptide_index))
   TEST_REAL_SIMILAR(rt_pt_pp.getPT("P01008",1),0.0402)
 END_SECTION
 
-START_SECTION(DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt))
-	TEST_REAL_SIMILAR(rt_pt_pp.getRTWeight("P01008",1,831.),99.999)
-END_SECTION
-
 START_SECTION((const std::map<String, std::vector<DoubleReal> >& getProteinRTMap() const))
   const std::map<String, std::vector<DoubleReal> >& rt_map = rt_pt_pp.getProteinRTMap();
   TEST_REAL_SIMILAR(rt_map.find("P01008")->second[1],831.46429)
@@ -155,7 +158,80 @@ const std::map<String, std::vector<String> >& map = rt_pt_pp.getProteinPeptideSe
    TEST_EQUAL(map.size(),0);
 END_SECTION
 
-	
+
+START_SECTION((void setFixedModifications(StringList & modifications)))
+{
+  StringList list = StringList::create("Carbamidomethylation (C)");
+  ptr->setFixedModifications(list);
+  const std::map<char, std::vector<String> > & map = ptr->getFixedModifications();
+  TEST_EQUAL(map.size(),1)
+  TEST_EQUAL(map.begin()->first,'C')
+  TEST_EQUAL(map.begin()->second[0],"Carbamidomethylation")
+}
+END_SECTION
+
+START_SECTION((const std::map<char, std::vector<String> > & getFixedModifications()))
+{
+  StringList list = StringList::create("Oxidation (M)");
+  ptr->setFixedModifications(list);
+  const std::map<char, std::vector<String> > & map = ptr->getFixedModifications();
+  TEST_EQUAL(map.size(),1)
+  TEST_EQUAL(map.begin()->first,'M')
+  TEST_EQUAL(map.begin()->second[0],"Oxidation")
+}
+END_SECTION
+  
+START_SECTION((void setGaussianParameters(DoubleReal mu, DoubleReal sigma)))
+{
+  ptr->setGaussianParameters(-3.,10.);
+  TEST_REAL_SIMILAR(ptr->getGaussMu(),-3.)
+  TEST_REAL_SIMILAR(ptr->getGaussSigma(),10.)  
+}
+END_SECTION
+
+START_SECTION((DoubleReal getGaussMu()))
+{
+  ptr->setGaussianParameters(-10.,10.);
+  TEST_REAL_SIMILAR(ptr->getGaussMu(),-10.)
+}
+END_SECTION
+
+START_SECTION((DoubleReal getGaussSigma()))
+{
+  ptr->setGaussianParameters(-10.,15.);
+  TEST_REAL_SIMILAR(ptr->getGaussSigma(),15.)  
+}
+END_SECTION
+std::vector< ConvexHull2D > hulls(2);
+hulls[0].addPoint(DPosition<2>(810.0,1.0));
+hulls[0].addPoint(DPosition<2>(810.0,2.0));
+hulls[1].addPoint(DPosition<2>(854.5,1.0));
+hulls[1].addPoint(DPosition<2>(854.5,4.0));
+
+
+START_SECTION((DoubleReal getRTProbability(String prot_id, Size peptide_index, Feature &feature)))
+{
+  Feature f;
+  f.setRT(831.46);
+  f.setConvexHulls(hulls);
+  param.setValue("rt_settings:min_rt",800.);
+  param.setValue("rt_settings:max_rt",900.);
+  param.setValue("rt_settings:rt_step_size",10.);
+  rt_pt_pp.setParameters(param);
+  rt_pt_pp.setGaussianParameters(0.,1.);
+  TEST_REAL_SIMILAR(rt_pt_pp.getRTProbability("P01008",1,f),0.9973)
+}
+END_SECTION
+
+START_SECTION((DoubleReal getRTProbability(DoubleReal pred_rt, Feature &feature)))
+{
+  Feature f;
+  f.setRT(831.46);
+  f.setConvexHulls(hulls);
+  TEST_REAL_SIMILAR(rt_pt_pp.getRTProbability(831.46429,f),0.9973)
+}
+END_SECTION
+
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

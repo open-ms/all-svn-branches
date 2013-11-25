@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
@@ -42,667 +49,848 @@
 
 namespace OpenMS
 {
-	class Peak1D;
-	
-	/**
-		@brief Representation of a mass spectrometry experiment.
-		
-		Contains the data and metadata of an experiment performed with an MS (or HPLC and MS).
-		
-		Be carefull when changing the order of contained MSSpectrum instances, if tandem-MS data is
-		stored in this class. The only way to find a precursor spectrum of MSSpectrum x is to 
-		search for the first spectrum before x that has a lower MS-level!
-		
-		@note For range operations, see \ref RangeUtils "RangeUtils module"!
+  class Peak1D;
 
-		@ingroup Kernel
-	*/
-	template <typename PeakT = Peak1D, typename ChromatogramPeakT = ChromatogramPeak>
-	class MSExperiment
-		:	public std::vector<MSSpectrum<PeakT> >,
-			public RangeManager<2>,
-			public ExperimentalSettings,
-			public PersistentObject
-	{
-		public:
-			/// @name Base type definitions
-			//@{
-			/// Peak type
-			typedef PeakT PeakType;
-			/// Chromatogram peak type
-			typedef ChromatogramPeakT ChromatogramPeakType;
-			/// Area type
-			typedef DRange<2> AreaType;
-			/// Coordinate type of peak positions
-			typedef typename PeakType::CoordinateType CoordinateType;
-			/// Intenstiy type of peaks
-			typedef typename PeakType::IntensityType IntensityType;
-			/// RangeManager type
-			typedef RangeManager<2> RangeManagerType;
-			/// Spectrum Type
-			typedef MSSpectrum<PeakType> SpectrumType;
-			/// Chromatogram type
-			typedef MSChromatogram<ChromatogramPeakType> ChromatogramType;
-			/// STL base class type
-			typedef std::vector<SpectrumType> Base;
-			//@}
+  /**
+    @brief Representation of a mass spectrometry experiment.
 
-			/// @name Iterator type definitions
-			//@{
-			/// Mutable iterator
-			typedef typename std::vector<SpectrumType>::iterator Iterator;
-			/// Non-mutable iterator
-			typedef typename std::vector<SpectrumType>::const_iterator ConstIterator;
-			/// Mutable area iterator type (for traversal of a rectangular subset of the peaks)
-			typedef Internal::AreaIterator<PeakT, PeakT&, PeakT*, Iterator, typename SpectrumType::Iterator> AreaIterator;
-			/// Immutable area iterator type (for traversal of a rectangular subset of the peaks)
-			typedef Internal::AreaIterator<const PeakT, const PeakT&, const PeakT*, ConstIterator, typename SpectrumType::ConstIterator> ConstAreaIterator;
-			//@}
-      
-			/// Constructor
-			MSExperiment() :
-			 	Base(),
-				RangeManagerType(),
-				ExperimentalSettings(),
-				PersistentObject(),
-				ms_levels_(),
-				total_size_(0)
-			{
-			}
+    Contains the data and metadata of an experiment performed with an MS (or HPLC and MS).
 
-			/// Copy constructor
-			MSExperiment(const MSExperiment& source) :
-				std::vector<MSSpectrum<PeakT> >(source),
-				RangeManagerType(source),
-				ExperimentalSettings(source),
-				PersistentObject(source),
-				ms_levels_(source.ms_levels_),
-				total_size_(source.total_size_),
-				chromatograms_(source.chromatograms_)
-			{
-			}
+    Be careful when changing the order of contained MSSpectrum instances, if tandem-MS data is
+    stored in this class. The only way to find a precursor spectrum of MSSpectrum x is to
+    search for the first spectrum before x that has a lower MS-level!
 
-			/// Assignment operator
-			MSExperiment& operator= (const MSExperiment& source)
-			{
-				if (&source == this) return *this;
+    @note For range operations, see \ref RangeUtils "RangeUtils module"!
 
-				Base::operator=(source);
-				RangeManagerType::operator=(source);
-				ExperimentalSettings::operator=(source);
-				PersistentObject::operator=(source);
+    @ingroup Kernel
+  */
+  template <typename PeakT = Peak1D, typename ChromatogramPeakT = ChromatogramPeak>
+  class MSExperiment :
+    public RangeManager<2>,
+    public ExperimentalSettings,
+    public PersistentObject
+  {
 
-				ms_levels_           = source.ms_levels_;
-				total_size_					 = source.total_size_;
-				chromatograms_       = source.chromatograms_;
-        
-        //no need to copy the alloc?!
-        //alloc_
-        
-				return *this;
-			}
+public:
 
-      /// Assignment operator
-			MSExperiment& operator= (const ExperimentalSettings& source)
-			{
-				ExperimentalSettings::operator=(source);
+    /// @name Base type definitions
+    //@{
+    /// Peak type
+    typedef PeakT PeakType;
+    /// Chromatogram peak type
+    typedef ChromatogramPeakT ChromatogramPeakType;
+    /// Area type
+    typedef DRange<2> AreaType;
+    /// Coordinate type of peak positions
+    typedef typename PeakType::CoordinateType CoordinateType;
+    /// Intensity type of peaks
+    typedef typename PeakType::IntensityType IntensityType;
+    /// RangeManager type
+    typedef RangeManager<2> RangeManagerType;
+    /// Spectrum Type
+    typedef MSSpectrum<PeakType> SpectrumType;
+    /// Chromatogram type
+    typedef MSChromatogram<ChromatogramPeakType> ChromatogramType;
+    /// STL base class type
+    typedef std::vector<SpectrumType> Base;
+    //@}
 
-				return *this;
-			}
+    /// @name Iterator type definitions
+    //@{
+    /// Mutable iterator
+    typedef typename std::vector<SpectrumType>::iterator Iterator;
+    /// Non-mutable iterator
+    typedef typename std::vector<SpectrumType>::const_iterator ConstIterator;
+    /// Mutable area iterator type (for traversal of a rectangular subset of the peaks)
+    typedef Internal::AreaIterator<PeakT, PeakT &, PeakT *, Iterator, typename SpectrumType::Iterator> AreaIterator;
+    /// Immutable area iterator type (for traversal of a rectangular subset of the peaks)
+    typedef Internal::AreaIterator<const PeakT, const PeakT &, const PeakT *, ConstIterator, typename SpectrumType::ConstIterator> ConstAreaIterator;
+    //@}
 
-			/// Equality operator
-			bool operator== (const MSExperiment& rhs) const
-			{
-				return ExperimentalSettings::operator==(rhs) && std::operator==(rhs,*this) && chromatograms_ == rhs.chromatograms_;
-			}
-			/// Equality operator
-			bool operator!= (const MSExperiment& rhs) const
-			{
-				return !(operator==(rhs));
-			}
-			
-			///@name Conversion to/from 2D data
-			//@{
-			/**
-				@brief Reads out a 2D Spectrum
+    /// @name Delegations of calls to the vector of MSSpectra
+    // Attention: these refer to the spectra vector only!
+    //@{
+    typedef typename Base::value_type value_type; 
+    typedef typename Base::iterator iterator; 
+    typedef typename Base::const_iterator const_iterator; 
 
-				Container can be a PeakArray or an STL container of peaks which
-				supports push_back(), end() and back()
-			*/
-			template <class Container>
-			void get2DData(Container& cont) const
-			{
-				for (typename Base::const_iterator spec = Base::begin(); spec != Base::end(); ++spec)
-				{
-					if (spec->getMSLevel()!=1)
-					{
-						continue;
-					}
-					for (typename SpectrumType::const_iterator it = spec-> begin(); it!=spec->end(); ++it)
-					{
-						cont.push_back(typename Container::value_type());
-						cont.back().setRT(spec->getRT());
-						cont.back().setMZ(it->getMZ());
-						cont.back().setIntensity(it->getIntensity());
-					}
-				}
-			}
+    inline Size size() const
+    {
+      return spectra_.size(); 
+    }
 
-			/**
-				@brief Assignment of a 2D spectrum to MSExperiment
+    inline void resize(Size s)
+    {
+      spectra_.resize(s); 
+    }
 
-				Container can be a PeakArray or an STL container of peaks.
+    inline bool empty() const
+    {
+      return spectra_.empty(); 
+    }
 
-				@exception Exception::Precondition is thrown if the container is not sorted according to retention time (not only in debug mode)
-			*/
-			template <class Container>
-			void set2DData(const Container& cont)
-			{
-				SpectrumType* spectrum = 0;
-				// If the container is empty, nothing will happen
-				if (cont.size() == 0) return;
+    inline void reserve(Size s)
+    {
+      spectra_.reserve(s); 
+    }
 
-				typename PeakType::CoordinateType current_rt = - (std::numeric_limits<typename PeakType::CoordinateType>::max)();
+    inline SpectrumType& operator[] (Size n)
+    {
+      return spectra_[n];
+    }
 
-				for (typename Container::const_iterator iter = cont.begin(); iter != cont.end(); ++iter)
-				{
-					// check if the retention time time has changed
-					if (current_rt != iter->getRT() || spectrum == 0)
-					{
-						if (current_rt > iter->getRT())
-						{
-							throw Exception::Precondition(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Input container is not sorted!");
-						}
-						current_rt =  iter->getRT();
-						Base::insert(Base::end(),SpectrumType());
-						spectrum = &(Base::back());
-						spectrum->setRT(current_rt);
-						spectrum->setMSLevel(1);
-					}
+    inline const SpectrumType& operator[] (Size n) const
+    {
+      return spectra_[n];
+    }
 
-					// create temporary peak and insert it into spectrum
-					spectrum->insert(spectrum->end(), PeakType());
-					spectrum->back().setIntensity(iter->getIntensity());
-					spectrum->back().setPosition(iter->getMZ());
-				}
-			}
-			//@}
+    inline Iterator begin() 
+    {
+      return spectra_.begin();
+    }
 
-			///@name Iterating ranges and areas
-			//@{
-			///Returns an area iterator for @p area
-			AreaIterator areaBegin(CoordinateType min_rt, CoordinateType max_rt, CoordinateType min_mz, CoordinateType max_mz)
-			{
-				OPENMS_PRECONDITION(min_rt<=max_rt, "Swapped RT range boundaries!")
-					OPENMS_PRECONDITION(min_mz<=max_mz, "Swapped MZ range boundaries!")
-					//std::cout << "areaBegin: " << min_rt << " " << max_rt << " " << min_mz << " " << max_mz << std::endl;
-					return AreaIterator(this->begin(),RTBegin(min_rt), RTEnd(max_rt), min_mz, max_mz);
-			}
+    inline ConstIterator begin() const
+    {
+      return spectra_.begin();
+    }
 
-			/// Returns an invalid area iterator marking the end of an area
-			AreaIterator areaEnd()
-			{
-				return AreaIterator();
-			}
+    inline Iterator end() 
+    {
+      return spectra_.end();
+    }
 
-			///Returns a non-mutable area iterator for @p area
-			ConstAreaIterator areaBeginConst(CoordinateType min_rt, CoordinateType max_rt, CoordinateType min_mz, CoordinateType max_mz) const
-			{
-				OPENMS_PRECONDITION(min_rt<=max_rt, "Swapped RT range boundaries!")
-					OPENMS_PRECONDITION(min_mz<=max_mz, "Swapped MZ range boundaries!") 
-					//std::cout << "areaBeginConst: " << min_rt << " " << max_rt << " " << min_mz << " " << max_mz << std::endl;
-					return ConstAreaIterator(this->begin(),RTBegin(min_rt), RTEnd(max_rt), min_mz, max_mz);
-			}
+    inline ConstIterator end() const
+    {
+      return spectra_.end();
+    }
+    //@}
 
-			/// Returns an non-mutable invalid area iterator marking the end of an area
-			ConstAreaIterator areaEndConst() const
-			{
-				return ConstAreaIterator();
-			}
+    // Aliases / chromatograms
+    inline void reserveSpaceSpectra(Size s)
+    {
+      spectra_.reserve(s); 
+    }
+    inline void reserveSpaceChromatograms(Size s)
+    {
+      chromatograms_.reserve(s); 
+    }
 
-			/**
-				@brief Fast search for spectrum range begin
+    /// Constructor
+    MSExperiment() :
+      RangeManagerType(),
+      ExperimentalSettings(),
+      PersistentObject(),
+      ms_levels_(),
+      total_size_(0)
+    {}
 
-        Returns the first scan which has equal or higher (>=) RT than @p rt.
+    /// Copy constructor
+    MSExperiment(const MSExperiment & source) :
+      RangeManagerType(source),
+      ExperimentalSettings(source),
+      PersistentObject(source),
+      ms_levels_(source.ms_levels_),
+      total_size_(source.total_size_),
+      chromatograms_(source.chromatograms_),
+      spectra_(source.spectra_)
+    {}
 
-				@note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
-			*/
-			ConstIterator RTBegin(CoordinateType rt) const
-			{
-				SpectrumType s;
-				s.setRT(rt);
-				return lower_bound(Base::begin(), Base::end(), s, typename SpectrumType::RTLess());
-			}
+    /// Assignment operator
+    MSExperiment & operator=(const MSExperiment & source)
+    {
+      if (&source == this) return *this;
 
-			/**
-				@brief Fast search for spectrum range end (returns the past-the-end iterator)
-        
-        Returns the first scan which has higher (>) RT than @p rt.
+      RangeManagerType::operator=(source);
+      ExperimentalSettings::operator=(source);
+      PersistentObject::operator=(source);
 
-				@note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
-			*/
-			ConstIterator RTEnd(CoordinateType rt) const
-			{
-				SpectrumType s;
-				s.setRT(rt);
-				return upper_bound(Base::begin(),Base::end(), s, typename SpectrumType::RTLess());
-			}
+      ms_levels_     = source.ms_levels_;
+      total_size_    = source.total_size_;
+      chromatograms_ = source.chromatograms_;
+      spectra_ = source.spectra_;
 
-			/**
-				@brief Fast search for spectrum range begin
+      //no need to copy the alloc?!
+      //alloc_
 
-				@note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
-			*/
-			Iterator RTBegin(CoordinateType rt)
-			{
-				SpectrumType s;
-				s.setRT(rt);
-				return lower_bound(Base::begin(), Base::end(), s, typename SpectrumType::RTLess());
-			}
+      return *this;
+    }
 
-			/**
-				@brief Fast search for spectrum range end (returns the past-the-end iterator)
+    /// Assignment operator
+    MSExperiment & operator=(const ExperimentalSettings & source)
+    {
+      ExperimentalSettings::operator=(source);
+      return *this;
+    }
 
-				@note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
-			*/
-			Iterator RTEnd(CoordinateType rt)
-			{
-				SpectrumType s;
-				s.setRT(rt);
-				return upper_bound(Base::begin(),Base::end(), s, typename SpectrumType::RTLess());
-			}
-			//@}
+    /// Equality operator
+    bool operator==(const MSExperiment & rhs) const
+    {
+      return ExperimentalSettings::operator==(rhs) &&
+          chromatograms_ == rhs.chromatograms_ && 
+          spectra_ == rhs.spectra_;
+    }
 
-			/**
-				@name Range methods  
+    /// Equality operator
+    bool operator!=(const MSExperiment & rhs) const
+    {
+      return !(operator==(rhs));
+    }
 
-				@note The range values (min, max, etc.) are not updated automatically. Call updateRanges() to update the values!
-			*/
-			//@{
-			// Docu in base class
-			virtual void updateRanges()
-			{
-				updateRanges(-1);
-			}
+    ///@name Conversion to/from 2D data
+    //@{
+    /**
+      @brief Reads out a 2D Spectrum
 
-			/**
-				@brief Updates the m/z, intensity, retention time and MS level ranges of all spectra with a certain ms level
+      Container can be a PeakArray or an STL container of peaks which
+      supports push_back(), end() and back()
+    */
+    template <class Container>
+    void get2DData(Container & cont) const
+    {
+      for (typename Base::const_iterator spec = spectra_.begin(); spec != spectra_.end(); ++spec)
+      {
+        if (spec->getMSLevel() != 1)
+        {
+          continue;
+        }
+        for (typename SpectrumType::const_iterator it = spec->begin(); it != spec->end(); ++it)
+        {
+          cont.push_back(typename Container::value_type());
+          cont.back().setRT(spec->getRT());
+          cont.back().setMZ(it->getMZ());
+          cont.back().setIntensity(it->getIntensity());
+        }
+      }
+    }
 
-				@param ms_level MS level to consider for m/z range , RT range and intensity range (All MS levels if negative)
-			*/
-			void updateRanges(Int ms_level)
-			{
-				//clear MS levels
-				ms_levels_.clear();
+    /**
+      @brief Assignment of a 2D spectrum to MSExperiment
 
-				//reset mz/rt/int range
-				this->clearRanges();
-				//reset point count
-				total_size_ = 0;
+      Container can be a PeakArray or an STL container of peaks.
 
-				//empty
-				if (this->size()==0 && chromatograms_.size() == 0)
-				{
-					return;
-				}
+      @exception Exception::Precondition is thrown if the container is not sorted according to
+      retention time (not only in debug mode)
+    */
+    template <class Container>
+    void set2DData(const Container & cont)
+    {
+      SpectrumType * spectrum = 0;
+      // If the container is empty, nothing will happen
+      if (cont.empty()) return;
 
-				//update
-				for (typename Base::iterator it = this-> begin(); it!=this->end(); ++it)
-				{
-					if (ms_level < Int(0) || Int(it->getMSLevel())==ms_level)
-					{
-						//ms levels
-						if (std::find(ms_levels_.begin(),ms_levels_.end(),it->getMSLevel())==ms_levels_.end())
-						{
-							ms_levels_.push_back(it->getMSLevel());
-						}
+      typename PeakType::CoordinateType current_rt = -(std::numeric_limits<typename PeakType::CoordinateType>::max)();
 
-						// calculate size
-						total_size_ += it->size();
+      for (typename Container::const_iterator iter = cont.begin(); iter != cont.end(); ++iter)
+      {
+        // check if the retention time time has changed
+        if (current_rt != iter->getRT() || spectrum == 0)
+        {
+          if (current_rt > iter->getRT())
+          {
+            throw Exception::Precondition(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Input container is not sorted!");
+          }
+          current_rt =  iter->getRT();
+          spectra_.insert(spectra_.end(), SpectrumType());
+          spectrum = &(spectra_.back());
+          spectrum->setRT(current_rt);
+          spectrum->setMSLevel(1);
+        }
 
-						//rt
-						if (it->getRT() < RangeManagerType::pos_range_.minX()) RangeManagerType::pos_range_.setMinX(it->getRT());
-						if (it->getRT() > RangeManagerType::pos_range_.maxX()) RangeManagerType::pos_range_.setMaxX(it->getRT());
+        // create temporary peak and insert it into spectrum
+        spectrum->insert(spectrum->end(), PeakType());
+        spectrum->back().setIntensity(iter->getIntensity());
+        spectrum->back().setPosition(iter->getMZ());
+      }
+    }
 
-						//do not update mz and int when the spectrum is empty
-						if (it->size()==0) continue;
+    //@}
 
-						it->updateRanges();
+    ///@name Iterating ranges and areas
+    //@{
+    /// Returns an area iterator for @p area
+    AreaIterator areaBegin(CoordinateType min_rt, CoordinateType max_rt, CoordinateType min_mz, CoordinateType max_mz)
+    {
+      OPENMS_PRECONDITION(min_rt <= max_rt, "Swapped RT range boundaries!")
+      OPENMS_PRECONDITION(min_mz <= max_mz, "Swapped MZ range boundaries!")
+      OPENMS_PRECONDITION(this->isSorted(true), "Experiment is not sorted by RT and m/z! Using AreaIterator will give invalid results!")
+      //std::cout << "areaBegin: " << min_rt << " " << max_rt << " " << min_mz << " " << max_mz << std::endl;
+      return AreaIterator(spectra_.begin(), RTBegin(min_rt), RTEnd(max_rt), min_mz, max_mz);
+    }
 
-						//mz
-						if (it->getMin()[0] < RangeManagerType::pos_range_.minY()) RangeManagerType::pos_range_.setMinY(it->getMin()[0]);
-						if (it->getMax()[0] > RangeManagerType::pos_range_.maxY()) RangeManagerType::pos_range_.setMaxY(it->getMax()[0]);
+    /// Returns an invalid area iterator marking the end of an area
+    AreaIterator areaEnd()
+    {
+      return AreaIterator();
+    }
 
-						//int
-						if (it->getMinInt() < RangeManagerType::int_range_.minX()) RangeManagerType::int_range_.setMinX(it->getMinInt());
-						if (it->getMaxInt() > RangeManagerType::int_range_.maxX()) RangeManagerType::int_range_.setMaxX(it->getMaxInt());
+    /// Returns a non-mutable area iterator for @p area
+    ConstAreaIterator areaBeginConst(CoordinateType min_rt, CoordinateType max_rt, CoordinateType min_mz, CoordinateType max_mz) const
+    {
+      OPENMS_PRECONDITION(min_rt <= max_rt, "Swapped RT range boundaries!")
+      OPENMS_PRECONDITION(min_mz <= max_mz, "Swapped MZ range boundaries!")
+      OPENMS_PRECONDITION(this->isSorted(true), "Experiment is not sorted by RT and m/z! Using ConstAreaIterator will give invalid results!")
+      //std::cout << "areaBeginConst: " << min_rt << " " << max_rt << " " << min_mz << " " << max_mz << std::endl;
+      return ConstAreaIterator(spectra_.begin(), RTBegin(min_rt), RTEnd(max_rt), min_mz, max_mz);
+    }
 
-					}
-				}
-				std::sort(ms_levels_.begin(), ms_levels_.end());
+    /// Returns an non-mutable invalid area iterator marking the end of an area
+    ConstAreaIterator areaEndConst() const
+    {
+      return ConstAreaIterator();
+    }
 
-				if (this->chromatograms_.size() == 0)
-				{
-					return;
-				}				
+    /**
+      @brief Fast search for spectrum range begin
 
-				//TODO CHROM update intensity, m/z and RT according to chromatograms as well! (done????)
+      Returns the first scan which has equal or higher (>=) RT than @p rt.
 
-				for (typename std::vector<ChromatogramType>::iterator it = chromatograms_.begin(); it != chromatograms_.end(); ++it)
-				{
-					// update MZ
-					if (it->getMZ() < RangeManagerType::pos_range_.minY()) RangeManagerType::pos_range_.setMinY(it->getMZ());
-					if (it->getMZ() > RangeManagerType::pos_range_.maxY()) RangeManagerType::pos_range_.setMaxY(it->getMZ());
+      @note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
+    */
+    ConstIterator RTBegin(CoordinateType rt) const
+    {
+      SpectrumType s;
+      s.setRT(rt);
+      return lower_bound(spectra_.begin(), spectra_.end(), s, typename SpectrumType::RTLess());
+    }
 
-					// do not update RT and in if the specturm is empty
-					if (it->size() == 0) continue;
+    /**
+      @brief Fast search for spectrum range end (returns the past-the-end iterator)
 
-					total_size_ += it->size();
+      Returns the first scan which has higher (>) RT than @p rt.
 
-					it->updateRanges();
+      @note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
+    */
+    ConstIterator RTEnd(CoordinateType rt) const
+    {
+      SpectrumType s;
+      s.setRT(rt);
+      return upper_bound(spectra_.begin(), spectra_.end(), s, typename SpectrumType::RTLess());
+    }
 
-					// RT
-					if (it->getMin()[0] < RangeManagerType::pos_range_.minX()) RangeManagerType::pos_range_.setMinX(it->getMin()[0]);
-					if (it->getMax()[0] > RangeManagerType::pos_range_.maxX()) RangeManagerType::pos_range_.setMaxX(it->getMax()[0]);
+    /**
+      @brief Fast search for spectrum range begin
 
-					// int
-					if (it->getMinInt() < RangeManagerType::int_range_.minX()) RangeManagerType::int_range_.setMinX(it->getMinInt());
+      @note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
+    */
+    Iterator RTBegin(CoordinateType rt)
+    {
+      SpectrumType s;
+      s.setRT(rt);
+      return lower_bound(spectra_.begin(), spectra_.end(), s, typename SpectrumType::RTLess());
+    }
+
+    /**
+      @brief Fast search for spectrum range end (returns the past-the-end iterator)
+
+      @note Make sure the spectra are sorted with respect to retention time! Otherwise the result is undefined.
+    */
+    Iterator RTEnd(CoordinateType rt)
+    {
+      SpectrumType s;
+      s.setRT(rt);
+      return upper_bound(spectra_.begin(), spectra_.end(), s, typename SpectrumType::RTLess());
+    }
+
+    //@}
+
+    /**
+      @name Range methods
+
+      @note The range values (min, max, etc.) are not updated automatically. Call updateRanges() to update the values!
+    */
+    ///@{
+    // Docu in base class
+    virtual void updateRanges()
+    {
+      updateRanges(-1);
+    }
+
+    /**
+      @brief Updates the m/z, intensity, retention time and MS level ranges of all spectra with a certain ms level
+
+      @param ms_level MS level to consider for m/z range , RT range and intensity range (All MS levels if negative)
+    */
+    void updateRanges(Int ms_level)
+    {
+      //clear MS levels
+      ms_levels_.clear();
+
+      //reset mz/rt/int range
+      this->clearRanges();
+      //reset point count
+      total_size_ = 0;
+
+      //empty
+      if (spectra_.empty() && chromatograms_.empty())
+      {
+        return;
+      }
+
+      //update
+      for (typename Base::iterator it = spectra_.begin(); it != spectra_.end(); ++it)
+      {
+        if (ms_level < Int(0) || Int(it->getMSLevel()) == ms_level)
+        {
+          //ms levels
+          if (std::find(ms_levels_.begin(), ms_levels_.end(), it->getMSLevel()) == ms_levels_.end())
+          {
+            ms_levels_.push_back(it->getMSLevel());
+          }
+
+          // calculate size
+          total_size_ += it->size();
+
+          //rt
+          if (it->getRT() < RangeManagerType::pos_range_.minX()) RangeManagerType::pos_range_.setMinX(it->getRT());
+          if (it->getRT() > RangeManagerType::pos_range_.maxX()) RangeManagerType::pos_range_.setMaxX(it->getRT());
+
+          //do not update mz and int when the spectrum is empty
+          if (it->size() == 0) continue;
+
+          it->updateRanges();
+
+          //mz
+          if (it->getMin()[0] < RangeManagerType::pos_range_.minY()) RangeManagerType::pos_range_.setMinY(it->getMin()[0]);
+          if (it->getMax()[0] > RangeManagerType::pos_range_.maxY()) RangeManagerType::pos_range_.setMaxY(it->getMax()[0]);
+
+          //int
+          if (it->getMinInt() < RangeManagerType::int_range_.minX()) RangeManagerType::int_range_.setMinX(it->getMinInt());
           if (it->getMaxInt() > RangeManagerType::int_range_.maxX()) RangeManagerType::int_range_.setMaxX(it->getMaxInt());
-					
-				}
-			}
 
-			/// returns the minimal m/z value
-			CoordinateType getMinMZ() const
-			{
-				return RangeManagerType::pos_range_.minPosition()[1];
-			}
+        }
+        // for MS level = 1 we extend the range for all the MS2 precursors
+        if (ms_level == 1 && it->getMSLevel() == 2)
+        {
+          if (!it->getPrecursors().empty())
+          {
+            DoubleReal pc_rt = it->getRT();
+            if (pc_rt < RangeManagerType::pos_range_.minX()) RangeManagerType::pos_range_.setMinX(pc_rt);
+            if (pc_rt > RangeManagerType::pos_range_.maxX()) RangeManagerType::pos_range_.setMaxX(pc_rt);
+            DoubleReal pc_mz = it->getPrecursors()[0].getMZ();
+            if (pc_mz < RangeManagerType::pos_range_.minY()) RangeManagerType::pos_range_.setMinY(pc_mz);
+            if (pc_mz > RangeManagerType::pos_range_.maxY()) RangeManagerType::pos_range_.setMaxY(pc_mz);
+          }
 
-			/// returns the maximal m/z value
-			CoordinateType getMaxMZ() const
-			{
-				return RangeManagerType::pos_range_.maxPosition()[1];
-			}
+        }
 
-			/// returns the minimal retention time value
-			CoordinateType getMinRT() const
-			{
-				return RangeManagerType::pos_range_.minPosition()[0];
-			}
+      }
+      std::sort(ms_levels_.begin(), ms_levels_.end());
 
-			/// returns the maximal retention time value
-			CoordinateType getMaxRT() const
-			{
-				return RangeManagerType::pos_range_.maxPosition()[0];
-			}
 
-			/**
-				@brief Returns RT and m/z range the data lies in.
 
-				RT is dimension 0, m/z is dimension 1
-			*/
-			const AreaType& getDataRange() const
-			{
-				return RangeManagerType::pos_range_;
-			}
 
-			/// returns the total number of peaks
-			UInt64 getSize() const
-		 	{
-			 	return total_size_;
-		 	}
+      if (this->chromatograms_.empty())
+      {
+        return;
+      }
 
-			/// returns an array of MS levels
-			const std::vector<UInt>& getMSLevels() const
-		 	{
-			 	return ms_levels_;
-		 	}
-			//@}
-			
-			///@name Sorting spectra and peaks
-			//@{
-			/**
-				@brief Sorts the data points by retention time
-				
-				@param sort_mz if @em true, spectra are sorted by m/z position as well
-			*/
-			void sortSpectra(bool sort_mz = true)
-			{
-				std::sort(this->begin(),this->end(),typename SpectrumType::RTLess());
+      //TODO CHROM update intensity, m/z and RT according to chromatograms as well! (done????)
 
-				if (sort_mz)
-				{
-					// sort each spectrum by m/z
-					for (Iterator iter = this->begin(); iter != this->end(); ++iter)
-					{
-						iter->sortByPosition();
-					}
-				}
-			}
+      for (typename std::vector<ChromatogramType>::iterator it = chromatograms_.begin(); it != chromatograms_.end(); ++it)
+      {
 
-			/** 
-				@brief Sorts the data points of the chromatograms by m/z
+        // ignore TICs and ECs (as these are usually positioned at 0 and therefor lead to a large white margin in plots if included)
+        if (it->getChromatogramType() == ChromatogramSettings::TOTAL_ION_CURRENT_CHROMATOGRAM ||
+            it->getChromatogramType() == ChromatogramSettings::EMISSION_CHROMATOGRAM)
+        {
+          continue;
+        }
 
-				@param sort_rt if @em true, chromatograms are sorted by rt position as well
-			*/
-			void sortChromatograms(bool sort_rt = true)
-			{
-				// sort the chromatograms according to their product m/z
-				std::sort(chromatograms_.begin(), chromatograms_.end(), typename ChromatogramType::MZLess());
+        // update MZ
+        if (it->getMZ() < RangeManagerType::pos_range_.minY()) RangeManagerType::pos_range_.setMinY(it->getMZ());
+        if (it->getMZ() > RangeManagerType::pos_range_.maxY()) RangeManagerType::pos_range_.setMaxY(it->getMZ());
 
-				if (sort_rt)
-				{
-					for (typename std::vector<ChromatogramType>::iterator it = chromatograms_.begin(); it != chromatograms_.end(); ++it)
-					{
-						it->sortByPosition();
-					}
-				}
-			}
-			
-			/**
-				@brief Checks if all spectra are sorted with respect to ascending RT
-				
-				@param check_mz if @em true, checks if all peaks are sorted with respect to ascending m/z
-			*/
-			bool isSorted(bool check_mz = true ) const
-			{
-				//check RT positions
-				for (Size i=1; i<this->size(); ++i)
-				{
-					if (this->operator[](i-1).getRT()>this->operator[](i).getRT()) return false;
-				}
-				//check spectra
-				if (check_mz)
-				{
-					for (Size i=0; i<this->size(); ++i)
-					{
-						if (!this->operator[](i).isSorted()) return false;
-					}
-				}
-				// TODO CHROM
-				return true;
-			}
-			//@}
-			
-			/// Resets all internal values
-			void reset()
-			{
-				Base::clear(); //remove data
-				RangeManagerType::clearRanges(); //reset range manager
-				ExperimentalSettings::operator=(ExperimentalSettings()); //reset meta info
-			}
-			
-			/**
-				@brief Clears the meta data arrays of all contained spectra (float, integer and string arrays)
-				
-				@return @em true if meta data arrays were present and removed. @em false otherwise.
-			*/
-			bool clearMetaDataArrays()
-			{
-				bool meta_present = false;
-				for (Size i=0; i< this->size(); ++i)
-				{
-					if (this->operator[](i).getFloatDataArrays().size()!=0 || this->operator[](i).getIntegerDataArrays().size()!=0 || this->operator[](i).getStringDataArrays().size()!=0)
-					{
-						meta_present = true;
-					}
-					this->operator[](i).getStringDataArrays().clear();
-					this->operator[](i).getIntegerDataArrays().clear();
-					this->operator[](i).getFloatDataArrays().clear();
-				}
-				return meta_present;
-			}
-			
-			/// returns the meta information of this experiment (const access)
-			const ExperimentalSettings& getExperimentalSettings() const
-			{ 
-				return *this; 
-			}
-			/// returns the meta information of this experiment (mutable access)
-			ExperimentalSettings& getExperimentalSettings()
-			{ 
-				return *this; 
-			}
+        // do not update RT and in if the spectrum is empty
+        if (it->size() == 0) continue;
 
-			/**
-				@brief Returns the precursor spectrum of the scan pointed to by @p iterator
+        total_size_ += it->size();
 
-				If there is no precursor scan the past-the-end iterator is returned.
-			*/
-			ConstIterator getPrecursorSpectrum(ConstIterator iterator) const
-			{
-				if (iterator==this->end() || iterator==this->begin())
-				{
-					return this->end();
-				}
-				UInt ms_level = iterator->getMSLevel();
-				do
-				{
-					--iterator;
-					if (iterator->getMSLevel() < ms_level)
-					{
-						return iterator;
-					}
-				}
-				while (iterator!=this->begin());
+        it->updateRanges();
 
-				return this->end();
-			}
-			
-			/// Swaps the content of this map with the content of @p from
-			void swap(MSExperiment& from)
-			{
-				MSExperiment tmp;
-				
-				//swap range information
-				tmp.RangeManagerType::operator=(*this);
-				this->RangeManagerType::operator=(from);
-				from.RangeManagerType::operator=(tmp);
-				
-				//swap experimental settings
-				tmp.ExperimentalSettings::operator=(*this);
-				this->ExperimentalSettings::operator=(from);
-				from.ExperimentalSettings::operator=(tmp);
+        // RT
+        if (it->getMin()[0] < RangeManagerType::pos_range_.minX()) RangeManagerType::pos_range_.setMinX(it->getMin()[0]);
+        if (it->getMax()[0] > RangeManagerType::pos_range_.maxX()) RangeManagerType::pos_range_.setMaxX(it->getMax()[0]);
 
-				//swap persistent object
-				tmp.PersistentObject::operator=(*this);
-				this->PersistentObject::operator=(from);
-				from.PersistentObject::operator=(tmp);
-			
-				// swap chromatograms
-				std::swap(chromatograms_, from.chromatograms_);
+        // int
+        if (it->getMinInt() < RangeManagerType::int_range_.minX()) RangeManagerType::int_range_.setMinX(it->getMinInt());
+        if (it->getMaxInt() > RangeManagerType::int_range_.maxX()) RangeManagerType::int_range_.setMaxX(it->getMaxInt());
+      }
+    }
 
-				//swap peaks
-				Base::swap(from);
+    /// returns the minimal m/z value
+    CoordinateType getMinMZ() const
+    {
+      return RangeManagerType::pos_range_.minPosition()[1];
+    }
 
-				//swap remaining members
-				ms_levels_.swap(from.ms_levels_);
-				std::swap(total_size_,from.total_size_);
-			}
+    /// returns the maximal m/z value
+    CoordinateType getMaxMZ() const
+    {
+      return RangeManagerType::pos_range_.maxPosition()[1];
+    }
 
-			/// sets the chromatogram list
-			void setChromatograms(const std::vector<MSChromatogram<ChromatogramPeakType> >& chromatograms)
-			{
-				chromatograms_ = chromatograms;
-			}
+    /// returns the minimal retention time value
+    CoordinateType getMinRT() const
+    {
+      return RangeManagerType::pos_range_.minPosition()[0];
+    }
 
-			/// adds a chromatogram to the list
-			void addChromatogram(const MSChromatogram<ChromatogramPeakType> & chromatogram)
-			{
-				chromatograms_.push_back(chromatogram);
-			}
+    /// returns the maximal retention time value
+    CoordinateType getMaxRT() const
+    {
+      return RangeManagerType::pos_range_.maxPosition()[0];
+    }
 
-			/// returns the chromatogram list
-			const std::vector<MSChromatogram<ChromatogramPeakType> >& getChromatograms() const
-			{
-				return chromatograms_;
-			}
-			
-			/**
-				@brief Clears all data and meta data
-				
-				@param clear_meta_data If @em true, all meta data is cleared in addition to the data.
-			*/ 
-			void clear(bool clear_meta_data)
-			{
-				Base::clear();
-				
-				if (clear_meta_data)
-				{
-					clearRanges();
-					clearId();
-					this->ExperimentalSettings::operator=(ExperimentalSettings()); // no "clear" method
-					chromatograms_.clear();
-					ms_levels_.clear();
-					total_size_ = 0;
-				}
-			}
-			
-		protected:
-	
-	    // Docu in base class
-	    virtual void clearChildIds_()
-	    {
-	    	for (Size i=0; i<this->size(); ++i)
-				{
-					this->operator[](i).clearId(true);
-				}
-	    }
+    /**
+      @brief Returns RT and m/z range the data lies in.
 
-	    /// MS levels of the data
-	    std::vector<UInt> ms_levels_;
-	    /// Number of all data points
-	    UInt64 total_size_;
+      RT is dimension 0, m/z is dimension 1
+    */
+    const AreaType & getDataRange() const
+    {
+      return RangeManagerType::pos_range_;
+    }
 
-			/// chromatograms 
-			std::vector<MSChromatogram<ChromatogramPeakType> > chromatograms_;
-	};
-	
-	///Print the contents to a stream.
-	template <typename PeakT, typename ChromatogramPeakT>
-	std::ostream& operator << (std::ostream& os, const MSExperiment<PeakT, ChromatogramPeakT>& exp)
-	{
-	    os << "-- MSEXPERIMENT BEGIN --"<<std::endl;
-	
-	    //experimental settings
-	    os <<static_cast<const ExperimentalSettings&>(exp);
-	
-	    //spectra
-	    for (typename MSExperiment<PeakT>::const_iterator it=exp.begin(); it!=exp.end(); ++it)
-	    {
-	      os << *it;
-	    }
+    /// returns the total number of peaks
+    UInt64 getSize() const
+    {
+      return total_size_;
+    }
 
-			//chromatograms
-			for (typename std::vector<MSChromatogram<ChromatogramPeakT> >::const_iterator it = exp.getChromatograms().begin(); it != exp.getChromatograms().end(); ++it)
-			{
-				os << *it;
-			}
+    /// returns an array of MS levels
+    const std::vector<UInt> & getMSLevels() const
+    {
+      return ms_levels_;
+    }
 
-	    os << "-- MSEXPERIMENT END --"<<std::endl;
-	
-	    return os;
-	}
+    ///@}
+
+    ///@name Sorting spectra and peaks
+    ///@{
+    /**
+      @brief Sorts the data points by retention time
+
+      @param sort_mz if @em true, spectra are sorted by m/z position as well
+    */
+    void sortSpectra(bool sort_mz = true)
+    {
+      std::sort(spectra_.begin(), spectra_.end(), typename SpectrumType::RTLess());
+
+      if (sort_mz)
+      {
+        // sort each spectrum by m/z
+        for (Iterator iter = spectra_.begin(); iter != spectra_.end(); ++iter)
+        {
+          iter->sortByPosition();
+        }
+      }
+    }
+
+    /**
+      @brief Sorts the data points of the chromatograms by m/z
+
+      @param sort_rt if @em true, chromatograms are sorted by rt position as well
+    */
+    void sortChromatograms(bool sort_rt = true)
+    {
+      // sort the chromatograms according to their product m/z
+      std::sort(chromatograms_.begin(), chromatograms_.end(), typename ChromatogramType::MZLess());
+
+      if (sort_rt)
+      {
+        for (typename std::vector<ChromatogramType>::iterator it = chromatograms_.begin(); it != chromatograms_.end(); ++it)
+        {
+          it->sortByPosition();
+        }
+      }
+    }
+
+    /**
+      @brief Checks if all spectra are sorted with respect to ascending RT
+
+      @param check_mz if @em true, checks if all peaks are sorted with respect to ascending m/z
+    */
+    bool isSorted(bool check_mz = true) const
+    {
+      //check RT positions
+      for (Size i = 1; i < spectra_.size(); ++i)
+      {
+        if (spectra_[i - 1].getRT() > spectra_[i].getRT()) return false;
+      }
+      //check spectra
+      if (check_mz)
+      {
+        for (Size i = 0; i < spectra_.size(); ++i)
+        {
+          if (!spectra_[i].isSorted()) return false;
+        }
+      }
+      // TODO CHROM
+      return true;
+    }
+
+    //@}
+
+    /// Resets all internal values
+    void reset()
+    {
+      spectra_.clear();           //remove data
+      RangeManagerType::clearRanges();           //reset range manager
+      ExperimentalSettings::operator=(ExperimentalSettings());           //reset meta info
+    }
+
+    /**
+      @brief Clears the meta data arrays of all contained spectra (float, integer and string arrays)
+
+      @return @em true if meta data arrays were present and removed. @em false otherwise.
+    */
+    bool clearMetaDataArrays()
+    {
+      bool meta_present = false;
+      for (Size i = 0; i < spectra_.size(); ++i)
+      {
+        if (spectra_[i].getFloatDataArrays().size() != 0 || spectra_[i].getIntegerDataArrays().size() != 0 || spectra_[i].getStringDataArrays().size() != 0)
+        {
+          meta_present = true;
+        }
+        spectra_[i].getStringDataArrays().clear();
+        spectra_[i].getIntegerDataArrays().clear();
+        spectra_[i].getFloatDataArrays().clear();
+      }
+      return meta_present;
+    }
+
+    /// returns the meta information of this experiment (const access)
+    const ExperimentalSettings & getExperimentalSettings() const
+    {
+      return *this;
+    }
+
+    /// returns the meta information of this experiment (mutable access)
+    ExperimentalSettings & getExperimentalSettings()
+    {
+      return *this;
+    }
+
+    /**
+      @brief Returns the precursor spectrum of the scan pointed to by @p iterator
+
+      If there is no precursor scan the past-the-end iterator is returned.
+    */
+    ConstIterator getPrecursorSpectrum(ConstIterator iterator) const
+    {
+      if (iterator == spectra_.end() || iterator == spectra_.begin())
+      {
+        return spectra_.end();
+      }
+      UInt ms_level = iterator->getMSLevel();
+      do
+      {
+        --iterator;
+        if (iterator->getMSLevel() < ms_level)
+        {
+          return iterator;
+        }
+      }
+      while (iterator != spectra_.begin());
+
+      return spectra_.end();
+    }
+
+    /// Swaps the content of this map with the content of @p from
+    void swap(MSExperiment & from)
+    {
+      MSExperiment tmp;
+
+      //swap range information
+      tmp.RangeManagerType::operator=(* this);
+      this->RangeManagerType::operator=(from);
+      from.RangeManagerType::operator=(tmp);
+
+      //swap experimental settings
+      tmp.ExperimentalSettings::operator=(* this);
+      this->ExperimentalSettings::operator=(from);
+      from.ExperimentalSettings::operator=(tmp);
+
+      //swap persistent object
+      tmp.PersistentObject::operator=(* this);
+      this->PersistentObject::operator=(from);
+      from.PersistentObject::operator=(tmp);
+
+      // swap chromatograms
+      std::swap(chromatograms_, from.chromatograms_);
+
+      //swap peaks
+      spectra_.swap(from.getSpectra());
+
+      //swap remaining members
+      ms_levels_.swap(from.ms_levels_);
+      std::swap(total_size_, from.total_size_);
+    }
+
+    /// sets the spectra list
+    void setSpectra(const std::vector<MSSpectrum<PeakT> > & spectra)
+    {
+      spectra_ = spectra;
+    }
+
+    /// adds a spectra to the list
+    void addSpectrum(const MSSpectrum<PeakT> & spectrum)
+    {
+      spectra_.push_back(spectrum);
+    }
+
+    /// returns the spectra list
+    const std::vector<MSSpectrum<PeakT> > & getSpectra() const
+    {
+      return spectra_;
+    }
+
+    /// returns the spectra list
+    std::vector<MSSpectrum<PeakT> > & getSpectra() 
+    {
+      return spectra_;
+    }
+
+    /// sets the chromatogram list
+    void setChromatograms(const std::vector<MSChromatogram<ChromatogramPeakType> > & chromatograms)
+    {
+      chromatograms_ = chromatograms;
+    }
+
+    /// adds a chromatogram to the list
+    void addChromatogram(const MSChromatogram<ChromatogramPeakType> & chromatogram)
+    {
+      chromatograms_.push_back(chromatogram);
+    }
+
+    /// returns the chromatogram list
+    const std::vector<MSChromatogram<ChromatogramPeakType> > & getChromatograms() const
+    {
+      return chromatograms_;
+    }
+
+    /// @name Easy Access interface
+    //@{
+    /// returns a single chromatogram 
+    MSChromatogram<ChromatogramPeakType> & getChromatogram(Size id) 
+    {
+      return chromatograms_[id];
+    }
+
+    /// returns a single spectrum 
+    MSSpectrum<PeakT> & getSpectrum(Size id) 
+    {
+      return spectra_[id];
+    }
+
+    /// get the total number of spectra available
+    inline Size getNrSpectra() const
+    {
+      return spectra_.size();
+    }
+
+    /// get the total number of chromatograms available
+    inline Size getNrChromatograms() const
+    {
+      return chromatograms_.size();
+    }
+    //@}
+
+    /// returns the total ion chromatogram (TIC)
+    const MSChromatogram<ChromatogramPeakType> getTIC() const
+    {
+      // The TIC is (re)calculated from the MS1 spectra. Even if MSExperiment does not contain a TIC chromatogram explicitly, it can be reported.
+      MSChromatogram<ChromatogramPeakType> TIC;
+      for (typename Base::const_iterator spec_it = spectra_.begin(); spec_it != spectra_.end(); ++spec_it)
+      {
+        if (spec_it->getMSLevel() == 1)
+        {
+          DoubleReal totalIntensity = 0;
+          // sum intensities of a spectrum
+          for (typename SpectrumType::const_iterator peak_it = spec_it->begin(); peak_it != spec_it->end(); ++peak_it)
+          {
+            totalIntensity += peak_it->getIntensity();
+          }
+          // fill chromatogram
+          ChromatogramPeakType peak;
+          peak.setRT(spec_it->getRT());
+          peak.setIntensity(totalIntensity);
+          TIC.push_back(peak);
+        }
+      }
+      return TIC;
+    }
+
+    /**
+      @brief Clears all data and meta data
+
+      @param clear_meta_data If @em true, all meta data is cleared in addition to the data.
+    */
+    void clear(bool clear_meta_data)
+    {
+      spectra_.clear();
+
+      if (clear_meta_data)
+      {
+        clearRanges();
+        clearId();
+        this->ExperimentalSettings::operator=(ExperimentalSettings());             // no "clear" method
+        chromatograms_.clear();
+        ms_levels_.clear();
+        total_size_ = 0;
+      }
+    }
+
+protected:
+
+    // Docu in base class
+    virtual void clearChildIds_()
+    {
+      for (Size i = 0; i < spectra_.size(); ++i)
+      {
+        spectra_[i].clearId(true);
+      }
+    }
+
+    /// MS levels of the data
+    std::vector<UInt> ms_levels_;
+    /// Number of all data points
+    UInt64 total_size_;
+
+    /// chromatograms
+    std::vector<MSChromatogram<ChromatogramPeakType> > chromatograms_;
+
+    /// spectra
+    std::vector<SpectrumType> spectra_;
+  };
+
+
+  /// Print the contents to a stream.
+  template <typename PeakT, typename ChromatogramPeakT>
+  std::ostream & operator<<(std::ostream & os, const MSExperiment<PeakT, ChromatogramPeakT> & exp)
+  {
+    os << "-- MSEXPERIMENT BEGIN --" << std::endl;
+
+    //experimental settings
+    os << static_cast<const ExperimentalSettings &>(exp);
+
+    //spectra
+    for (typename MSExperiment<PeakT>::const_iterator it = exp.begin(); it != exp.end(); ++it)
+    {
+      os << *it;
+    }
+
+    //chromatograms
+    for (typename std::vector<MSChromatogram<ChromatogramPeakT> >::const_iterator it = exp.getChromatograms().begin(); it != exp.getChromatograms().end(); ++it)
+    {
+      os << *it;
+    }
+
+    os << "-- MSEXPERIMENT END --" << std::endl;
+
+    return os;
+  }
 
 } // namespace OpenMS
 

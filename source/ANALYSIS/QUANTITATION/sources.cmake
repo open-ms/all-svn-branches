@@ -6,7 +6,19 @@ set(sources_list
 ItraqChannelExtractor.C
 ItraqConstants.C
 ItraqQuantifier.C
+PeptideAndProteinQuant.C
 ProteinInference.C
+ProteinResolver.C
+QuantitativeExperimentalDesign.C
+IsobaricQuantitationMethod.C
+IsobaricChannelExtractor.C
+ItraqFourPlexQuantitationMethod.C
+IsobaricQuantifier.C
+IsobaricNormalizer.C
+IsobaricQuantifierStatistics.C
+IsobaricIsotopeCorrector.C
+ItraqEightPlexQuantitationMethod.C
+TMTSixPlexQuantitationMethod.C
 )
 
 ### add path to the filenames

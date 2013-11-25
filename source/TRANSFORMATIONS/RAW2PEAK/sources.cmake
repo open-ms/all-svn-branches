@@ -9,6 +9,8 @@ OptimizePeakDeconvolution.C
 OptimizePick.C
 PeakPickerCWT.C
 PeakPickerHiRes.C
+PeakPickerIterative.C
+PeakPickerSH.C
 PeakShape.C
 TwoDOptimization.C
 )

@@ -4,16 +4,13 @@ set(directory source/COMPARISON/CLUSTERING)
 ### list all filenames of the directory here
 set(sources_list
 AverageLinkage.C
-CentroidLinkage.C
 ClusterAnalyzer.C
 ClusterFunctor.C
 ClusterHierarchical.C
-ClusteringMethod.C
 CompleteLinkage.C
 EuclideanSimilarity.C
-HashClustering.C
-QTClustering.C
 SingleLinkage.C
+SILACClustering.C
 )
 
 ### add path to the filenames

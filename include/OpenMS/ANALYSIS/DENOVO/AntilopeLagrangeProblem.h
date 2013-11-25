@@ -58,11 +58,11 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     DeNovoLagrangeProblemBoost(const SpectrumGraphSeqan *G_in):
                           LagrangeProblem(),
                           G(G_in),
-                          forbidden_nodes_(),                          
+                          forbidden_nodes_(),                                                                              
+                          prefix_(),
                           edge_weights_(),
                           edge_weights_bk_(),
                           spanning_edges_(),
-                          prefix_(),
                           lower_bound_(MINUS_INF)
     {      
       best_feasible_solution_.score = MINUS_INF;
@@ -79,12 +79,12 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     DeNovoLagrangeProblemBoost(const DeNovoLagrangeProblemBoost &dnlp):
                           LagrangeProblem(dnlp),
                           G(dnlp.G),
-                          edge_weights_(dnlp.edge_weights_),
-                          edge_weights_bk_(dnlp.edge_weights_bk_),
                           forbidden_nodes_(dnlp.forbidden_nodes_),
                           forbidden_edges_(dnlp.forbidden_edges_),
-                          spanning_edges_(dnlp.spanning_edges_),
                           prefix_(dnlp.prefix_),
+                          edge_weights_(dnlp.edge_weights_),
+                          edge_weights_bk_(dnlp.edge_weights_bk_),                          
+                          spanning_edges_(dnlp.spanning_edges_),                          
                           lower_bound_(MINUS_INF)
     {      
       best_feasible_solution_.score = MINUS_INF;
@@ -142,9 +142,6 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     //private default constructor
     DeNovoLagrangeProblemBoost(){;}
 
-    //remove this. seems to be conly for testing reasons
-    double lower_bound_;
-
     ///SpectrumGraph
     const SpectrumGraphSeqan *G;
 
@@ -175,6 +172,8 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
     std::vector<std::vector<EdgeDescriptor> > spanning_edges_;
 
+    //remove this. seems to be conly for testing reasons
+    double lower_bound_;
 
   public:
     /// method computes the longest path

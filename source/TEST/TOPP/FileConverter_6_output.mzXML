@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <mzXML xmlns="http://sashimi.sourceforge.net/schema_revision/mzXML_2.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sashimi.sourceforge.net/schema_revision/mzXML_2.1 http://sashimi.sourceforge.net/schema_revision/mzXML_2.1/mzXML_idx_2.1.xsd">
 	<msRun scanCount="28">
-		<parentFile fileName="tiny1.RAW" fileType="RAWData" fileSha1="71be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+		<parentFile fileName="FileConverter_6_input.mzML" fileType="processedData" fileSha1="1bba4248ffd9231a39d431e10512e34ac5917f50"/>
 		<msInstrument>
 			<msManufacturer category="msManufacturer" value=""/>
 			<msModel category="msModel" value=""/>
@@ -83,7 +83,7 @@
 			<nameValue name="preset scan configuration" value="3"/>
 		</scan>
 		<scan num="4" msLevel="1" peaksCount="0" polarity="+" scanType="zoom" retentionTime="PT5.4S" startMz="110" endMz="905">
-			<peaks precision="32" byteOrder="network" pairOrder="m/z-int" xsi:nil="1"/>
+			<peaks precision="32" byteOrder="network" pairOrder="m/z-int" xsi:nil="true"/>
 			<nameValue name="sdname" value="spectrumdescription4"/>
 			<scan num="5" msLevel="2" peaksCount="1" polarity="any" retentionTime="PT0S">
 				<precursorMz precursorIntensity="0">0</precursorMz>

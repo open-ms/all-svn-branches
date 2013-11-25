@@ -1,133 +1,220 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
+// --------------------------------------------------------------------------
+//                   OpenMS -- Open-Source Mass Spectrometry
+// --------------------------------------------------------------------------
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+//
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
-// --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
-// --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Maintainer: Mathias Walzer $
+// $Authors: Mathias Walzer, Timo Sachsenberg$
 // --------------------------------------------------------------------------
 //
 #ifndef OPENMS_FILTERING_TRANSFORMERS_WINDOWMOWER_H
 #define OPENMS_FILTERING_TRANSFORMERS_WINDOWMOWER_H
 
-#include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
+#include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
+#include <OpenMS/KERNEL/StandardTypes.h>
+
 #include <set>
 
 namespace OpenMS
 {
 
   /**
-  	@brief WindowMower augments the highest peaks in a sliding window
-		 
-		@htmlinclude OpenMS_WindowMower.parameters
+    @brief WindowMower augments the highest peaks in a sliding or jumping window
 
-		@ingroup SpectraPreprocessers
+    @htmlinclude OpenMS_WindowMower.parameters
+
+    @ingroup SpectraPreprocessers
   */
-  class OPENMS_DLLAPI WindowMower
-  	 : public PreprocessingFunctor
+  class OPENMS_DLLAPI WindowMower :
+    public DefaultParamHandler
   {
-  public:
+public:
 
-		// @name Constructors, destructors and assignment operators
-		// @{
+    // @name Constructors, destructors and assignment operators
+    // @{
     /// default constructor
     WindowMower();
-
-    /// copy constructor
-    WindowMower(const WindowMower& source);
-
     /// destructor
     virtual ~WindowMower();
 
+    /// copy constructor
+    WindowMower(const WindowMower& source);
     /// assignment operator
-    WindowMower& operator = (const WindowMower& source);
-		// @}
+    WindowMower& operator=(const WindowMower& source);
+    // @}
 
-    static PreprocessingFunctor* create()
-    { 
-    	return new WindowMower();
-    }
-		
-		template <typename SpectrumType> void filterSpectrum(SpectrumType& spectrum)
-		{
-			typedef typename SpectrumType::Iterator Iterator;
-			typedef typename SpectrumType::ConstIterator ConstIterator;
-			
-			DoubleReal windowsize = (DoubleReal)param_.getValue("windowsize");
-    	UInt peakcount = (UInt)param_.getValue("peakcount");
-			
-			//copy spectrum
-			SpectrumType old_spectrum = spectrum;
-			old_spectrum.sortByPosition();
-			
-			//find high peak positions
-			bool end  = false;
-			std::set<double> positions;
-			for (ConstIterator it = old_spectrum.begin(); it != old_spectrum.end(); ++it)
-			{
-				// copy the window from the spectrum
-				SpectrumType window;
-				for (ConstIterator it2 = it; (it2->getPosition() - it->getPosition() < windowsize); )
-				{
-					window.push_back(*it2);
-					if (++it2 == old_spectrum.end())
-					{
-						end = true;
-						break;
-					}
-				}
-				
-				//extract peakcount most intense peaks				
-				window.sortByIntensity(true);
-				for (Size i = 0; i < peakcount; ++i)
-				{
-					if (i < window.size())
-					{
-						positions.insert(window[i].getMZ());
-					}
-				}
-				//abort at the end of the spectrum
-				if (end) break;
-			}
+    /// sliding window version (slower)
+    template <typename SpectrumType>
+    void filterPeakSpectrumForTopNInSlidingWindow(SpectrumType& spectrum)
+    {
+      typedef typename SpectrumType::ConstIterator ConstIterator;
 
-			// replace the old peaks by the new ones
-			spectrum.clear(false);
-			for (ConstIterator it = old_spectrum.begin(); it != old_spectrum.end(); ++it)
-			{
-				if (positions.find(it->getMZ()) != positions.end())
-				{
-					spectrum.push_back(*it);
-				}
-			}
+      windowsize_ = (DoubleReal)param_.getValue("windowsize");
+      peakcount_ = (UInt)param_.getValue("peakcount");
+
+      //copy spectrum
+      SpectrumType old_spectrum = spectrum;
+      old_spectrum.sortByPosition();
+
+      //find high peak positions
+      bool end  = false;
+      std::set<double> positions;
+      for (ConstIterator it = old_spectrum.begin(); it != old_spectrum.end(); ++it)
+      {
+        // copy the window from the spectrum
+        SpectrumType window;
+        for (ConstIterator it2 = it; (it2->getPosition() - it->getPosition() < windowsize_); )
+        {
+          window.push_back(*it2);
+          if (++it2 == old_spectrum.end())
+          {
+            end = true;
+            break;
+          }
+        }
+
+        //extract peakcount most intense peaks
+        window.sortByIntensity(true);
+        for (Size i = 0; i < peakcount_; ++i)
+        {
+          if (i < window.size())
+          {
+            positions.insert(window[i].getMZ());
+          }
+        }
+        //abort at the end of the spectrum
+        if (end) break;
+      }
+
+      // replace the old peaks by the new ones
+      spectrum.clear(false);
+      for (ConstIterator it = old_spectrum.begin(); it != old_spectrum.end(); ++it)
+      {
+        if (positions.find(it->getMZ()) != positions.end())
+        {
+          spectrum.push_back(*it);
+        }
+      }
     }
 
-		void filterPeakSpectrum(PeakSpectrum& spectrum);
+    void filterPeakSpectrum(PeakSpectrum& spectrum);
 
-		void filterPeakMap(PeakMap& exp);
-	
-		static const String getProductName()
-		{
-			return "WindowMower";
-		}
-		
+    void filterPeakMap(PeakMap& exp);
+
+    // jumping window version (faster)
+    template <typename SpectrumType>
+    void filterPeakSpectrumForTopNInJumpingWindow(SpectrumType& spectrum)
+    {
+      if (spectrum.empty())
+      {
+        return;
+      }
+
+      spectrum.sortByPosition();
+
+      windowsize_ = (DoubleReal)param_.getValue("windowsize");
+      peakcount_ = (UInt)param_.getValue("peakcount");
+
+      // copy meta data
+      SpectrumType out = spectrum;
+      out.clear(false);
+
+      SpectrumType peaks_in_window;
+      DoubleReal window_start = spectrum[0].getMZ();
+      for (Size i = 0; i != spectrum.size(); ++i)
+      {
+        if (spectrum[i].getMZ() - window_start < windowsize_)      // collect peaks in window
+        {
+          peaks_in_window.push_back(spectrum[i]);
+        }
+        else       // step over window boundaries
+        {
+          window_start = spectrum[i].getMZ();       // as there might be large gaps between peaks resulting in empty windows, set new window start to next peak
+
+          // copy N highest peaks to out
+          if (peaks_in_window.size() > peakcount_)
+          {
+            std::partial_sort(peaks_in_window.begin(), peaks_in_window.begin() + peakcount_, peaks_in_window.end(), reverseComparator(typename SpectrumType::PeakType::IntensityLess()));
+            copy(peaks_in_window.begin(), peaks_in_window.begin() + peakcount_, back_inserter(out));
+          }
+          else
+          {
+            std::sort(peaks_in_window.begin(), peaks_in_window.end(), reverseComparator(typename SpectrumType::PeakType::IntensityLess()));
+            copy(peaks_in_window.begin(), peaks_in_window.end(), back_inserter(out));
+          }
+
+          peaks_in_window.clear(false);
+          peaks_in_window.push_back(spectrum[i]);
+        }
+      }
+
+      if (peaks_in_window.empty())    // last window is empty -> no special handling needed
+      {
+        out.sortByPosition();
+        spectrum = out;
+        return;
+      }
+
+      // Note that the last window might be much smaller than windowsize.
+      // Therefor the number of peaks copied from this window should be adapted accordingly.
+      // Otherwise a lot of noise peaks are copied from each end of a spectrum.
+
+      DoubleReal last_window_size = peaks_in_window.back().getMZ() - window_start;
+      DoubleReal last_window_size_fraction = last_window_size / windowsize_;
+      Size last_window_peakcount = last_window_size_fraction * peakcount_;
+
+      if (last_window_peakcount)    // handle single peak in last window (will produce no proper fraction)
+      {
+        last_window_peakcount = 1;
+      }
+
+      // sort for last_window_peakcount highest peaks
+      std::partial_sort(peaks_in_window.begin(), peaks_in_window.begin() + last_window_peakcount, peaks_in_window.end(), reverseComparator(typename SpectrumType::PeakType::IntensityLess()));
+
+      if (peaks_in_window.size() > last_window_peakcount)
+      {
+        std::copy(peaks_in_window.begin(), peaks_in_window.begin() + last_window_peakcount, back_inserter(out));
+      }
+      else
+      {
+        std::copy(peaks_in_window.begin(), peaks_in_window.end(), std::back_inserter(out));
+      }
+
+      out.sortByPosition();
+      spectrum = out;
+      return;
+    }
+
+    //TODO reimplement DefaultParamHandler::updateMembers_()
+
+private:
+    DoubleReal windowsize_;
+    UInt peakcount_;
   };
 
 }

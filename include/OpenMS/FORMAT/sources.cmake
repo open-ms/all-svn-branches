@@ -22,7 +22,6 @@ source_group("Source Files\\OpenMS\\FORMAT" FILES ${mocced_sources})
 
 ### list all header files of the directory here
 set(sources_list_h
-ANDIFile.h
 Base64.h
 Bzip2Ifstream.h
 Bzip2InputStream.h
@@ -42,25 +41,29 @@ FileHandler.h
 GzipIfstream.h
 GzipInputStream.h
 IdXMLFile.h
+IndexedMzMLFile.h
+IndexedMzMLFileLoader.h
 InspectInfile.h
 InspectOutfile.h
 KroenikFile.h
 LibSVMEncoder.h
 MS2File.h
+MSNumpressCoder.h
 MSPFile.h
 MascotInfile.h
 MascotGenericFile.h
-MascotOutfile.h
 MascotRemoteQuery.h
 MascotXMLFile.h
 MsInspectFile.h
 MzDataFile.h
 MzMLFile.h
+MzTab.h
+MzTabFile.h
 MzXMLFile.h
 OMSSACSVFile.h
 OMSSAXMLFile.h
+ParamXMLFile.h
 PTMXMLFile.h
-PeakFileOptions.h
 PeakTypeEstimator.h
 PepNovoInfile.h
 PepNovoOutfile.h
@@ -71,6 +74,7 @@ SequestInfile.h
 SequestOutfile.h
 SpecArrayFile.h
 SVOutStream.h
+SwathFile.h
 TextFile.h
 ToolDescriptionFile.h
 TransformationXMLFile.h
@@ -80,6 +84,7 @@ XTandemInfile.h
 XTandemXMLFile.h
 FileTypes.h
 MzIdentMLFile.h
+MzQuantMLFile.h
 TraMLFile.h
 XMassFile.h
 )

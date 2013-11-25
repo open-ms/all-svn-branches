@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
@@ -26,8 +33,6 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmPoseClustering.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/StablePairFinder.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
@@ -39,213 +44,107 @@ using namespace std;
 namespace OpenMS
 {
 
-	MapAlignmentAlgorithmPoseClustering::MapAlignmentAlgorithmPoseClustering()
-		: MapAlignmentAlgorithm(), reference_index_(0), reference_file_()
-	{
-		setName("MapAlignmentAlgorithmPoseClustering");
+  MapAlignmentAlgorithmPoseClustering::MapAlignmentAlgorithmPoseClustering() :
+    MapAlignmentAlgorithm(),
+    max_num_peaks_considered_(0)
+  {
+    setName("MapAlignmentAlgorithmPoseClustering");
 
-		defaults_.insert("superimposer:",PoseClusteringAffineSuperimposer().getParameters());
-		defaults_.insert("pairfinder:",StablePairFinder().getParameters());
-		defaults_.setValue("max_num_peaks_considered",400,"The maximal number of peaks to be considered per map.  This cutoff is only applied to peak maps. To use all peaks, set this to '-1'.");
-		defaults_.setMinInt("max_num_peaks_considered", -1);
-		//TODO 'max_num_peaks_considered' should apply to peaks and features!! (Clemens)
-		defaultsToParam_();
-	}
+    defaults_.insert("superimposer:", PoseClusteringAffineSuperimposer().getParameters());
+    defaults_.insert("pairfinder:", StablePairFinder().getParameters());
+    defaults_.setValue("max_num_peaks_considered", 1000, "The maximal number of peaks/features to be considered per map. To use all, set to '-1'.");
+    defaults_.setMinInt("max_num_peaks_considered", -1);
 
-	MapAlignmentAlgorithmPoseClustering::~MapAlignmentAlgorithmPoseClustering()
-	{
-	}
+    defaultsToParam_();
 
-	void MapAlignmentAlgorithmPoseClustering::setReference(Size reference_index, const String& reference_file)
-	{
-		reference_index_ = reference_index;
-		// can't load the file yet because we don't know if the type will match:
-		reference_file_ = reference_file;
-	}
+  }
 
-	void MapAlignmentAlgorithmPoseClustering::alignPeakMaps(vector< MSExperiment<> >& maps, vector<TransformationDescription>& transformations)
-	{
-		// prepare transformations for output
-		transformations.clear();
+  void MapAlignmentAlgorithmPoseClustering::updateMembers_()
+  {
+    superimposer_.setParameters(param_.copy("superimposer:", true));
+    superimposer_.setLogType(getLogType());
 
-		const Int max_num_peaks_considered = param_.getValue("max_num_peaks_considered");
+    pairfinder_.setParameters(param_.copy("pairfinder:", true));
+    pairfinder_.setLogType(getLogType());
 
-		// reference map:
-		Size reference_index = reference_index_ - 1; // local index is 0-based
-		if (!reference_file_.empty())
-		{
-			if (FileHandler::getType(reference_file_) != FileTypes::MZML)
-			{
-				throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "reference file must be of type mzML in this case (same as input)");
-			}
-			maps.resize(maps.size() + 1);
-			MzMLFile().load(reference_file_, maps.back());
-			reference_index = maps.size() - 1;
-		}
-		else if (reference_index_ == 0) // no reference given
-		{
-			// use map with highest number of peaks as reference:
-			Size max_count = 0;
-			for (Size m = 0; m < maps.size(); ++m)
-			{
-				// initialize "getSize()" by calling "updateRanges()"
-				maps[m].updateRanges(1);
-				if (maps[m].getSize() > max_count)
-				{
-					max_count = maps[m].getSize();
-					reference_index = m;
-				}
-			}
-		}
+    max_num_peaks_considered_ = param_.getValue("max_num_peaks_considered");
+  }
 
-		computeTransformations_(maps, transformations, reference_index, 
-														max_num_peaks_considered);
-	}
+  MapAlignmentAlgorithmPoseClustering::~MapAlignmentAlgorithmPoseClustering()
+  {
+  }
 
+  void MapAlignmentAlgorithmPoseClustering::align(const FeatureMap<> & map, TransformationDescription & trafo)
+  {
+    ConsensusMap map_scene;
+    ConsensusMap::convert(1, map, map_scene, max_num_peaks_considered_);
+    align(map_scene, trafo);
+  }
 
-	template <typename MapType>
-	void MapAlignmentAlgorithmPoseClustering::computeTransformations_(
-		vector<MapType>& maps, vector<TransformationDescription>& transformations,
-		Size reference_index, Size max_num_peaks_considered)
-	{
-		startProgress(0, 10 * maps.size(), "aligning input maps");
+  void MapAlignmentAlgorithmPoseClustering::align(const MSExperiment<> & map, TransformationDescription & trafo)
+  {
+    ConsensusMap map_scene;
+    MSExperiment<> map2(map);
+    ConsensusMap::convert(1, map2, map_scene, max_num_peaks_considered_); // copy MSExperiment here, since it is sorted internally by intensity
+    align(map_scene, trafo);
+  }
 
-    // build a consensus map of the elements of the reference map (for consensus
-    // map input, take only the highest peaks)
-    vector<ConsensusMap> input(2);
-		ConsensusMap::convert(reference_index, maps[reference_index], input[0], 
-													max_num_peaks_considered);
+  void MapAlignmentAlgorithmPoseClustering::align(const ConsensusMap & map, TransformationDescription & trafo)
+  {
+    // TODO: move this to updateMembers_? (if consensusMap prevails)
+    // TODO: why does superimposer work on consensus map???
+    const ConsensusMap & map_model = reference_;
+    ConsensusMap map_scene = map;
 
-		//init superimposer and pairfinder with model and parameters
-		PoseClusteringAffineSuperimposer superimposer;
-    superimposer.setParameters(param_.copy("superimposer:", true));
-		superimposer.setLogType(getLogType());
+    // run superimposer to find the global transformation
+    TransformationDescription si_trafo;
+    superimposer_.run(map_model, map_scene, si_trafo);
 
-    StablePairFinder pairfinder;
-    pairfinder.setParameters(param_.copy("pairfinder:", true));
-		pairfinder.setLogType(getLogType());
-
-		for (Size i = 0; i < maps.size(); ++i)
-		{
-			setProgress(10 * i);
-			if (i != reference_index)
-			{
-				// build scene_map
-				ConsensusMap::convert(i, maps[i], input[1], max_num_peaks_considered);
-				setProgress(10 * i + 1);
-
-				// run superimposer to find the global transformation
-	      vector<TransformationDescription> si_trafos;
-	      superimposer.run(input, si_trafos);
-				setProgress(10 * i + 2);
-
-				// apply transformation to consensus features and contained feature
-				// handles
-				for (Size j = 0; j < input[1].size(); ++j)
-				{
-					//Calculate new RT
-					DoubleReal rt = input[1][j].getRT();
-					rt = si_trafos[0].apply(rt);
-					//Set RT of consensus feature centroid
-					input[1][j].setRT(rt);
-					//Set RT of consensus feature handles
-					input[1][j].begin()->asMutable().setRT(rt);
-				}
-				setProgress(10 * i + 3);
-
-	      //run pairfinder fo find pairs
-				ConsensusMap result;
-				pairfinder.run(input, result);
-				setProgress(10 * i + 4);
-
-				// calculate the local transformation
-				si_trafos[0].invert(); // to undo the transformation applied above
-				TransformationDescription::DataPoints data;
-				for (ConsensusMap::Iterator it = result.begin(); it != result.end();
-						 ++it)
-				{
-					if (it->size() == 2) // two matching features
-					{
-						DoubleReal x = 0, y = 0;
-						for (ConsensusFeature::iterator feat_it = it->begin();
-								 feat_it != it->end(); ++feat_it)
-						{
-							// one feature should be from the reference map:
-							if (feat_it->getMapIndex() == reference_index)
-							{
-								y = feat_it->getRT();
-							}
-							// transform RT back to the original scale:
-							else x = si_trafos[0].apply(feat_it->getRT());
-						}
-						data.push_back(make_pair(x, y));
-					}
-				}
-				setProgress(10 * i + 5);
-				TransformationDescription trafo(data);
-				transformations.push_back(trafo);
-				setProgress(10*i+6);
-			}
-
-			else if (reference_file_.empty())
-			{
-				// set no transformation for reference map:
-				TransformationDescription trafo;
-				trafo.fitModel("identity");
-				transformations.push_back(trafo);
-			}
-		}
-
-		setProgress(10 * maps.size());
-		endProgress();
-
-		// reference file was added to "maps", has to be removed now:
-		if (!reference_file_.empty()) maps.resize(maps.size() - 1);
-	}
-
-
-	void MapAlignmentAlgorithmPoseClustering::alignFeatureMaps(vector< FeatureMap<> >& maps, vector<TransformationDescription>& transformations)
-	{
-		// prepare transformations for output
-		transformations.clear();
-
-		// reference map:
-		Size reference_index(0);
-		if (!reference_file_.empty())
-		{
-			if (FileHandler::getType(reference_file_) != FileTypes::FEATUREXML)
-			{
-				throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "reference file must be of type featureXML in this case (same as input)");
-			}
-			maps.resize(maps.size() + 1);
-			FeatureXMLFile().load(reference_file_, maps.back());
-			reference_index = maps.size() - 1;
-		}
-    else if (reference_index_ == 0) // no reference given
+    // apply transformation to consensus features and contained feature
+    // handles
+    for (Size j = 0; j < map_scene.size(); ++j)
     {
-			// use map with highest number of features as reference:
-      Size max_count = 0;
-      for (Size m = 0; m < maps.size(); ++m)
+      //Calculate new RT
+      DoubleReal rt = map_scene[j].getRT();
+      rt = si_trafo.apply(rt);
+      //Set RT of consensus feature centroid
+      map_scene[j].setRT(rt);
+      //Set RT of consensus feature handles
+      map_scene[j].begin()->asMutable().setRT(rt);
+    }
+
+    //run pairfinder to find pairs
+    ConsensusMap result;
+    //TODO: add another 2map interface to pairfinder?
+    std::vector<ConsensusMap> input(2);
+    input[0] = map_model;
+    input[1] = map_scene;
+    pairfinder_.run(input, result);
+
+    // calculate the local transformation
+    si_trafo.invert();         // to undo the transformation applied above
+    TransformationDescription::DataPoints data;
+    for (ConsensusMap::Iterator it = result.begin(); it != result.end();
+         ++it)
+    {
+      if (it->size() == 2)           // two matching features
       {
-        if (maps[m].size() > max_count)
+        ConsensusFeature::iterator feat_it = it->begin();
+        DoubleReal y = feat_it->getRT();
+        DoubleReal x = si_trafo.apply((++feat_it)->getRT());
+        // one feature should be from the reference map:
+        if (feat_it->getMapIndex() != 0)
         {
-          max_count = maps[m].size();
-          reference_index = m;
+          data.push_back(make_pair(x, y));
+        }
+        else
+        {
+          data.push_back(make_pair(y, x));
         }
       }
     }
-
-		computeTransformations_(maps, transformations, reference_index);
-	}
-
-
-	void MapAlignmentAlgorithmPoseClustering::getDefaultModel(String& model_type, 
-																														Param& params)
-	{
-		model_type = "linear";
-		params.clear();
-		params.setValue("symmetric_regression", "true");
-	}
-
+    trafo = TransformationDescription(data);
+    trafo.fitModel("linear");
+  }
 
 } //namespace

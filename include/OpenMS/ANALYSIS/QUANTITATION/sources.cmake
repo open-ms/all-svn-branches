@@ -6,7 +6,19 @@ set(sources_list_h
 ItraqChannelExtractor.h
 ItraqConstants.h
 ItraqQuantifier.h
+PeptideAndProteinQuant.h
 ProteinInference.h
+ProteinResolver.h
+QuantitativeExperimentalDesign.h
+IsobaricQuantitationMethod.h
+IsobaricChannelExtractor.h
+ItraqFourPlexQuantitationMethod.h
+IsobaricQuantifier.h
+IsobaricNormalizer.h
+IsobaricQuantifierStatistics.h
+IsobaricIsotopeCorrector.h
+ItraqEightPlexQuantitationMethod.h
+TMTSixPlexQuantitationMethod.h
 )
 
 ### add path to the filenames
@@ -19,4 +31,3 @@ endforeach(i)
 source_group("Header Files\\OpenMS\\ANALYSIS\\QUANTITATION" FILES ${sources_h})
 
 set(OpenMS_sources_h ${OpenMS_sources_h} ${sources_h})
-

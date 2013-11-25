@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
 // $Authors: Andreas Bertsch $
@@ -145,6 +152,75 @@ START_SECTION((void addCVTerm(const CVTerm &term)))
   TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), false)
   cv_term_list.addCVTerm(cv_term);
   TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), true)
+}
+END_SECTION
+
+START_SECTION((void replaceCVTerm(const CVTerm &cv_term)))
+{
+  CVTerm::Unit unit("my_unit_accession", "my_unit_name", "my_unit_ontology_name");
+  CVTerm cv_term("my_accession", "my_name", "my_cv_identifier_ref", "3.0", unit);
+  CVTermList cv_term_list;
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), false)
+  cv_term_list.replaceCVTerm(cv_term);
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), true)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"].size(), 1)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"][0].getValue(), "3.0")
+  CVTerm cv_term2("my_accession", "my_name", "my_cv_identifier_ref", "2.0", unit);
+  cv_term_list.replaceCVTerm(cv_term2);
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), true)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"].size(), 1)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"][0].getValue(), "2.0")
+}
+END_SECTION
+
+START_SECTION((void replaceCVTerms(const std::vector<CVTerm> &cv_terms)))
+{
+  CVTerm::Unit unit("my_unit_accession", "my_unit_name", "my_unit_ontology_name");
+  CVTerm cv_term("my_accession", "my_name", "my_cv_identifier_ref", "3.0", unit);
+  CVTerm cv_term2("my_accession", "my_name", "my_cv_identifier_ref", "2.0", unit);
+  std::vector<CVTerm> tmp;
+  tmp.push_back(cv_term);
+  tmp.push_back(cv_term2);
+  CVTermList cv_term_list;
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), false)
+  cv_term_list.replaceCVTerms(tmp, "my_accession");
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), true)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"].size(), 2)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"][0].getValue(), "3.0")
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"][1].getValue(), "2.0")
+  cv_term_list.replaceCVTerm(cv_term2);
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), true)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"].size(), 1)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"][0].getValue(), "2.0")
+}
+END_SECTION
+
+START_SECTION((void replaceCVTerms(const Map<String, vector<CVTerm> >& cv_term_map)))
+{
+  CVTerm::Unit unit("my_unit_accession", "my_unit_name", "my_unit_ontology_name");
+  CVTerm cv_term("my_accession", "my_name", "my_cv_identifier_ref", "3.0", unit);
+  CVTerm cv_term2("my_accession2", "my_name", "my_cv_identifier_ref", "2.0", unit);
+  std::vector<CVTerm> tmp;
+  tmp.push_back(cv_term);
+  std::vector<CVTerm> tmp2;
+  tmp2.push_back(cv_term2);
+  Map<String, std::vector<CVTerm> >new_terms;
+  new_terms["my_accession2"] = tmp2;
+  TEST_EQUAL(new_terms.has("my_accession2"), true);
+
+  // create CVTermList with old "my_accession"
+  CVTermList cv_term_list;
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), false)
+  cv_term_list.replaceCVTerms(tmp, "my_accession");
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), true)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession"].size(), 1)
+
+  // replace the terms, delete "my_accession" and introduce "my_accession2"
+  cv_term_list.replaceCVTerms(new_terms);
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession"), false)
+  TEST_EQUAL(cv_term_list.hasCVTerm("my_accession2"), true)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession2"].size(), 1)
+  TEST_EQUAL(cv_term_list.getCVTerms()["my_accession2"][0].getValue(), "2.0")
 }
 END_SECTION
 

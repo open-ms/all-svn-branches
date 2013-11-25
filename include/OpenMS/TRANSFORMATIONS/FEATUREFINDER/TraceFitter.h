@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
@@ -48,38 +55,35 @@ namespace OpenMS
    * This class provides the basic interface and some functionality to fit multiple mass traces to
    * a given RT shape model using the Levenberg-Marquardt algorithm.
    *
-   * @htmlinclude OpenMS_TraceFitter.parameters
-   *
    * @todo docu needs update
    *
    */
   template <class PeakType>
-  class TraceFitter
-    : public DefaultParamHandler
+  class TraceFitter :
+    public DefaultParamHandler
   {
 
-  public:
+public:
     /// default constructor.
-    TraceFitter()
-      : DefaultParamHandler("TraceFitter")
+    TraceFitter() :
+      DefaultParamHandler("TraceFitter")
     {
-      this->defaults_.setValue( "max_iteration", 500, "Maximum number of iterations using by Levenberg-Marquardt algorithm.", StringList::create("advanced") );
-      this->defaults_.setValue( "epsilon_abs", 0.0001, "Absolute error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced") );
-      this->defaults_.setValue( "epsilon_rel", 0.0001, "Relative error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced") );
+      this->defaults_.setValue("max_iteration", 500, "Maximum number of iterations using by Levenberg-Marquardt algorithm.", StringList::create("advanced"));
+      this->defaults_.setValue("epsilon_abs", 0.0001, "Absolute error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced"));
+      this->defaults_.setValue("epsilon_rel", 0.0001, "Relative error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced"));
     }
 
     /// copy constructor
-    TraceFitter(const TraceFitter& source)
-      : DefaultParamHandler(source),
-        epsilon_abs_(source.epsilon_abs_),
-        epsilon_rel_(source.epsilon_rel_),
-        max_iterations_(source.max_iterations_)
+    TraceFitter(const TraceFitter & source) :
+      DefaultParamHandler(source),
+      epsilon_abs_(source.epsilon_abs_),
+      epsilon_rel_(source.epsilon_rel_),
+      max_iterations_(source.max_iterations_)
     {
     }
 
-
     /// assignment operator
-    virtual TraceFitter& operator = (const TraceFitter& source)
+    virtual TraceFitter & operator=(const TraceFitter & source)
     {
       DefaultParamHandler::operator=(source);
       max_iterations_ = source.max_iterations_;
@@ -98,58 +102,40 @@ namespace OpenMS
     /**
      * Main method of the TraceFitter which triggers the actual fitting.
      */
-    virtual void fit(FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & /* traces */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void fit(FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & traces) = 0;
 
     /**
      * Returns the lower bound of the fitted RT model
      */
-    virtual DoubleReal getLowerRTBound() const
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal getLowerRTBound() const = 0;
 
     /**
      * Returns the upper bound of the fitted RT model
      */
-    virtual DoubleReal getUpperRTBound() const
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal getUpperRTBound() const = 0;
 
     /**
      * Returns the height of the fitted model
      */
-    virtual DoubleReal getHeight() const
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal getHeight() const = 0;
 
     /**
      * Returns the center position of the fitted model
      */
-    virtual DoubleReal getCenter() const
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal getCenter() const = 0;
 
     /**
      * Returns the mass trace width at half max (FWHM)
      */
-    virtual DoubleReal getFWHM() const
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal getFWHM() const = 0;
 
     /**
      * Returns the theoretical value of the fitted model at position k in the passed Mass Trace
+     *
+     * @param trace the mass trace for which the value should be computed
+     * @param k  use the position of the k-th peak to compute the value
      */
-    virtual DoubleReal computeTheoretical(const FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> & /* trace */, Size /* k */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal computeTheoretical(const FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> & trace, Size k) = 0;
 
     /**
      * Checks if the fitted model fills out at least 'min_rt_span' of the RT span
@@ -157,29 +143,20 @@ namespace OpenMS
      * @param rt_bounds RT boundaries of the fitted model
      * @param min_rt_span Minimum RT span in relation to extended area that has to remain after model fitting
      */
-    virtual bool checkMinimalRTSpan(const std::pair<DoubleReal,DoubleReal> & /* rt_bounds */, const DoubleReal /* min_rt_span */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual bool checkMinimalRTSpan(const std::pair<DoubleReal, DoubleReal> & rt_bounds, const DoubleReal min_rt_span) = 0;
 
     /**
      * Checks if the fitted model is not to big
      *
      * @param max_rt_span Maximum RT span in relation to extended area that the model is allowed to have
      */
-    virtual bool checkMaximalRTSpan(const DoubleReal /* max_rt_span */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual bool checkMaximalRTSpan(const DoubleReal max_rt_span) = 0;
 
     /**
      * ???
      * @todo docu needs update
      */
-    virtual DoubleReal getFeatureIntensityContribution()
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual DoubleReal getFeatureIntensityContribution() = 0;
 
     /**
      * Returns a textual representation of the fitted model function, that can be plotted using Gnuplot
@@ -190,20 +167,17 @@ namespace OpenMS
      * @param rt_shift A shift value, that allows to plot all RT profiles side by side, even if they would overlap in reality.
      *                 This should be 0 for the first mass trace and increase by a fixed value for each mass trace.
      */
-    virtual String getGnuplotFormula(FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> const & /* trace */, const char /* function_name */, const DoubleReal /* baseline */, const DoubleReal /* rt_shift */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual String getGnuplotFormula(FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> const & trace, const char function_name, const DoubleReal baseline, const DoubleReal rt_shift) = 0;
 
-  protected:
+protected:
 
     /**
+     * Prints the state of the current iteration (e.g., values of the parameters)
      *
+     * @param iter Number of current iteration.
+     * @param s The solver that also contains all the parameters.
      */
-    virtual void printState_(SignedSize /* iter */, gsl_multifit_fdfsolver * /* s */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void printState_(SignedSize iter, gsl_multifit_fdfsolver * s) = 0;
 
     virtual void updateMembers_()
     {
@@ -213,29 +187,28 @@ namespace OpenMS
     }
 
     /**
+     * Updates all member variables to the fitted values stored in the solver.
      *
+     * @param s The solver containing the fitted parameter values.
      */
-    virtual void getOptimizedParameters_(gsl_multifit_fdfsolver * /* s */)
-    {
-      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-    }
+    virtual void getOptimizedParameters_(gsl_multifit_fdfsolver * s) = 0;
 
     /**
      * Optimize the given parameters using the Levenberg-Marquardt algorithm.
      */
     void optimize_(FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & traces, const Size num_params, double x_init[],
-        Int (* residual)(const gsl_vector * x, void * params, gsl_vector * f),
-        Int (* jacobian)(const gsl_vector * x, void * params, gsl_matrix * J),
-        Int (* evaluate)(const gsl_vector * x, void * params, gsl_vector * f, gsl_matrix * J))
+                   Int (* residual)(const gsl_vector * x, void * params, gsl_vector * f),
+                   Int (* jacobian)(const gsl_vector * x, void * params, gsl_matrix * J),
+                   Int (* evaluate)(const gsl_vector * x, void * params, gsl_vector * f, gsl_matrix * J))
     {
-      const gsl_multifit_fdfsolver_type *T;
-      gsl_multifit_fdfsolver *s;
+      const gsl_multifit_fdfsolver_type * T;
+      gsl_multifit_fdfsolver * s;
 
       const size_t data_count = traces.getPeakCount();
 
       // gsl always expects N>=p or default gsl error handler invoked,
       // cause Jacobian be rectangular M x N with M>=N
-      if ( data_count < num_params ) throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-FinalSet", "Skipping feature, gsl always expects N>=p" );
+      if (data_count < num_params) throw Exception::UnableToFit(__FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-FinalSet", "Skipping feature, gsl always expects N>=p");
 
       gsl_multifit_function_fdf func;
       gsl_vector_view x = gsl_vector_view_array(x_init, num_params);
@@ -251,7 +224,7 @@ namespace OpenMS
       gsl_multifit_fdfsolver_set(s, &func, &x.vector);
       SignedSize iter = 0;
       Int gsl_status_;
-			do
+      do
       {
         iter++;
         gsl_status_ = gsl_multifit_fdfsolver_iterate(s);
@@ -274,8 +247,7 @@ namespace OpenMS
     DoubleReal epsilon_rel_;
     /// Maximum number of iterations
     SignedSize max_iterations_;
-    /// Current status of the gsl fitting
-    //Int gsl_status_;
+
   };
 
 }

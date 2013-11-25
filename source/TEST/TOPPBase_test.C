@@ -1,34 +1,42 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
-// $Authors: Marc Sturm, Clemens Groepl $
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
+// --------------------------------------------------------------------------
+// $Maintainer: Stephan Aiche $
+// $Authors: Marc Sturm, Clemens Groepl, Stephan Aiche $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
 #include <OpenMS/FORMAT/TextFile.h>
+#include <OpenMS/FORMAT/ParamXMLFile.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
@@ -78,9 +86,7 @@ class TOPPBaseTest
       registerDoubleList_("doublelist2","<double>",DoubleList::create("1.2,2.33"),"doublelist with restrictions",false);
       setMinFloat_("doublelist2",0.2);
       setMaxFloat_("doublelist2",5.4);
-
     }
-
 
     String getStringOption(const String& name) const
     {
@@ -184,7 +190,7 @@ class TOPPBaseTestNOP
     {
       registerStringOption_("stringoption","<string>","","string description");
       registerIntOption_("intoption","<int>",0,"int description",false);
-      registerDoubleOption_("doubleoption","<double>",std::numeric_limits<double>::quiet_NaN(),"double description");
+      registerDoubleOption_("doubleoption","<double>", -1.0,"double description", false);
       registerFlag_("flag","flag description");
       registerStringList_("stringlist","<stringlist>",StringList::create(""),"stringlist description");
       registerIntList_("intlist","<intlist>",IntList::create(""),"intlist description");
@@ -226,6 +232,114 @@ class TOPPBaseTestNOP
     }
 };
 
+// Test class for parameters derived from a Param object
+class TOPPBaseTestParam: public TOPPBase
+{
+  public:
+    TOPPBaseTestParam(const Param& param): 
+			TOPPBase("TOPPBaseTestParam", "A test class with parameters derived from Param", false), test_param_(param)
+    {
+      main(0, 0);
+    }
+
+    virtual void registerOptionsAndFlags_()
+    {
+			registerFullParam_(test_param_);
+		}
+
+    virtual ExitCodes main_(int /*argc*/ , const char** /*argv*/)
+    {
+      return EXECUTION_OK;
+    }
+
+	  const Param& getParam() const
+		{
+			return getParam_();
+		}
+
+  private:
+	  Param test_param_;
+};
+
+//test class with optional parameters
+class TOPPBaseCmdParseTest
+  : public TOPPBase
+{
+
+public:
+  TOPPBaseCmdParseTest()
+    : TOPPBase("TOPPBaseCmdParseTest", "A test class to test parts of the cmd parser functionality", false)
+  {}
+  
+  virtual void registerOptionsAndFlags_()
+  {
+  }
+  
+  ExitCodes run(int argc , const char** argv)
+  {
+    return main(argc, argv);
+  }
+  
+  virtual ExitCodes main_(int /*argc*/ , const char** /*argv*/)
+  {
+    return EXECUTION_OK;
+  }
+};
+
+//test class with optional parameters
+class TOPPBaseCmdParseSubsectionsTest
+: public TOPPBase
+{
+  
+public:
+  TOPPBaseCmdParseSubsectionsTest()
+  : TOPPBase("TOPPBaseCmdParseSubsectionsTest", "A test class to test parts of the cmd parser functionality", false)
+  {}
+  
+  void registerOptionsAndFlags_()
+  {
+    registerStringOption_("stringoption","<string>","","string description");
+    registerSubsection_("algorithm", "Algorithm parameters section");
+    registerSubsection_("other", "Other parameters section");
+  }
+  
+  Param getSubsectionDefaults_(const String & section) const
+  {
+    Param p;
+    if (section == "algorithm")
+    {
+      p.setValue("param1", "param1_value", "param1_description");
+      p.setValue("param2", "param2_value", "param2_description");
+    }
+    else
+    {
+      p.setValue("param3", "param3_value", "param3_description");
+      p.setValue("param4", "param4_value", "param4_description");
+    }
+    return p;
+  }
+  
+  ExitCodes run(int argc , const char** argv)
+  {
+    return main(argc, argv);
+  }
+  
+  virtual ExitCodes main_(int /*argc*/ , const char** /*argv*/)
+  {
+    return EXECUTION_OK;
+  }
+  
+  String getStringOption(String name)
+  {
+    return getStringOption_(name);
+  }
+  
+  Param getParam()
+  {
+    return getParam_();
+  }
+};
+
 /////////////////////////////////////////////////////////////
 
   START_TEST(TOPPBase, "$Id$");
@@ -234,7 +348,7 @@ class TOPPBaseTestNOP
 
 TOPPBaseTest* ptr = 0;
 TOPPBaseTest* nullPointer = 0;
-START_SECTION((TOPPBase(const String &name, const String &description, bool official=true, bool id_tag_support=false, const String &version="")))
+START_SECTION((TOPPBase(const String& name, const String& description, bool official = true, bool id_tag_support = false, bool require_args = true, const String& version = "")))
 	ptr = new TOPPBaseTest();
 	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
@@ -242,52 +356,6 @@ END_SECTION
 START_SECTION((virtual ~TOPPBase()))
 	delete ptr;
 END_SECTION
-
-START_SECTION((void checkTOPPIniFile(const String &tool_path)))
-  // does this anything? (ek)
-  NOT_TESTABLE
-END_SECTION
-
-START_SECTION((static Map<String,StringList> getToolList()))
-	TEST_EQUAL(ToolHandler::getTOPPToolList().has("FileInfo"),true)
-	TEST_EQUAL(ToolHandler::getTOPPToolList().has("ImaginaryTool"),false)
-	TEST_EQUAL(ToolHandler::getTOPPToolList()["FileInfo"].types.empty(),true)
-	TEST_EQUAL(ToolHandler::getTOPPToolList()["FeatureFinder"].types.empty(),false)
-END_SECTION
-
-START_SECTION((static Map<String,StringList> getUtilList()))
-	TEST_EQUAL(ToolHandler::getUtilList().has("MapAlignmentEvaluation"),true)
-	TEST_EQUAL(ToolHandler::getUtilList().has("SomeCoolUtil"),false)
-	TEST_EQUAL(ToolHandler::getUtilList()["MSSimulator"].types.empty(),false)
-	TEST_EQUAL(ToolHandler::getUtilList()["ImageCreator"].types.empty(),true)
-END_SECTION
-
-TOPPBase::ParameterInformation* pi_ptr = 0;
-TOPPBase::ParameterInformation* pi_nullPointer = 0;
-
-START_SECTION(([TOPPBase::ParameterInformation] ParameterInformation()))
-    pi_ptr = new TOPPBase::ParameterInformation();
-    TEST_NOT_EQUAL(pi_ptr, pi_nullPointer)
-END_SECTION
-
-TOPPBase::ParameterInformation pi("Temperatur", TOPPBase::ParameterInformation::DOUBLE, "sehr hoch", "ganz hoch", "eine Art Beschreibung", true, false);
-
-START_SECTION(([TOPPBase::ParameterInformation] ParameterInformation(const String &n, ParameterTypes t, const String &arg, const DataValue &def, const String &desc, bool req, bool adv, const StringList &tag_values=StringList())))
-  TEST_EQUAL(pi.name, "Temperatur");
-  TEST_EQUAL(pi.type, TOPPBase::ParameterInformation::DOUBLE);
-  TEST_EQUAL(pi.default_value, "ganz hoch");
-  TEST_EQUAL(pi.required, true);
-END_SECTION
-
-START_SECTION(([TOPPBase::ParameterInformation] ParameterInformation& operator=(const ParameterInformation &rhs)))
-  TOPPBase::ParameterInformation assign_to = pi;
-  
-  TEST_EQUAL(assign_to.name, "Temperatur");
-  TEST_EQUAL(assign_to.type, TOPPBase::ParameterInformation::DOUBLE);
-  TEST_EQUAL(assign_to.default_value, "ganz hoch");
-  TEST_EQUAL(assign_to.required, true);
-END_SECTION
-
 
 START_SECTION((ExitCodes main(int argc, const char**argv)))
 	NOT_TESTABLE
@@ -383,7 +451,8 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 
 	TOPPBaseTest tmp9(3, write_ini);
 	Param p1, p2;
-	p1.load(filename);
+  ParamXMLFile paramFile;
+	paramFile.load(filename, p1);
 	//remove id pool (the path is dependent on the installation path)
 	p1.remove("TOPPBaseTest:1:id_pool");
 
@@ -447,11 +516,6 @@ START_SECTION(([EXTRA]String getDoubleOption_(const String& name) const))
 
 	TEST_EXCEPTION(Exception::WrongParameterType,tmp2.getDoubleOption("intoption"));
 	TEST_EXCEPTION(Exception::UnregisteredParameter,tmp2.getDoubleOption("imleeewenit"));
-
-	//missing required parameters
-	const char* string_cl2[2] = {a1, a11};
-	TOPPBaseTestNOP tmp3(2,string_cl2);
-	TEST_EXCEPTION(Exception::RequiredParameterNotGiven,tmp3.getDoubleOption("doubleoption"));
 END_SECTION
 
 START_SECTION(([EXTRA] String getIntList_(const String& name) const))
@@ -619,6 +683,99 @@ START_SECTION(([EXTRA] data processing methods))
 		TEST_EQUAL(exp[i].getDataProcessing()[0].getProcessingActions().size(),1)
 		TEST_EQUAL(*(exp[i].getDataProcessing()[0].getProcessingActions().begin()),DataProcessing::ALIGNMENT)
 	}
+END_SECTION
+
+START_SECTION(([EXTRA] const Param& getParam_()))
+{
+	Param test_param;
+	test_param.setValue("param_int", 123, "param int description");
+	test_param.setValue("param_double", -4.56, "param double description");
+	test_param.setValue("param_string", "test", "param string description");
+	test_param.setValue("param_stringlist", StringList::create("this,is,a,test"), "param stringlist description");
+	test_param.setValue("param_intlist", IntList::create("7,-8,9"), "param intlist description");
+	test_param.setValue("param_doublelist", DoubleList::create("123,-4.56,0.789"), "param doublelist description");
+	test_param.setValue("param_flag", "true", "param flag description");
+	test_param.setValidStrings("param_flag", StringList::create("true,false"));
+
+	TOPPBaseTestParam temp(test_param);
+	Param result = temp.getParam(); // contains "test_param" + some default stuff
+	for (Param::ParamIterator it = test_param.begin(); it != test_param.end(); ++it)
+	{
+		TEST_EQUAL(*it == result.getEntry(it.getName()), true);
+	}
+}
+END_SECTION
+
+START_SECTION((static void setMaxNumberOfThreads(int num_threads)))
+{
+  // this is a helper function that is only working if openmp is active
+  // due to bugs in the different OpenMP implementations it is not realy
+  // testable
+  NOT_TESTABLE
+}
+END_SECTION
+
+START_SECTION(([EXTRA] misc options on command line))
+{
+  // misc text option
+	const char* string_cl[2] = {a1, a12}; //command line: "TOPPBaseTest commandline"
+	TOPPBaseCmdParseTest tmp1;
+  TOPPBase::ExitCodes ec1 = tmp1.run(2,string_cl);
+  TEST_EQUAL(ec1, TOPPBase::ILLEGAL_PARAMETERS)
+
+  // unknown option
+  TOPPBaseCmdParseTest tmp2;
+	const char* string_cl_2[3] = {a1, a10, a12}; //command line: "TOPPBaseTest -stringoption commandline"
+  TOPPBase::ExitCodes ec2 = tmp1.run(3,string_cl_2);
+  TEST_EQUAL(ec2, TOPPBase::ILLEGAL_PARAMETERS)
+}
+END_SECTION
+
+const char* a22 = "-algorithm:param1";
+const char* a23 = "-algorithm:param2";
+const char* a24 = "-other:param3";
+const char* a25 = "-other:param4";
+const char* a26 = "val1";
+const char* a27 = "val2";
+const char* a28 = "val3";
+const char* a29 = "val4";
+std::string temp_a30(OPENMS_GET_TEST_DATA_PATH("TOPPBaseCmdParseSubsectionsTest.ini"));
+const char* a30 = temp_a30.c_str();
+
+START_SECTION(([EXTRA] test subsection parameters))
+{
+  const char* string_cl_1[3] = {a1, a10, a12}; //command line: "TOPPBaseTest -stringoption commandline"
+	TOPPBaseCmdParseSubsectionsTest tmp1;
+  TOPPBase::ExitCodes ec1 = tmp1.run(3, string_cl_1);
+  TEST_EQUAL(ec1, TOPPBase::EXECUTION_OK)
+  TEST_EQUAL(tmp1.getStringOption("stringoption"), "commandline");
+  TEST_EQUAL(tmp1.getParam().getValue("algorithm:param1"), "param1_value");
+  TEST_EQUAL(tmp1.getParam().getValue("algorithm:param2"), "param2_value");
+  TEST_EQUAL(tmp1.getParam().getValue("other:param3"), "param3_value");
+  TEST_EQUAL(tmp1.getParam().getValue("other:param4"), "param4_value");
+  
+  // overwrite from cmd
+  const char* string_cl_2[11] = {a1, a10, a12, a22, a26, a23, a27, a24, a28, a25, a29}; //command line: "TOPPBaseTest -algorithm:param1 val1 -algorithm:param2 val2 -algorithm:param3 val3 -algorithm:param4 val4 -stringoption commandline"
+	TOPPBaseCmdParseSubsectionsTest tmp2;
+  TOPPBase::ExitCodes ec2 = tmp2.run(11, string_cl_2);
+  TEST_EQUAL(ec2, TOPPBase::EXECUTION_OK)
+  TEST_EQUAL(tmp2.getStringOption("stringoption"), "commandline");
+  TEST_EQUAL(tmp2.getParam().getValue("algorithm:param1"), "val1");
+  TEST_EQUAL(tmp2.getParam().getValue("algorithm:param2"), "val2");
+  TEST_EQUAL(tmp2.getParam().getValue("other:param3"), "val3");
+  TEST_EQUAL(tmp2.getParam().getValue("other:param4"), "val4");
+    
+  // overwrite ini values from cmd
+  const char* string_cl_3[9] = {a1, a3, a30, a22, a26, a25, a29, a10, a12 }; //command line: "TOPPBaseTest -ini TOPPBaseCmdParseSubsectionsTest.ini -algorithm:param1 val1 -algorithm:param4 val4"
+	TOPPBaseCmdParseSubsectionsTest tmp3;
+  TOPPBase::ExitCodes ec3 = tmp3.run(9, string_cl_3);
+  TEST_EQUAL(ec3, TOPPBase::EXECUTION_OK)
+  TEST_EQUAL(tmp3.getStringOption("stringoption"), "commandline");
+  TEST_EQUAL(tmp3.getParam().getValue("algorithm:param1"), "val1");
+  TEST_EQUAL(tmp3.getParam().getValue("algorithm:param2"), "param2_ini_value");
+  TEST_EQUAL(tmp3.getParam().getValue("other:param3"), "param3_ini_value");
+  TEST_EQUAL(tmp3.getParam().getValue("other:param4"), "val4");
+}
 END_SECTION
 
 /////////////////////////////////////////////////////////////

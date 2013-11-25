@@ -83,7 +83,9 @@ namespace OpenMS{
     for(Size i = 0; i < nodes.size(); ++i)
     {
       forbidNode(nodes[i]);
+#ifdef DEBUG
       std::cerr<<" forbid node: "<< nodes[i] <<std::endl;
+#endif
     }
 
 
@@ -131,7 +133,7 @@ namespace OpenMS{
       seqan::appendValue(ordering, *it);
     }
 
-    seqan::dagShortestPathST(G->graph, start_vertex, seqan::back(ordering), edge_weights_, predecessors, distance, ordering, forbidden_nodes_, forbidden_edges_);
+    SpectrumGraphSeqan::dagShortestPathST(G->graph, start_vertex, seqan::back(ordering), edge_weights_, predecessors, distance, ordering, forbidden_nodes_, forbidden_edges_);
 
     if(seqan::back(distance) >= SpectrumGraphSeqan::INFINITYdist / 2)
     {
@@ -338,26 +340,27 @@ namespace OpenMS{
 
   void DeNovoLagrangeProblemBoost::updateWeights(const DVector& lambda)
   {
+    typedef SpectrumGraphSeqan::VertexDescriptor VertexDescriptor;
+    typedef SpectrumGraphSeqan::OutEdgeIterator OutEdgeIterator;
     edge_weights_ = edge_weights_bk_;
 
-    SpectrumGraphSeqan::VertexIterator node_it(G->graph);
+    DVector::const_iterator l_it(lambda.begin());
 
-    for(; !seqan::atEnd(node_it); ++node_it)
+    for (Size id = 0; l_it != lambda.end(); ++l_it, ++id)
     {
-      DoubleReal lambda_sum = 0.0;
-      const std::vector<Size> &clusters = G->getClusters(*node_it);
-      for(std::vector<Size>::const_iterator clust_it = clusters.begin(); clust_it!=clusters.end(); ++clust_it)
-      {
-        lambda_sum += lambda[*clust_it];
-      }
+      if (*l_it == 0)
+        continue;
 
-      if(lambda_sum > 0)
+      std::vector<VertexDescriptor>vertices;
+      G->getConflictingNodesByCluster(vertices, id);
+      std::vector<VertexDescriptor>::const_iterator v_it(vertices.begin());
+      //put weights onto outgoing edges
+      for (; v_it != vertices.end(); ++v_it)
       {
-        // adapt weight of all outgoing edges
-        SpectrumGraphSeqan::OutEdgeIterator out_it(G->graph, *node_it);
+        OutEdgeIterator out_it(G->graph, *v_it);
         for(; !seqan::atEnd(out_it); ++out_it)
         {
-          seqan::property(edge_weights_, *out_it) += lambda_sum;
+          seqan::property(edge_weights_, *out_it) += *l_it;
         }
       }
     }

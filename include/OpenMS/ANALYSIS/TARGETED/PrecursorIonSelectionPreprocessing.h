@@ -1,24 +1,31 @@
-// -*- Mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Alexandra Zerck $
@@ -32,7 +39,7 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/FORMAT/FASTAFile.h>
-
+#include <OpenMS/KERNEL/FeatureMap.h>
 
 #include <algorithm>
 #include <cmath>
@@ -40,108 +47,130 @@
 #include <fstream>
 namespace OpenMS
 {
-	
+
   /**
-		 @brief This class implements the database preprocessing needing for precursor ion selection.
+    @brief This class implements the database preprocessing needing for precursor ion selection.
 
-		 
-
-		 @htmlinclude OpenMS_PrecursorIonSelectionPreprocessing.parameters
-
-	*/
-  class OPENMS_DLLAPI PrecursorIonSelectionPreprocessing : public DefaultParamHandler
+    @htmlinclude OpenMS_PrecursorIonSelectionPreprocessing.parameters
+   */
+  class OPENMS_DLLAPI PrecursorIonSelectionPreprocessing :
+    public DefaultParamHandler
   {
-  public:
-		PrecursorIonSelectionPreprocessing();
-		PrecursorIonSelectionPreprocessing(const PrecursorIonSelectionPreprocessing& source);
-		~PrecursorIonSelectionPreprocessing();
-		
-		PrecursorIonSelectionPreprocessing& operator = (const PrecursorIonSelectionPreprocessing& source);
-		
-	
-		const std::map<String,std::vector<DoubleReal> >& getProtMasses() const;
+public:
+    PrecursorIonSelectionPreprocessing();
+    PrecursorIonSelectionPreprocessing(const PrecursorIonSelectionPreprocessing & source);
+    ~PrecursorIonSelectionPreprocessing();
+
+    PrecursorIonSelectionPreprocessing & operator=(const PrecursorIonSelectionPreprocessing & source);
 
 
-		const std::vector<DoubleReal> & getMasses(String acc) const;
+    const std::map<String, std::vector<DoubleReal> > & getProtMasses() const;
 
-		const std::map<String, std::vector<DoubleReal> >& getProteinRTMap() const;
-		const std::map<String, std::vector<DoubleReal> >& getProteinPTMap() const;
-		const std::map<String, std::vector<String> >& getProteinPeptideSequenceMap() const;
-		
 
-		/**
-		 *	@brief Calculates tryptric peptide masses of a given database and stores masses and peptide sequences
-		 *	
-		 *	@param db_path Path to database file (fasta)
-		 *	@param save Flag if preprocessing should be stored.
-		 *
-		 *	@throws Exception::FileNotFound if file with preprocessing or db can't be found
-		 *  @throws Exception::UnableToCreateFile if preprocessing file can't be written
-		 */
-		void dbPreprocessing(String db_path,bool save=true);
+    const std::vector<DoubleReal> & getMasses(String acc) const;
 
-		/**
-		 *	@brief Calculates tryptric peptide masses of a given database and stores masses and peptide sequences
-		 *	
-		 *	@param db_path Path to database file (fasta)
-		 *	@param save Flag if preprocessing should be stored.
-		 *
-		 *	@throws Exception::FileNotFound if file with preprocessing or db can't be found
-		 *  @throws Exception::UnableToCreateFile if preprocessing file can't be written
-		 */
-		void dbPreprocessing(String db_path,String rt_model_path,String dt_model_path,bool save=true);
+    const std::map<String, std::vector<DoubleReal> > & getProteinRTMap() const;
+    const std::map<String, std::vector<DoubleReal> > & getProteinPTMap() const;
+    const std::map<String, std::vector<String> > & getProteinPeptideSequenceMap() const;
 
-		
-		/**
-		 *	@brief Loads tryptric peptide masses of a given database.
-		 *
-		 *	@throws Exception::FileNotFound if file with preprocessing can't be found
-		 *	@throws Exception::InvalidParameter if precursor_mass_tolerance_unit is ppm and
-		 *  file containing bin borders can't be found
-		 */
-		void loadPreprocessing();
 
-		/// get the weighted frequency of a mass
-		DoubleReal getWeight(DoubleReal mass);
+    /**
+      @brief Calculates tryptic peptide masses of a given database and stores masses and peptide sequences
 
-		DoubleReal getRT(String prot_id,Size peptide_index);
-		
-		DoubleReal getPT(String prot_id,Size peptide_index);
+      @param db_path Path to database file (fasta)
+      @param save Flag if preprocessing should be stored.
 
-		/// get the rt-weight for the proposed peptide and its measured rt
-		DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt);
+      @throws Exception::FileNotFound if file with preprocessing or db can't be found
+      @throws Exception::UnableToCreateFile if preprocessing file can't be written
+    */
+    void dbPreprocessing(String db_path, bool save = true);
 
-		
-	protected:
-		/// saves the preprocessed db
-		void savePreprocessedDB_(String db_path,String path);
-		void savePreprocessedDBWithRT_(String db_path,String path);
-		/// loads the preprocessed db
-		void loadPreprocessedDB_(String path);
-		void setFixedModifications_(StringList& modifications);
+    /**
+      @brief Calculates tryptic peptide masses of a given database and stores masses and peptide sequences
 
-    /// preprocess fasta identifier
-    void filterTaxonomyIdentifier_(FASTAFile::FASTAEntry& entry);
+      @param db_path Path to database file (fasta)
+      @param rt_model_path
+      @param dt_model_path
+      @param save Flag if preprocessing should be stored.
 
-		/// all tryptic masses of the distinct peptides in the database
-		std::vector<DoubleReal> masses_;
+      @throws Exception::FileNotFound if file with preprocessing or db can't be found
+      @throws Exception::UnableToCreateFile if preprocessing file can't be written
+    */
+    void dbPreprocessing(String db_path, String rt_model_path, String dt_model_path, bool save = true);
+
+
+    /**
+      @brief Loads tryptic peptide masses of a given database.
+
+      @throws Exception::FileNotFound if file with preprocessing can't be found
+      @throws Exception::InvalidParameter if precursor_mass_tolerance_unit is ppm and
+      file containing bin borders can't be found
+    */
+    void loadPreprocessing();
+
+    /// get the weighted frequency of a mass
+    DoubleReal getWeight(DoubleReal mass);
+
+    DoubleReal getRT(String prot_id, Size peptide_index);
+
+    DoubleReal getPT(String prot_id, Size peptide_index);
+
+    void setFixedModifications(StringList & modifications);
+    const std::map<char, std::vector<String> > & getFixedModifications()
+    {
+      return fixed_modifications_;
+    }
+
+    void setGaussianParameters(DoubleReal mu, DoubleReal sigma);
+    DoubleReal getGaussMu()
+    {
+      return mu_;
+    }
+
+    DoubleReal getGaussSigma()
+    {
+      return sigma_;
+    }
+
+    DoubleReal getRTProbability(String prot_id, Size peptide_index, Feature & feature);
+    DoubleReal getRTProbability(DoubleReal pred_rt, Feature & feature);
+
+protected:
+    /// saves the preprocessed db
+    void savePreprocessedDB_(String db_path, String path);
+    void savePreprocessedDBWithRT_(String db_path, String path);
+    /// loads the preprocessed db
+    void loadPreprocessedDB_(String path);
+    /// pre-process fasta identifier
+    void filterTaxonomyIdentifier_(FASTAFile::FASTAEntry & entry);
+    Int getScanNumber_(DoubleReal rt);
+    DoubleReal getRTProbability_(DoubleReal min_obs_rt, DoubleReal max_obs_rt, DoubleReal pred_rt);
+    /// update members method from DefaultParamHandler to update the members
+    void updateMembers_();
+
+    /// all tryptic masses of the distinct peptides in the database
+    std::vector<DoubleReal> masses_;
     /// the sequences of the tryptic peptides
     std::set<AASequence> sequences_;
     /// stores masses of tryptic peptides for proteins, key is the accession number
-    std::map<String,std::vector<DoubleReal> > prot_masses_;
+    std::map<String, std::vector<DoubleReal> > prot_masses_;
     /// the masses of the bins used for preprocessing (only used if bins are not equidistant, i.e. with ppm)
     std::vector<DoubleReal> bin_masses_;
-		/// counter for the bins
-		std::vector<UInt> counter_;
-		/// maximal relative frequency of a mass
+    /// counter for the bins
+    std::vector<UInt> counter_;
+    /// maximal relative frequency of a mass
     UInt f_max_;
 
-		bool fixed_mods_;
-		std::map<String, std::vector<DoubleReal> > rt_prot_map_;
-		std::map<String, std::vector<DoubleReal> > pt_prot_map_;
-		std::map<String, std::vector<String> > prot_peptide_seq_map_;
-		std::map<char, std::vector<String> > fixed_modifications_;
+    bool fixed_mods_;
+    std::map<String, std::vector<DoubleReal> > rt_prot_map_;
+    std::map<String, std::vector<DoubleReal> > pt_prot_map_;
+    std::map<String, std::vector<String> > prot_peptide_seq_map_;
+    std::map<char, std::vector<String> > fixed_modifications_;
+    DoubleReal sigma_;
+    DoubleReal mu_;
+
+
   };
 }
-    
+
 #endif //#ifndef OPENMS_ANALYSIS_ID_PRECURSORIONSELECTIONPREPROCESSING_H

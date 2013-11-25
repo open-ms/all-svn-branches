@@ -172,8 +172,8 @@ namespace OpenMS
       double time = (clock() - tstart) / CLOCKS_PER_SEC;
       time_total = time;
       cout << "TIME_LAGRANGE::" << i << "::" << time << "::" << time_total << endl;
-
     }
+
     cout << " TOTAL TIME_LAGRANGE:: " <<time_total << endl;
 
     for (int i = 0; i < k; i++)

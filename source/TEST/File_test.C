@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Chris Bielow $
@@ -31,6 +38,9 @@
 
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
+#include <OpenMS/CONCEPT/VersionInfo.h>
+#include <OpenMS/FORMAT/TextFile.h>
+#include <QDir>
 
 using namespace OpenMS;
 using namespace std;
@@ -47,19 +57,20 @@ END_SECTION
 
 START_SECTION((static bool exists(const String &file)))
 	TEST_EQUAL(File::exists("does_not_exists.txt"), false)
+	TEST_EQUAL(File::exists(""), false)
 	TEST_EQUAL(File::exists(OPENMS_GET_TEST_DATA_PATH("File_test_text.txt")), true)
 END_SECTION
 
 START_SECTION((static bool empty(const String &file)))
 	TEST_EQUAL(File::empty("does_not_exists.txt"), true)
-	TEST_EQUAL(File::empty(OPENMS_GET_TEST_DATA_PATH("File_test_empty.txt")), true)	
+	TEST_EQUAL(File::empty(OPENMS_GET_TEST_DATA_PATH("File_test_empty.txt")), true)
 	TEST_EQUAL(File::empty(OPENMS_GET_TEST_DATA_PATH("File_test_text.txt")), false)
 END_SECTION
 
 START_SECTION((static bool remove(const String &file)))
 	//deleting non-existing file
 	TEST_EQUAL(File::remove("does_not_exists.txt"), true)
-	
+
 	//deleting existing file
 	String filename;
 	NEW_TMP_FILE(filename);
@@ -67,20 +78,21 @@ START_SECTION((static bool remove(const String &file)))
 	os.open (filename.c_str(), ofstream::out);
 	os << "File_test dummy file to delete" << endl;
 	os.close();
-	TEST_EQUAL(File::remove(filename), true)	
+	TEST_EQUAL(File::remove(filename), true)
 END_SECTION
 
 START_SECTION((static bool readable(const String &file)))
 	TEST_EQUAL(File::readable("does_not_exists.txt"), false)
-	TEST_EQUAL(File::readable(OPENMS_GET_TEST_DATA_PATH("File_test_empty.txt")), true)	
+	TEST_EQUAL(File::readable(OPENMS_GET_TEST_DATA_PATH("File_test_empty.txt")), true)
 	TEST_EQUAL(File::readable(OPENMS_GET_TEST_DATA_PATH("File_test_text.txt")), true)
+	TEST_EQUAL(File::readable(""), false)
 END_SECTION
 
 START_SECTION((static bool writable(const String &file)))
 	TEST_EQUAL(File::writable("/this/file/cannot/be/written.txt"), false)
 	TEST_EQUAL(File::writable(OPENMS_GET_TEST_DATA_PATH("File_test_empty.txt")), true)
 	TEST_EQUAL(File::writable(OPENMS_GET_TEST_DATA_PATH("File_test_imaginary.txt")), true)
-		
+
 	String filename;
 	NEW_TMP_FILE(filename);
 	TEST_EQUAL(File::writable(filename), true)
@@ -88,8 +100,16 @@ END_SECTION
 
 START_SECTION((static String find(const String &filename, StringList directories=StringList())))
 	TEST_EXCEPTION(Exception::FileNotFound,File::find("File.h"))
-
-	TEST_NOT_EQUAL(File::find("OpenMS_DB.sql"),"");
+  TEST_NOT_EQUAL(File::find("OpenMS_DB.sql"),"");
+  TEST_EXCEPTION(Exception::FileNotFound,File::find(""))
+END_SECTION
+  
+START_SECTION((static String findDoc(const String& filename)))
+	TEST_EXCEPTION(Exception::FileNotFound,File::findDoc("non-existing-documentation"))
+  // should exist in every valid source tree (we cannot test for Doxyfile since doxygen might not be installed)
+  TEST_EQUAL(File::findDoc("doxygen/Doxyfile.in").hasSuffix("Doxyfile.in"), true)
+  // a file from the build tree
+  TEST_EQUAL(File::findDoc("code_examples/cmake_install.cmake").hasSuffix("cmake_install.cmake"), true)
 END_SECTION
 
 START_SECTION((static String absolutePath(const String &file)))
@@ -101,7 +121,7 @@ START_SECTION((static String path(const String &file)))
 END_SECTION
 
 START_SECTION((static String basename(const String &file)))
-	TEST_EQUAL(File::basename("/souce/config/bla/bluff.h"),"bluff.h");
+	TEST_EQUAL(File::basename("/souce/config/bla/bluff.h"), "bluff.h");
 END_SECTION
 
 START_SECTION((static bool fileList(const String &dir, const String &file_pattern, StringList &output, bool full_path=false)))
@@ -117,7 +137,7 @@ END_SECTION
 
 START_SECTION((static String getUniqueName()))
 	String unique_name = File::getUniqueName();
-	
+
 	// test if the string consists of three parts
 	StringList split;
 	unique_name.split('_', split);
@@ -143,6 +163,47 @@ START_SECTION((static bool isDirectory(const String& path)))
 	TEST_EQUAL(File::isDirectory(OPENMS_GET_TEST_DATA_PATH("File_test_text.txt")),false)
 END_SECTION
 
+START_SECTION(static bool removeDirRecursively(const String &dir_name))
+  QDir d;
+  String dirname = File::getTempDirectory() + "/" + File::getUniqueName() + "/" + File::getUniqueName() + "/";
+  TEST_EQUAL(d.mkpath(dirname.toQString()), TRUE);
+  TextFile tf;
+  tf.store(dirname + "test.txt");
+  TEST_EQUAL(File::removeDirRecursively(dirname), true)
+END_SECTION
+
+START_SECTION(static String getTempDirectory())
+  TEST_NOT_EQUAL(File::getTempDirectory(), String())
+  TEST_EQUAL(File::exists(File::getTempDirectory()), true)
+END_SECTION
+
+START_SECTION(static String getUserDirectory())
+  TEST_NOT_EQUAL(File::getUserDirectory(), String())
+  TEST_EQUAL(File::exists(File::getUserDirectory()), true)
+END_SECTION
+
+START_SECTION(static Param getSystemParameters())
+  Param p = File::getSystemParameters();
+  TEST_EQUAL(p.size()>0, true)
+  TEST_EQUAL(p.getValue("version"), VersionInfo::getVersion())
+END_SECTION
+
+START_SECTION(static String findDatabase(const String &db_name))
+
+  TEST_EXCEPTION(Exception::FileNotFound, File::findDatabase("filedoesnotexists"))
+  String db = File::findDatabase("./CV/unimod.obo");
+  //TEST_EQUAL(db,"wtf")
+  TEST_EQUAL(db.hasSubstring("share/OpenMS"), true)
+
+END_SECTION
+
+
+START_SECTION(static String findExecutable(const OpenMS::String& toolName))
+{
+	TEST_EXCEPTION(Exception::FileNotFound, File::findExecutable("executable_does_not_exist"))
+	TEST_EQUAL(File::path(File::findExecutable("File_test")) + "/", File::getExecutablePath())
+}
+END_SECTION
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

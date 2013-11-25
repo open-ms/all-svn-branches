@@ -1,24 +1,31 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2013.
 //
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution
+//    may be used to endorse or promote products derived from this software
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS.
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
@@ -30,102 +37,204 @@
 
 #include <OpenMS/FORMAT/XMLFile.h>
 #include <OpenMS/FORMAT/HANDLERS/MzMLHandler.h>
-#include <OpenMS/FORMAT/PeakFileOptions.h>
+#include <OpenMS/FORMAT/OPTIONS/PeakFileOptions.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/METADATA/DocumentIdentifier.h>
+#include <OpenMS/INTERFACES/IMSDataConsumer.h>
 
 namespace OpenMS
 {
-	/**
-		@brief File adapter for MzML files
+  /**
+      @brief File adapter for MzML files
 
-		This implementation does currently not support the whole functionality of MzML.
-		Some minor features are still missing:
-			- chromatograms
-			
-		@todo Implement chromatograms (Andreas)
-		
-		@ingroup FileIO
-	*/
-	class OPENMS_DLLAPI MzMLFile
-		:	public Internal::XMLFile,
-			public ProgressLogger
-	{
-		public:
-			///Default constructor
-			MzMLFile();
-			///Destructor
-			~MzMLFile();
+      This implementation does currently not support the whole functionality of MzML.
+      Some minor features are still missing:
+          - chromatograms
 
-      /// Mutable access to the options for loading/storing
-      PeakFileOptions& getOptions();
+      @todo Implement chromatograms (Andreas)
 
-      /// Non-mutable access to the options for loading/storing
-      const PeakFileOptions& getOptions() const;
+      @ingroup FileIO
+  */
+  class OPENMS_DLLAPI MzMLFile :
+    public Internal::XMLFile,
+    public ProgressLogger
+  {
+public:
+    ///Default constructor
+    MzMLFile();
+    ///Destructor
+    ~MzMLFile();
 
-			/**
-				@brief Loads a map from a MzML file.
+    /// Mutable access to the options for loading/storing
+    PeakFileOptions& getOptions();
 
-				@p map has to be a MSExperiment or have the same interface.
+    /// Non-mutable access to the options for loading/storing
+    const PeakFileOptions& getOptions() const;
 
-				@exception Exception::FileNotFound is thrown if the file could not be opened
-				@exception Exception::ParseError is thrown if an error occurs during parsing
-			*/
-			template <typename MapType>
-			void load(const String& filename, MapType& map)
-			{
-				map.reset();
+    /// set options for loading/storing
+    void setOptions(const PeakFileOptions &);
 
-				//set DocumentIdentifier
-				map.setLoadedFileType(filename);
-				map.setLoadedFilePath(filename);
+    /**
+        @brief Loads a map from a MzML file.
 
-				Internal::MzMLHandler<MapType> handler(map,filename,schema_version_,*this);
-				handler.setOptions(options_);
-				parse_(filename, &handler);
-			}
+        @p map has to be a MSExperiment or have the same interface.
 
-			/**
-				@brief Stores a map in a MzML file.
+        @exception Exception::FileNotFound is thrown if the file could not be opened
+        @exception Exception::ParseError is thrown if an error occurs during parsing
+    */
+    template <typename MapType>
+    void load(const String& filename, MapType& map)
+    {
+      map.reset();
 
-				@p map has to be a MSExperiment or have the same interface.
+      //set DocumentIdentifier
+      map.setLoadedFileType(filename);
+      map.setLoadedFilePath(filename);
 
-				@exception Exception::UnableToCreateFile is thrown if the file could not be created
-			*/
-			template <typename MapType>
-			void store(const String& filename, const MapType& map) const
-			{
-				Internal::MzMLHandler<MapType> handler(map,filename,schema_version_,*this);
-				handler.setOptions(options_);
-				save_(filename, &handler);
-			}
+      Internal::MzMLHandler<MapType> handler(map, filename, getVersion(), *this);
+      handler.setOptions(options_);
+      //handler can throw parse error and other errors - catch those here - they are the cause for a parse error - report accordingly
+      try
+      {
+        parse_(filename, &handler);
+      }
+      catch (Exception::BaseException& e)
+      {
+        std::string expr;
+        expr.append(e.getFile());
+        expr.append("@");
+        std::stringstream ss;
+        ss << e.getLine(); // we need c++11!! maybe in 2012?
+        expr.append(ss.str());
+        expr.append("-");
+        expr.append(e.getFunction());
+        std::string mess = "- due to that error of type ";
+        mess.append(e.getName());
+        throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, expr, mess);
+      }
 
-			/**
-				@brief Checks if a file validates against the XML schema.
+    }
 
-		  	@exception Exception::FileNotFound is thrown if the file cannot be found.
-			*/
-			bool isValid(const String& filename, std::ostream& os = std::cerr);
+    /**
+        @brief Only count he number of spectra and chromatograms from a file
+    */
+    void loadSize(const String & filename, Size& scount, Size& ccount);
 
-			/**
-				@brief Checks if a file is valid with respect to the mapping file and the controlled vocabulary.
+    /**
+        @brief Stores a map in a MzML file.
 
-				@param filename File name of the file to be checked.
-				@param errors Errors during the validation are returned in this output parameter.
-				@param warnings Warnings during the validation are returned in this output parameter.
+        @p map has to be a MSExperiment or have the same interface.
 
-				@exception Exception::FileNotFound is thrown if the file could not be opened
-			*/
-			bool isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings);
+        @exception Exception::UnableToCreateFile is thrown if the file could not be created
+    */
+    template <typename MapType>
+    void store(const String& filename, const MapType& map) const
+    {
+      Internal::MzMLHandler<MapType> handler(map, filename, getVersion(), *this);
+      handler.setOptions(options_);
+      save_(filename, &handler);
+    }
 
-		private:
+    /**
+        @brief Transforms a map while loading using the supplied MSDataConsumer.
 
-			/// Options for loading / storing
-			PeakFileOptions options_;
+        The result will not be stored by this class.
+    */
+    template <typename MapType>
+    void transform(const String& filename_in, /* const String& filename_out, */ Interfaces::IMSDataConsumer<MapType> * consumer/* , const MapType& map */)
+    {
+      //    typedef MSExperiment<> MapType;
+      
+      // First pass through the file -> get the meta-data and hand it to the consumer
+      {
+        Size scount = 0, ccount = 0;
+        MapType experimental_settings;
+        bool size_only_before_ = options_.getSizeOnly();
+        options_.setSizeOnly(true);
+        Internal::MzMLHandler<MapType> handler(experimental_settings, filename_in, getVersion(), *this);
+        handler.setOptions(options_);
+        parse_(filename_in, &handler);
+        handler.getCounts(scount, ccount);
+        options_.setSizeOnly(size_only_before_);
+        consumer->setExpectedSize(scount, ccount);
+        consumer->setExperimentalSettings(experimental_settings);
+      }
+      
+      // Second pass through the data, now read the spectra!
+      {
+        MapType dummy;
+        Internal::MzMLHandler<MapType> handler(dummy, filename_in, getVersion(), *this);
+        handler.setOptions(options_);
+        handler.setMSDataConsumer(consumer);
+        // TODO catch errors as above ?
+        parse_(filename_in, &handler);
+      }
+    }
 
-			/// Location of indexed mzML schema
-			String indexed_schema_location_;
-	};
+    /**
+        @brief Transforms a map while loading using the supplied MSDataConsumer
+
+        The result will be stored in the supplied map.
+    */
+    template <typename MapType>
+    void transform(const String& filename_in, /* const String& filename_out, */ Interfaces::IMSDataConsumer<MapType> * consumer, MapType& map)
+    {
+      // First pass through the file -> get the meta-data and hand it to the consumer
+      {
+        Size scount = 0, ccount = 0;
+        MapType experimental_settings;
+        bool size_only_before_ = options_.getSizeOnly();
+        options_.setSizeOnly(true);
+        Internal::MzMLHandler<MapType> handler(experimental_settings, filename_in, getVersion(), *this);
+        handler.setOptions(options_);
+        parse_(filename_in, &handler);
+        handler.getCounts(scount, ccount);
+        options_.setSizeOnly(size_only_before_);
+        consumer->setExpectedSize(scount, ccount);
+        consumer->setExperimentalSettings(experimental_settings);
+      }
+
+      // Second pass through the data, now read the spectra!
+      {
+        Internal::MzMLHandler<MapType> handler(map, filename_in, getVersion(), *this);
+        bool always_append_data = options_.getAlwaysAppendData();
+        options_.setAlwaysAppendData(true);
+        handler.setOptions(options_);
+        handler.setMSDataConsumer(consumer);
+
+        // TODO catch errors as above ?
+        parse_(filename_in, &handler);
+        options_.setAlwaysAppendData(always_append_data);
+      }
+    }
+
+    /**
+        @brief Checks if a file validates against the XML schema.
+
+    @exception Exception::FileNotFound is thrown if the file cannot be found.
+    */
+    bool isValid(const String& filename, std::ostream& os = std::cerr);
+
+    /**
+        @brief Checks if a file is valid with respect to the mapping file and the controlled vocabulary.
+
+        @param filename File name of the file to be checked.
+        @param errors Errors during the validation are returned in this output parameter.
+        @param warnings Warnings during the validation are returned in this output parameter.
+
+        @exception Exception::FileNotFound is thrown if the file could not be opened
+    */
+    bool isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings);
+
+private:
+
+    /// Options for loading / storing
+    PeakFileOptions options_;
+
+    /// Location of indexed mzML schema
+    String indexed_schema_location_;
+  };
 
 } // namespace OpenMS
 

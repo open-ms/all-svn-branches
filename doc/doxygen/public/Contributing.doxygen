@@ -1,25 +1,32 @@
-// -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
-//
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS -- Open-Source Mass Spectrometry               
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
-//
-//  This library is free software; you can redistribute it and/or
-//  modify it under the terms of the GNU Lesser General Public
-//  License as published by the Free Software Foundation; either
-//  version 2.1 of the License, or (at your option) any later version.
-//
-//  This library is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-//  Lesser General Public License for more details.
-//
-//  You should have received a copy of the GNU Lesser General Public
-//  License along with this library; if not, write to the Free Software
-//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
-//
+// Copyright The OpenMS Team -- Eberhard Karls University Tuebingen,
+// ETH Zurich, and Freie Universitaet Berlin 2002-2012.
+// 
+// This software is released under a three-clause BSD license:
+//  * Redistributions of source code must retain the above copyright
+//    notice, this list of conditions and the following disclaimer.
+//  * Redistributions in binary form must reproduce the above copyright
+//    notice, this list of conditions and the following disclaimer in the
+//    documentation and/or other materials provided with the distribution.
+//  * Neither the name of any author or any participating institution 
+//    may be used to endorse or promote products derived from this software 
+//    without specific prior written permission.
+// For a full list of authors, refer to the file AUTHORS. 
+// --------------------------------------------------------------------------
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL ANY OF THE AUTHORS OR THE CONTRIBUTING 
+// INSTITUTIONS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+// EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+// OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+// WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF 
+// ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// 
 // --------------------------------------------------------------------------
 // $Maintainer:  $
 // $Authors: Marc Sturm $
@@ -36,8 +43,6 @@
 	
 	<H2 style="border-top:2px solid grey;">%OpenMS</H2>
 		<UL>
-
-
 			<LI><B>I have written a class for %OpenMS I want to contribute. What should I do?</B><BR>
 				Basically, you must conform to the %OpenMS @subpage coding_conventions :
 				<OL>
@@ -53,7 +58,6 @@
 					<LI>post a patch to the mailing list or 
 					<LI>become a developer and commit your code to the SVN directly.
 				</UL>
-
 			<LI><B>I want to implement a new file adapter. What is to be done?</B><BR>
 				<OL>
 					<LI> First you should add a file adapter class to the <tt>include/OpenMS/FORMAT/</tt> and <tt>source/FORMAT/</tt> folders.
@@ -71,11 +75,14 @@
 					<LI> To add your format to TOPP applications, add the file extension to the extensions list of the respective parameter:<BR>
 					     e.g. <tt>setValidStrings_("in_type", StringList::create("mzData,mzXML,mzML"));</tt> in <tt>FileInfo</tt>
 				</OL>
-				
-
 		</UL>
 	<H2 style="border-top:2px solid grey;">TOPP</H2>
-		<UL>
-			<LI> Coming soon.
-		</UL>
+
+			<LI><B>I want to implement a new TOPP tool. What is to be done?</B><BR>
+      <OL>
+        <LI> Prepare testdata for blackbox testing and add the test to <tt>source/TEST/TOPP/CMakeLists.txt</tt>. Make sure that a test exists for each commandline option of the tool.</LI>
+        <LI> Add your tool either in <tt>source/APPLICATIONS/TOPP</tt> or <tt>source/APPLICATIONS/UTILS</tt> (depending on its maturity) </LI>
+        <LI> Add your tool to the list in the ToolHandler in <tt>source/APPLICATIONS/ToolHandler.C</tt> </LI>
+        <LI> Insert your tool into the documentation in <tt>doc/doxygen/public/TOPP.doxygen</tt> </LI>
+      </OL>
 */

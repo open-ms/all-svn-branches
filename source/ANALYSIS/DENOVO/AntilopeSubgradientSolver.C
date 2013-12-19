@@ -175,9 +175,9 @@ namespace OpenMS {
    */
   typedef std::vector<DoubleReal> DVector;
 
-  int SubgradientSolver::SetMultiplierLowerBound( DVector LBounds ) { _multiplierLowerBound = LBounds; }
+  void SubgradientSolver::SetMultiplierLowerBound( DVector LBounds ) { _multiplierLowerBound = LBounds; }
 
-  int SubgradientSolver::SetMultiplierUpperBound( DVector UBounds ) { _multiplierUpperBound = UBounds; }
+  void SubgradientSolver::SetMultiplierUpperBound( DVector UBounds ) { _multiplierUpperBound = UBounds; }
 
   SubgradientSolver::DVector SubgradientSolver::GetFinalSolution( void ) const { return _dual; }
 
@@ -237,16 +237,13 @@ namespace OpenMS {
     {
       _noOfLastIteration=i;
 
-      //if (ctrlC_count >= 1) return UNSOLVED_INTERRUPT;
-      //if (get_ctrlC_counter() >= 1)
-      //return UNSOLVED_INTERRUPT;
-
       if( _verbose == 1 ) {
         cout << "(" << i << ")\tbest: " << _bestUpperBound << "\t/" << _bestLowerBound << "\tcurrent: ";
         cout.flush();
       }
 
-      try {
+      try
+      {
 
         if( _utimeLimit+1 != 0 )
           _curIter.start(); // TIC
@@ -266,7 +263,8 @@ namespace OpenMS {
         if( _utimeLimit+1 != 0 )
           _curIter.stop(); // TOC
 
-        if( _verbose == 1 ) {
+        if( _verbose == 1 )
+        {
           cout << _currentUpperBound << "/\t" << _currentLowerBound//;
               << "\t(" << subgradientIndices.size() << ")";
         }
@@ -281,21 +279,28 @@ namespace OpenMS {
         {
           _bestLowerBound = _currentLowerBound;
           noNondecreasingRounds = -1;
-          if( _verbose == 1 ) {
-            cout << "(*)\n";
-          }
-        } else {
+          
+            if( _verbose == 1 )
+            {
+              cout << "(*)\n";
+            }
+        }
+        else
+        {
           if( _verbose == 1 )
             cout << "\n";
         }
 
         // now check whether we already reached an optimal solution
-        if( (_bestUpperBound - _bestLowerBound)< EPSILON ){
-          cout<<"case 1"<<endl;
-          cout<<"SOLVED IN ITERATION: "<<i+1<<endl;
-          return SOLVED;      }
-
-
+        if( (_bestUpperBound - _bestLowerBound)< EPSILON )
+        {
+          if( _verbose == 1 )
+          {
+            cout<<"case 1"<<endl;
+            cout<<"SOLVED IN ITERATION: "<<i+1<<endl;
+          }
+          return SOLVED;
+        }
 
         // increase the number of iterations in every single
         // iteration, since we're initializing noNonDecreasingRounds
@@ -308,7 +313,10 @@ namespace OpenMS {
           // half _my therefore
           _my /= 2;
 
-          if (_verbose == 1) { cout << "Setting my to " << _my << endl; }
+          if (_verbose == 1)
+          {
+            cout << "Setting my to " << _my << endl;
+          }
           noNondecreasingRounds = 0;
         }
 
@@ -316,24 +324,26 @@ namespace OpenMS {
         // calculate number of subgradients
         int noOfSubgradients = subgradientIndices.size();
 
-#ifdef VERBOSE_OUTPUT
-        cout << "number of subgradients = " << noOfSubgradients << endl;
-#endif
+        if( _verbose == 1 )
+        {
+          cout << "number of subgradients = " << noOfSubgradients << endl;
+        }
 
         double temp = 0;
         list<int>::iterator sg_iter;
-        for(sg_iter = subgradientIndices.begin(); sg_iter != subgradientIndices.end(); sg_iter++){
+        for(sg_iter = subgradientIndices.begin(); sg_iter != subgradientIndices.end(); sg_iter++)
+        {
           temp += (subgradient[*sg_iter]*subgradient[*sg_iter]);
         }
         double ss= _my* ((_bestUpperBound - _bestLowerBound)/sqrt(temp));
+
         //hack sandro
         ss = min(ss,2.0);
-        cout << "LagrangeITERATION: = " << i << endl;
 
-#ifdef VERBOSE_OUTPUT
-        cout << "stepsize = " << ss << endl;
-#endif
-
+        if( _verbose == 1 )
+        {
+          cout << "stepsize = " << ss << endl;
+        }
 
         // stop optimizing when the stepsize falls below the machine
         // accuracy ...
@@ -350,30 +360,40 @@ namespace OpenMS {
         bool changed = false;
         int count=0;
 
-        for( it=subgradientIndices.begin();it!=subgradientIndices.end();it++) {
+        for( it=subgradientIndices.begin();it!=subgradientIndices.end();it++)
+        {
           count++;
           double oldValue = _dual[*it];
           double newValue = _dual[*it] - ss*subgradient[*it];
           //cout<<"old value: "<<oldValue<<" new value: "<< newValue<<endl;
-          if( newValue < _multiplierLowerBound[*it] ) {
+          if( newValue < _multiplierLowerBound[*it] )
+          {
             _dual[*it] = _multiplierLowerBound[*it];
-          } else if( newValue > _multiplierUpperBound[*it] ) {
+          } else if( newValue > _multiplierUpperBound[*it] )
+          {
             _dual[*it] = _multiplierUpperBound[*it];
-          } else {
+          } else
+          {
             _dual[*it] = newValue;
           }
-          /*	    if (_dual[*it] != oldValue) {
-            changed = true;
-            //cout<<"changed set true here! "<<*it<<" to: "<<_dual[*it]<<endl;
-        }
-*/        
+          if (_dual[*it] != oldValue)
+          {
+            changed = true;            
+          }
+
         } // for
-        /*	  if (!changed){
-          cout<<"hier gehts raus!"<<endl;
+        if (!changed)
+        {
+          if( _verbose == 1 )
+          {
+            cout<<"hier gehts raus!"<<endl;
+          }
           return UNSOLVED_MU;
+        }
+
       }
-*/      
-			} catch (Exception::BaseException e) {
+      catch (Exception::BaseException e)
+      {
 				cerr << "SubgradientSolver::EvaluateProblem " << e.what() << endl;
 			}
 
@@ -407,7 +427,10 @@ namespace OpenMS {
 					return UTIME_LIMIT;
 			}
 		}
-		cout<<"case2"<<endl;
+    if( _verbose == 1 )
+    {
+      cout<<"case2"<<endl;
+    }
     return SOLVED;
   }
 
@@ -457,7 +480,7 @@ namespace OpenMS {
     defaults_.setValue("my", 1.0, "The stepsize in the subgradient method");
     defaults_.setMinFloat("my", 0.05);
 
-    defaults_.setValue("verbosesolver",1,"set verbose output of the solver");
+    defaults_.setValue("verbosesolver",0,"set verbose output of the solver");
     defaults_.setMaxInt("verbosesolver",1);
     defaults_.setMinInt("verbosesolver",0);
 

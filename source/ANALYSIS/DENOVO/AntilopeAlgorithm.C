@@ -27,18 +27,19 @@
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeBranchBound.h>
 #include <cmath>
 
-#define DEBUG
+#undef DEBUG
+//#define DEBUG
 namespace OpenMS
 {  
   typedef DeNovoLagrangeProblemBoost::path_score_pair path_score_pair;
 
-  path_score_pair YenAlgorithm::kthIteration(UInt k, SubgradientSolver * sub_solver)
+  path_score_pair YenAlgorithm::kthIteration(Size k)
   {
     path_score_pair result_path_score, prefix;
     result_path_score.score = 0;
     prefix.score = 0;
     DeNovoLagrangeProblemBoost de_novo_lagrange(G);
-    forbid_edges(k, de_novo_lagrange);    
+    forbid_edges(k, de_novo_lagrange);
 
     if (k == 0)
     {
@@ -59,12 +60,14 @@ namespace OpenMS
         prefix.score += G->getEdgeWeight(found_path[k-1][i-1], found_path[k-1][i]);
       }
 
-      cout << "DEVIATION node: " << deviation_node << endl;
-      for (int i = deviation_node; i < found_path[k - 1].size() - 1; ++i)
+      //cout << "DEVIATION node: " << deviation_node << endl;
+      for (Size i = deviation_node; i+1 < found_path[k - 1].size(); ++i)
       {
         result_path_score.score = DeNovoLagrangeProblemBoost::MINUS_INF;
         result_path_score.path.clear();
-        cout << "iteration: " << i << endl;
+#ifdef DEBUG
+        cout << "deviation node: " << i << endl;
+#endif
 
         de_novo_lagrange.setPrefix(prefix);
         de_novo_lagrange.forbidConflictingNodes(prefix.path.back());
@@ -84,19 +87,19 @@ namespace OpenMS
         //if path has better score than lowest score in heap, the replace this lowest heap element with it
         if (score > qu_score)
         {
-          std::cout<<"score vgl: "<<score<<" :: "<<qu_score<<std::endl;
+          //std::cout<<"score vgl: "<<score<<" :: "<<qu_score<<std::endl;
           cand_path_heap.insert(result_path_score);
           cand_path_heap.erase(--cand_path_heap.end());
 
-          std::cout<<"added candidate path:"<<std::endl;
+          //std::cout<<"added candidate path:"<<std::endl;
         }
         prefix.path.push_back(found_path[k - 1][i+1]);
         prefix.score += G->getEdgeWeight(found_path[k-1][i], found_path[k-1][i+1]);
       }
     }    
 
-    std::cerr<<"TOP CAND SCORE: "<< cand_path_heap.begin()->score <<std::endl;
-    std::cerr<<"CAND SIZE: "<<cand_path_heap.size()<<std::endl;
+    //std::cerr<<"TOP CAND SCORE: "<< cand_path_heap.begin()->score <<std::endl;
+    //std::cerr<<"CAND SIZE: "<<cand_path_heap.size()<<std::endl;
 
     path_score_pair k_longest = *cand_path_heap.begin();
     cand_path_heap.erase(cand_path_heap.begin());
@@ -107,7 +110,7 @@ namespace OpenMS
 
 
   //forbid edges as defined in yen paper page 714, step a
-  int YenAlgorithm::forbid_edges(int k, DeNovoLagrangeProblemBoost &dnlp)
+  int YenAlgorithm::forbid_edges(Size k, DeNovoLagrangeProblemBoost& dnlp)
   {    
     deviation_node = 0;
 
@@ -121,11 +124,13 @@ namespace OpenMS
       vector<VertexDescriptor> last_path = found_path[k - 1];
 
       //forbid edges from paths in found_path
-      for (int i = 0; i < k-1; ++i)
+      for (Size i = 0; i < k-1; ++i)
       {
-        int count = 0;
+        Size count = 0;
         vector<VertexDescriptor>::iterator last_path_it = last_path.begin();
         vector<VertexDescriptor>::iterator found_path_it = found_path[i].begin();
+          
+        //std::cerr << found_path.size() << " " << last_path.size() << " " << found_path[i].size() << std::endl;
 
         while(*last_path_it == *found_path_it)
         {
@@ -134,8 +139,11 @@ namespace OpenMS
           ++count;
         }
         dnlp.forbidEdge(*(--last_path_it), *found_path_it);
+#ifdef DEBUG
         cout << "forbid edge: " << *last_path_it << "::" << *found_path_it << endl;
-        deviation_node = max(deviation_node, count - 1);
+#endif
+        if (count)
+          deviation_node = max(deviation_node, count - 1);
       }      
     }
     return 0;
@@ -143,22 +151,20 @@ namespace OpenMS
 
 
 
-  int YenAlgorithm::computeLongestPaths(int k)
+  int YenAlgorithm::computeLongestPaths(Size k)
   {
     cand_path_heap.clear();
-    path_score_pair tmp = { vector<VertexDescriptor>(0), -SpectrumGraphSeqan::INFINITYdist };
+    path_score_pair tmp = { vector<VertexDescriptor>(0), -SpectrumGraphSeqan::INFINITYdist};
     std::vector<path_score_pair>tmp_v(k, tmp);
     cand_path_heap.insert(tmp_v.begin(), tmp_v.end());
-
-    SubgradientSolver *sub_solver = new SubgradientSolver();
 
     double tstart = clock();
     double time_total = 0;
 
-    for (int i = 0; i < k; i++)
+    for (Size i = 0; i < k; i++)
     {
       cout << "start for " << i << "-th path" << endl;
-      path_score_pair longestPath_temp = kthIteration(i, sub_solver);
+      path_score_pair longestPath_temp = kthIteration(i);
 
       found_path_scores.push_back(longestPath_temp.score);
       found_path.push_back(longestPath_temp.path);
@@ -176,7 +182,7 @@ namespace OpenMS
 
     cout << " TOTAL TIME_LAGRANGE:: " <<time_total << endl;
 
-    for (int i = 0; i < k; i++)
+    for (Size i = 0; i < k; i++)
     {
       vector<VertexDescriptor>::iterator found_path_it = found_path[i].begin();
       for (;found_path_it !=found_path[i].end(); ++found_path_it)

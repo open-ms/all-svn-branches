@@ -130,8 +130,8 @@ namespace OpenMS
        */
       void InitProblem(int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds);
       void InitProblem(int PrimalDimension, int DualDimension);
-      int SetMultiplierLowerBound(DVector LBounds);
-      int SetMultiplierUpperBound(DVector UBounds);
+      void SetMultiplierLowerBound(DVector LBounds);
+      void SetMultiplierUpperBound(DVector UBounds);
       SolverProgress Solve(LagrangeProblem& l);
 
       int SolveSingleIteration(LagrangeProblem& l);

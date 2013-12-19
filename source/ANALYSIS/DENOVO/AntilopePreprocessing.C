@@ -111,8 +111,7 @@ int IdSetup::create_vector_A(BoolVec &A, UIntVec & A_len, AASeqVecMap & annot_ma
     }
   }
 
-  UInt number_aa=all_amino_acids.size();
-  AASequence tag;
+  UInt number_aa=all_amino_acids.size();  
   std::vector<std::vector<int> >aa_tag_ids;
 
   for(Size len=1; len<=max_span_; ++len)
@@ -122,7 +121,7 @@ int IdSetup::create_vector_A(BoolVec &A, UIntVec & A_len, AASeqVecMap & annot_ma
     for(Size comb=0; comb<aa_tag_ids.size(); ++comb)
     {
       //get the AAs
-      tag="";
+      AASequence tag;//tag="";
       for(Size pos=0; pos<len;++pos)
       {
         tag+=all_amino_acids[aa_tag_ids[comb][pos]];

@@ -119,29 +119,29 @@ struct IdEval::IdAnnot
 
     AASequence sequence;
     std::vector<Int> chunks;
-    DoubleReal c_gap;
     DoubleReal n_gap;
+    DoubleReal c_gap;
 
     //default constructor (does nothing)
     IdAnnot():sequence(AASequence()),
               chunks(0),
-              c_gap(0.0),
-              n_gap(0.0)
+              n_gap(0.0),
+              c_gap(0.0)
               {}
 
     //constructor for call with both arguments
     IdAnnot(AASequence aa_seq, DoubleReal c_gap, DoubleReal n_gap, IntVec chunks_in = IntVec()):
             sequence(aa_seq),
-            c_gap(c_gap),
+            chunks(chunks_in),
             n_gap(n_gap),
-            chunks(chunks_in)
+            c_gap(c_gap)
             {}
 
     //constructor for call with sequence only
     IdAnnot(AASequence aa_seq):
-            sequence(aa_seq),
-            c_gap(0.0),
-            n_gap(0.0)
+            sequence(aa_seq),            
+            n_gap(0.0),
+            c_gap(0.0)
     {
         //assume no multiple edges if no chunks are input
         chunks.assign(sequence.size(),1);
@@ -151,8 +151,8 @@ struct IdEval::IdAnnot
     IdAnnot(const IdAnnot &rhs):
       sequence(rhs.sequence),
       chunks(rhs.chunks),
-      c_gap(rhs.c_gap),
-      n_gap(rhs.n_gap)
+      n_gap(rhs.n_gap),
+      c_gap(rhs.c_gap)
     {
     }
 

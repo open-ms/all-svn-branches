@@ -25,6 +25,7 @@ AntilopeSubgradientSolver.h
 AntilopeIonScoringRank.h
 AntilopeBayesNetwork.h
 LagrangeProblemBase.h
+AntilopeILP.h
 )
 
 ### add path to the filenames

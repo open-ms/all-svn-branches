@@ -24,8 +24,8 @@
 #include <iostream>
 #include <vector>
 #include <numeric>
-#undef DEBUG
-#define DEBUG
+#undef Debug
+//#define Debug
 //using namespace std;
 
 namespace OpenMS{
@@ -36,7 +36,7 @@ namespace OpenMS{
 
   int DeNovoLagrangeProblemBoost::EvaluateProblem(
       const DVector& Dual,
-      list<int>& DualIndices,
+      const list<int>& DualIndices,
       double& DualValue,
       double& PrimalValue,
       DVector& Subgradient,
@@ -54,9 +54,12 @@ namespace OpenMS{
     {
       computeSubgradientIndices(SubgradientIndices);
     }
-    std::cout<<"Dual::Primal::LowerBound   "<<DualValue<<" :: "<<PrimalValue<<"  ::  "<<lower_bound_<<std::endl;
+#ifdef Debug
+    std::cout<<"   "<<DualValue<<" :: "<<PrimalValue<<"  ::  "<<lower_bound_<<std::endl;
+#endif
 
-    if(DualValue < lower_bound_){
+    if(DualValue < lower_bound_)
+    {
       PrimalValue = DualValue = MINUS_INF;
       std::cout<<"INTERRUPTED"<<std::endl;
     }
@@ -77,19 +80,19 @@ namespace OpenMS{
     {
       return; //for the first node nothing needs to be done (no conflicts)
     }
-
+    
     const std::vector<VertexDescriptor> & nodes = G->getConflictingNodes(v);
 
     for(Size i = 0; i < nodes.size(); ++i)
     {
       forbidNode(nodes[i]);
-#ifdef DEBUG
+#ifdef Debug
       std::cerr<<" forbid node: "<< nodes[i] <<std::endl;
 #endif
     }
 
 
-#ifdef DEBUG
+#ifdef Debug
     std::cout<<"the forbidden nodes are:"<<std::endl;
 
     seqan::Iterator<const seqan::String<bool> >::Type forb_it = seqan::begin(forbidden_nodes_), end_it = seqan::end(forbidden_nodes_);
@@ -108,7 +111,9 @@ namespace OpenMS{
   ///compute the longest path from node start to node end
   void DeNovoLagrangeProblemBoost::computeLongestPath(DoubleReal &dual_score, DoubleReal &primal_score, const DVector& lambda)
   {
+#ifdef Debug
     std::cout << "start Pathfinding" << std::endl;
+#endif
     dual_score = MINUS_INF, primal_score = MINUS_INF;
 
     if(prefix_.path.empty())
@@ -144,7 +149,9 @@ namespace OpenMS{
     dual_score = seqan::back(distance);
 
     //backtracking and storing of the path
+#ifdef Debug
     std::cout << "start backtracking" << std::endl;
+#endif
     std::vector<VertexDescriptor> path;
     path.reserve(30);
     subgradient_.assign(G->getNumberOfClusters(), 1);
@@ -173,17 +180,20 @@ namespace OpenMS{
     }
 
     //Debug out
+#ifdef Debug
     std::cout<<"Found path:"<<std::endl;
     for(Size deb = 0; deb < path.size(); ++ deb)
     {
       std::cout<<path[deb]<<std::endl;
     }
+#endif
 
     // add the lambda summand to the complete score
     DoubleReal lambda_update = std::accumulate(lambda.begin(), lambda.end(), 0.);
-
+#ifdef Debug
     std::cout<<"relaxed score: "<<dual_score<<std::endl;
-    std::cout<<"prefix_score: "<< prefix_.score << "lambda update: "<<lambda_update<<std::endl;
+    std::cout<<"prefix_score: "<< prefix_.score << " lambda update: "<<lambda_update<<std::endl;
+#endif
     dual_score += prefix_.score - lambda_update;
     dual_score *= -1; //go from minimization back to maximization
 
@@ -201,8 +211,9 @@ namespace OpenMS{
           prev = path[i];
         }
         primal_score *= -1;
-        std::cerr<<"dual score: "<<dual_score<<"  primal score: "<<primal_score<<std::endl;
-
+#ifdef Debug
+        std::cerr<< "dual score: "<<dual_score << "  primal score: " << primal_score << std::endl;
+#endif
         if (primal_score > best_feasible_solution_.score)
         {
           best_feasible_solution_.score = primal_score;
@@ -222,7 +233,7 @@ namespace OpenMS{
   //-----------------------------------------------------reset---------------------------------------------------------------
   //-------------------------------------------------------------------------------------------------------------------------
 
-  void DeNovoLagrangeProblemBoost::reset()
+  void DeNovoLagrangeProblemBoost::reset(bool hard)
   {
     best_feasible_solution_.path.clear();
     best_feasible_solution_.score = MINUS_INF;
@@ -242,8 +253,10 @@ namespace OpenMS{
     for (int i = 0; i < subgradient_.size(); i++) {
       feasible = feasible && (subgradient_[i] > -1);
     }
+#ifdef Debug
     if (feasible)
       std::cout << "FEASIBLE!!" << std::endl;
+#endif
     return feasible;
   }
 
@@ -276,12 +289,12 @@ namespace OpenMS{
   }
 
 
-
   void DeNovoLagrangeProblemBoost::forceNode(VertexDescriptor node)
   {
-    for(Size i = 0; i < spanning_edges_[node].size(); ++i)
+    const std::vector<EdgeDescriptor>& spannings = G->getSpanningEdges(node);
+    for(Size i = 0; i < spannings.size(); ++i)
     {
-      forbidEdge(spanning_edges_[node][i]);
+      forbidEdge(spannings[i]);
     }
 
     //all conflicting nodes must be forbidden
@@ -292,7 +305,6 @@ namespace OpenMS{
     }
     std::cout<<"exit force node"<<std::endl;
   }
-
 
 
   void DeNovoLagrangeProblemBoost::forbidNode(VertexDescriptor node)
@@ -313,7 +325,9 @@ namespace OpenMS{
   {
     if(EdgeDescriptor edge = seqan::findEdge(G->graph, source, target))
     {
+#ifdef Debug
       std::cerr<<"forbid edge: "<<source<<"   --->   " << target << "   " << edge << std::endl;
+#endif
       forbidEdge(edge);
     }
   }
@@ -351,9 +365,9 @@ namespace OpenMS{
       if (*l_it == 0)
         continue;
 
-      std::vector<VertexDescriptor>vertices;
-      G->getConflictingNodesByCluster(vertices, id);
+      const std::vector<VertexDescriptor> &vertices = G->getCluster(id);
       std::vector<VertexDescriptor>::const_iterator v_it(vertices.begin());
+
       //put weights onto outgoing edges
       for (; v_it != vertices.end(); ++v_it)
       {
@@ -373,24 +387,23 @@ namespace OpenMS{
     if(init)
     {
       G->getEdgeWeights(edge_weights_bk_);
-      edge_weights_ = edge_weights_bk_;
-
-      SpectrumGraphSeqan::EdgeIterator edge_it(G->graph);
-      spanning_edges_.assign(G->size(), std::vector<EdgeDescriptor>());
-
-      while(!seqan::atEnd(edge_it))
-      {
-        VertexDescriptor source = seqan::sourceVertex(G->graph, *edge_it);
-        VertexDescriptor target = seqan::targetVertex(G->graph, *edge_it);
-        for(Size j = source + 1; j < target; ++j)
-        {
-          spanning_edges_[j].push_back(*edge_it);
-        }
-        ++edge_it;
-      }
-      return;
+//      edge_weights_ = edge_weights_bk_;
+//
+//      SpectrumGraphSeqan::EdgeIterator edge_it(G->graph);
+//      spanning_edges_.assign(G->size(), std::vector<EdgeDescriptor>());
+//
+//      while(!seqan::atEnd(edge_it))
+//      {
+//        VertexDescriptor source = seqan::sourceVertex(G->graph, *edge_it);
+//        VertexDescriptor target = seqan::targetVertex(G->graph, *edge_it);
+//        for(Size j = source + 1; j < target; ++j)
+//        {
+//          spanning_edges_[j].push_back(*edge_it);
+//        }
+//        ++edge_it;
+//      }
+//      return;
     }
-
     edge_weights_ = edge_weights_bk_;
   }
 

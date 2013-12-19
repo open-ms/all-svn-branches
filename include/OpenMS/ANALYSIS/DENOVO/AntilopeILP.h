@@ -21,52 +21,48 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// '$'Maintainer: Sandro Andreotti '$'
+// $Maintainer: Sandro Andreotti $
 // --------------------------------------------------------------------------
 
+#ifndef ANTILOPEILP_H
+#define ANTILOPEILP_H
 
-#ifndef BRANCHBOUNDDENOVO_H_
-#define BRANCHBOUNDDENOVO_H_
 
-#include <OpenMS/ANALYSIS/DENOVO/AntilopeLagrangeProblem.h>
+#include <OpenMS/ANALYSIS/DENOVO/AntilopeSpectrumGraph.h>
+#include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
+
 
 namespace OpenMS
 {
-  class BranchBoundDeNovo
+
+  class de_novo_ILP: public DefaultParamHandler
   {
-    typedef SpectrumGraphSeqan::VertexDescriptor VertexDescriptor;
-    typedef SpectrumGraphSeqan::EdgeDescriptor EdgeDescriptor;
-    typedef DeNovoLagrangeProblemBoost::path_score_pair path_score_pair;
-    typedef std::vector<DoubleReal> DVector;
+  private:
+    //convenience typedef
+    typedef std::vector<DoubleReal>DRealVec;
+    typedef std::vector<UInt>UIntVec;
+    typedef std::vector<UIntVec>CandSetInt;
+    typedef std::vector<DRealVec>CandSetReal;
 
-    public:
-      ///Custom Constructor
-      BranchBoundDeNovo(DoubleReal* glb_ptr, const DeNovoLagrangeProblemBoost& dlp, path_score_pair* psp);
+  public:
+    ///Constructor
+    de_novo_ILP();
 
-      ///Copy Constructor
-      BranchBoundDeNovo(const BranchBoundDeNovo &bbd);
+    ///Copy Constructor
+    de_novo_ILP(const de_novo_ILP&);
 
-      ///assignment operator
-      BranchBoundDeNovo& operator=(const BranchBoundDeNovo &bbd);
+    ///destructor
+    virtual ~de_novo_ILP()
+    {
+    };
 
-      void solve();
-      void branch(DeNovoLagrangeProblemBoost &, DeNovoLagrangeProblemBoost &);
+    ///assignment Operator
+    de_novo_ILP & operator=(const de_novo_ILP&);
 
-    private:
+    /// build cplex model and solve - classic approach
+    void computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt &cands, DRealVec &scores);
 
-      ///Default constructor
-      BranchBoundDeNovo();
-
-      ///Pointer to the global lower bound
-      DoubleReal *glb_;
-
-      ///the local DeNovoLagrangeProblem
-      DeNovoLagrangeProblemBoost lp_;
-
-      ///pointer to the best dual solution thus far
-      path_score_pair *path_and_score_;
-  };
-
+  }; //de_novo_ILP
 }//namespace
 
-#endif /* BRANCHBOUNDDENOVO_H_ */
+#endif // ANTILOPEILP_H

@@ -46,7 +46,8 @@
 #include <fstream>
 #include <stdlib.h>
 
-#define Debug
+#undef Debug
+//#define Debug
 
 namespace OpenMS
 {  
@@ -85,13 +86,14 @@ namespace OpenMS
   SpectrumGraphSeqan::SpectrumGraphSeqan(const SpectrumGraphSeqan & in) :
     DefaultParamHandler(in),
     graph(in.graph),
-    conflict_edges_(in.conflict_edges_),
-    conflict_edge_ids_(in.conflict_edge_ids_),
-    conflict_edge_matrix_(in.conflict_edge_matrix_),
-    conflicting_nodes_(in.conflicting_nodes_),
+    conflicting_nodes(in.conflicting_nodes),
+    pairwise_conflicting(in.pairwise_conflicting),
+    conflict_clusters(in.conflict_clusters),
+    conflict_clusters_inv(in.conflict_clusters_inv),
     vertices_(in.vertices_),
     edges_(in.edges_),
-    ordering_(in.ordering_)
+    ordering_(in.ordering_),
+    edge_weights_(in.edge_weights_)
   {
   }
 
@@ -101,14 +103,15 @@ namespace OpenMS
     if (this != &in)
     {
       DefaultParamHandler::operator=(in);
-      conflict_edges_ = in.conflict_edges_;
-      conflict_edge_ids_ = in.conflict_edge_ids_;
-      conflict_edge_matrix_ = in.conflict_edge_matrix_;
-      conflicting_nodes_ = in.conflicting_nodes_;
+      conflicting_nodes = in.conflicting_nodes;
+      pairwise_conflicting = in.pairwise_conflicting;
+      conflict_clusters = in.conflict_clusters;
+      conflict_clusters_inv = in.conflict_clusters_inv;
       vertices_ = in.vertices_;
       edges_ = in.edges_;
       ordering_ = in.ordering_;
       graph = in.graph;
+      edge_weights_ = in.edge_weights_;
     }
     return *this;
   }
@@ -146,14 +149,41 @@ namespace OpenMS
   /// return all edge weights (i,j)
   void SpectrumGraphSeqan::getEdgeWeights(seqan::String<DoubleReal> &weights) const
   {
-    seqan::resizeEdgeMap(graph, weights);
-    EdgeIterator it(graph);
-    while(!seqan::atEnd(it))
-    {
-      seqan::property(weights, *it) =  getEdgeWeight(seqan::sourceVertex(graph, *it), seqan::targetVertex(graph, *it));
-      ++it;
-    }
+//    seqan::resizeEdgeMap(graph, weights);
+//    EdgeIterator it(graph);
+//    while(!seqan::atEnd(it))
+//    {
+//      seqan::property(weights, *it) =  getEdgeWeight(seqan::sourceVertex(graph, *it), seqan::targetVertex(graph, *it));
+//      ++it;
+//    }
+    weights = edge_weights_;
   }
+    
+    //-------------------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------getEdgeWeights-----------------------------------------------------------
+    //-------------------------------------------------------------------------------------------------------------------------
+
+
+    /// return all edge weights (i,j)
+    void SpectrumGraphSeqan::setEdgeWeights()
+    {
+      seqan::resizeEdgeMap(graph, edge_weights_);
+      EdgeIterator it(graph);
+      
+      while(!seqan::atEnd(it))
+      {
+        VertexDescriptor source = seqan::sourceVertex(graph, *it);
+        DoubleReal factor = 0.0;
+        if (seqan::getProperty(edges_, *it).length >= 2)
+        {
+          factor = 2;
+        }
+        DoubleReal score = (-1) * seqan::getProperty(vertices_, source).score + factor;
+        
+        seqan::property(edge_weights_, *it) = score;
+        ++it;
+      }
+    }
 
 
   //-------------------------------------------------------------------------------------------------------------------------
@@ -174,9 +204,7 @@ namespace OpenMS
   bool SpectrumGraphSeqan::hasUndirectedEdge(VertexDescriptor i, VertexDescriptor j) const
   {
     if(i < j)
-      return conflict_edge_matrix_[i][j];
-    else
-      return conflict_edge_matrix_[j][i];
+      return pairwise_conflicting[i][j];
   }
 
   //-------------------------------------------------------------------------------------------------------------------------
@@ -329,8 +357,10 @@ namespace OpenMS
       if (min_dist < delta)
       {
         //debug info
+#ifdef Debug
         std::cout << "joined nodes " << ln << ": " << nodes[ln].real_mass << " and " << rn << " : "
                   << nodes[rn].real_mass << std::endl;
+#endif
 
         nodes[ln].int_mass = (UInt) floor(0.5 * (nodes[ln].int_mass + nodes[rn].int_mass) + 0.5);
         nodes[ln].real_mass = 0.5 * (nodes[ln].real_mass + nodes[rn].real_mass);
@@ -444,8 +474,9 @@ namespace OpenMS
         DoubleReal tmp_score_old = vertices_[i].score;
 
         vertices_[i].score += weight * scoring_func.getLogScore(disc_spectrum, vertices_[i].real_mass, interprets);
-
+#ifdef Debug
         std::cout<<"Node: "<<i<<" prev score: "<<tmp_score_old<<" New score: "<< vertices_[i].score << std::endl;
+#endif
       }
       else
       {
@@ -469,7 +500,7 @@ namespace OpenMS
     for(Size i = 1; i < tmp_vertices.size(); ++i)
     {
       if(tmp_vertices[i].score >= threshold ||
-         tryptic && i >= tmp_vertices.size() - 3)
+         (tryptic && i >= tmp_vertices.size() - 3))
       {
         vertices_.push_back(tmp_vertices[i]);
       }
@@ -568,7 +599,7 @@ namespace OpenMS
           for (std::vector<VertexDescriptor>::iterator target_cand_it = target_candidates.begin(); target_cand_it
                != target_candidates.end(); ++target_cand_it)
           {
-            if(!conflict_edge_matrix_[source_node][*target_cand_it])
+            if(!pairwise_conflicting[source_node][*target_cand_it])
             {
               Node& target = seqan::property(vertices_, *target_cand_it);
               Edge tmp_edge;
@@ -588,14 +619,16 @@ namespace OpenMS
         {
           //compute shortest path from node i to the last candidate and simlultaniously also to all other preceding candidates
           //for nodes that are already reachable no edge is added as it would be redundant
+#ifdef Debug
           std::cerr<<"weight map legnth:  " << seqan::length(weight_map)<<std::endl;
+#endif
           dagShortestPathST(graph, (VertexDescriptor)source_node, target_candidates.back(), weight_map, pred_map, dist_map, vertex_order);
 
           //for all nodes not reached we can add the edge to the graph. it is not redundant
           for (std::vector<VertexDescriptor>::iterator target_cand_it = target_candidates.begin(); target_cand_it
                != target_candidates.end(); ++target_cand_it)
           {
-            if (pred_map[*target_cand_it] == seqan::getNil<VertexDescriptor>() && !conflict_edge_matrix_[source_node][*target_cand_it])
+            if (pred_map[*target_cand_it] == seqan::getNil<VertexDescriptor>() && !pairwise_conflicting[source_node][*target_cand_it])
             {
               Node& target = seqan::property(vertices_, *target_cand_it);
               Edge tmp_edge;
@@ -638,62 +671,149 @@ namespace OpenMS
   //Rather important is the inciden list for each node, so that in the lagrangian relaxation we can use the index
   //of each undirected edge as identifier for the subgradients.
   //together with the vector of all undirected edges with the information: terminal nodes + id all useful information is accessible
-  UInt SpectrumGraphSeqan::createUdirEdgeSet(const PeakSpectrum &spectrum, UInt mode)
+  UInt SpectrumGraphSeqan::createUdirEdgeSet()
   {
-    conflict_edge_matrix_.assign(vertices_.size(), std::vector<bool>(vertices_.size(), false));
-    conflict_edge_ids_.assign(vertices_.size(), std::vector<Size>());
-    conflicting_nodes_.assign(vertices_.size(), std::vector<VertexDescriptor>());
-
-    //clear the previous entries
-    for (Size i = 0; i < conflict_edge_ids_.size(); ++i)
-    {
-      conflict_edge_ids_.clear();
-    }
-
-    //create an index of conflicting interpretations
-    std::vector<std::vector<Size> >conflict_index(spectrum.size());
+    //create the set of conflict clusters (hyperedges)
+    std::vector<Size> mapping;
+    Size nextId = 0;
 
     for (Size i = 1; i < vertices_.size() - 1; ++i)
     {
       std::set<Size>::iterator gen_it;
       for (gen_it = seqan::property(vertices_, i).generating_peaks.begin(); gen_it != seqan::getProperty(vertices_, i).generating_peaks.end(); ++gen_it)
       {
-        conflict_index[*gen_it].push_back(i);
+        if (*gen_it >= mapping.capacity())
+          mapping.reserve(2 * *gen_it);
+        if (*gen_it >= mapping.size())
+          mapping.resize(*gen_it + 1, -1u);
+
+        if (mapping[*gen_it] == -1u)
+        {
+          mapping[*gen_it] = nextId;
+          ++nextId;
+        }
+        
+        
+        Size id = mapping[*gen_it];
+        assert(id <= conflict_clusters.size());
+        
+        if (id == conflict_clusters.size())
+          conflict_clusters.push_back(std::vector<VertexDescriptor>(1,i));
+        else
+          conflict_clusters[id].push_back(i);
       }
     }
-
-    UInt edge_id = 0;
-    for (Size i = 0; i < conflict_index.size(); ++i)
+    
+    //create the inverse table --> for each node all clusters it appears in
+    conflict_clusters_inv.assign(vertices_.size(), std::vector<Size>());
+    conflicting_nodes.assign(vertices_.size(), std::vector<VertexDescriptor>());
+    pairwise_conflicting.assign(vertices_.size(), std::vector<bool>(vertices_.size(), false));
+    for (Size i = 0; i < conflict_clusters.size(); ++i)
     {
-      std::vector<Size>::iterator it1, it2;
-
-      for(it1 = conflict_index[i].begin(); it1 != conflict_index[i].end(); ++it1)
+      for (Size j = 0; j < conflict_clusters[i].size(); ++j)
       {
-        for(it2 = it1 + 1; it2 < conflict_index[i].end(); ++it2)
+        conflict_clusters_inv[conflict_clusters[i][j]].push_back(i);
+        for (Size k = j+1; k < conflict_clusters[i].size(); ++k)
         {
-          if(!conflict_edge_matrix_[*it1][*it2] && (seqan::property(vertices_, *it2).real_mass - seqan::property(vertices_, *it1).real_mass > 57.0) )
-          {
-            ConflictEdge c_edge;
-            c_edge.left_node = *it1;
-            c_edge.right_node = *it2;
-            conflict_edges_.push_back(c_edge);
-
-            conflict_edge_ids_[*it1].push_back(edge_id);
-            conflict_edge_ids_[*it2].push_back(edge_id);
-
-            conflicting_nodes_[*it1].push_back(*it2);
-            conflicting_nodes_[*it2].push_back(*it1);
-            conflict_edge_matrix_[*it1][*it2] = true;
-            conflict_edge_matrix_[*it2][*it1] = true;
-            std::cout<<"add undirected edge: "<<*it1<<"  <--> "<<*it2<<std::endl;
-
-            ++edge_id;
-          }
+          conflicting_nodes[conflict_clusters[i][j]].push_back(conflict_clusters[i][k]);
+          conflicting_nodes[conflict_clusters[i][k]].push_back(conflict_clusters[i][j]);
+          
+          pairwise_conflicting[conflict_clusters[i][j]][conflict_clusters[i][k]] = true;
+          pairwise_conflicting[conflict_clusters[i][k]][conflict_clusters[i][j]] = true;
         }
       }
     }
-
+    
+    //remove duplication entries in conflicting_nodes
+    for (Size i = 0; i < vertices_.size(); ++i)
+    {
+      std::vector<VertexDescriptor> &cni = conflicting_nodes[i];
+      std::sort(cni.begin(), cni.end());
+      cni.resize(std::distance(cni.begin(), std::unique(cni.begin(), cni.end() )));
+    }
+                               
     return 0;
   }
+  
+  
+    
+    
+    
+    
+    
+
+
+//    //clear the previous entries
+//    for (Size i = 0; i < conflict_edge_ids_.size(); ++i)
+//    {
+//      conflict_edge_ids_.clear();
+//    }
+//
+//    //create an index of conflicting interpretations
+//    std::vector<std::vector<Size> >conflict_index(spectrum.size());
+//
+//    for (Size i = 1; i < vertices_.size() - 1; ++i)
+//    {
+//      std::set<Size>::iterator gen_it;
+//      for (gen_it = seqan::property(vertices_, i).generating_peaks.begin(); gen_it != seqan::getProperty(vertices_, i).generating_peaks.end(); ++gen_it)
+//      {
+//        conflict_index[*gen_it].push_back(i);
+//      }
+//    }
+//
+//    UInt edge_id = 0;
+//    for (Size i = 0; i < conflict_index.size(); ++i)
+//    {
+//      std::vector<Size>::iterator it1, it2;
+//
+//      for(it1 = conflict_index[i].begin(); it1 != conflict_index[i].end(); ++it1)
+//      {
+//        for(it2 = it1 + 1; it2 < conflict_index[i].end(); ++it2)
+//        {
+//          if(!conflict_edge_matrix_[*it1][*it2] && (seqan::property(vertices_, *it2).real_mass - seqan::property(vertices_, *it1).real_mass > 57.0) )
+//          {
+//            ConflictEdge c_edge;
+//            c_edge.left_node = *it1;
+//            c_edge.right_node = *it2;
+//            conflict_edges_.push_back(c_edge);
+//
+//            conflict_edge_ids_[*it1].push_back(edge_id);
+//            conflict_edge_ids_[*it2].push_back(edge_id);
+//
+//            conflicting_nodes_[*it1].push_back(*it2);
+//            conflicting_nodes_[*it2].push_back(*it1);
+//            conflict_edge_matrix_[*it1][*it2] = true;
+//            conflict_edge_matrix_[*it2][*it1] = true;
+//#ifdef Debug
+//            std::cout<<"add undirected edge: "<<*it1<<"  <--> "<<*it2<<std::endl;
+//#endif
+//
+//            ++edge_id;
+//          }
+//        }
+//      }
+//    }
+//
+//    return 0;
+//  }
+  
+  void SpectrumGraphSeqan::createSpanningEdges()
+  {
+    EdgeIterator edge_it(graph);
+    spanning_edges_.assign(size(), std::vector<EdgeDescriptor>());
+    
+    while(!seqan::atEnd(edge_it))
+    {
+      VertexDescriptor source = seqan::sourceVertex(graph, *edge_it);
+      VertexDescriptor target = seqan::targetVertex(graph, *edge_it);
+      for(Size j = source + 1; j < target; ++j)
+      {
+        spanning_edges_[j].push_back(*edge_it);
+      }
+      ++edge_it;
+    }
+    return;
+  }
+  
 }//namespace OpenMS
 

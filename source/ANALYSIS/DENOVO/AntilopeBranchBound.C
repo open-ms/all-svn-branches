@@ -92,7 +92,9 @@ namespace OpenMS
     {
       if(*glb_ < lp_.get_best_primal_score())
       {
+#ifdef DEBUG
         std::cout<<"in solved if block"<<std::endl;
+#endif
         *glb_ = lp_.get_best_primal_score();
         *path_and_score_ = lp_.get_longest_path();
       }
@@ -109,8 +111,8 @@ namespace OpenMS
 
     std::cerr<<"VIOL: "<<viol_clusters.size()<<std::endl;
 
-    std::vector<VertexDescriptor> nodes_in_cl;
-    lp_.getSpectrumGraph().getConflictingNodesByCluster(nodes_in_cl, viol_clusters.front());
+    const std::vector<VertexDescriptor> &nodes_in_cl = lp_.getSpectrumGraph().getCluster(viol_clusters.front());
+    
     VertexDescriptor branch_node = nodes_in_cl.front();
 
     std::cout<<"perform branch step over node: "<<branch_node<<std::endl;

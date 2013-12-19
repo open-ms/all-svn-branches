@@ -29,6 +29,9 @@
 #include <OpenMS/ANALYSIS/DENOVO/AntilopePMCorrect.h>
 #include <OpenMS/CONCEPT/Constants.h>
 
+#undef Debug
+//#define Debug
+
 namespace OpenMS
 {
 
@@ -126,12 +129,12 @@ namespace OpenMS
       }
 
       //debuggin
-      
+#ifdef Debug
       for(UInt i = 0; i < similarities.size(); ++i)
       {
         std::cout<<"DEBUG: "<<similarities[i].shifted_parent_mass<<"  "<<similarities[i].shared_peaks_count<<"  "<<similarities[i].shared_peaks_intens<<"   "<<similarities[i].mse<<std::endl;
       }
-      
+#endif
 
       sort(similarities.begin(),similarities.end());
 

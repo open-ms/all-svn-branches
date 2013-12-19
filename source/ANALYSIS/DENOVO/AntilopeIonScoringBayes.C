@@ -46,7 +46,8 @@
 
 
 #define PEPNOVO 1
-#define DEBUG 1
+#undef Debug
+//#define Debug
 
 
 namespace OpenMS
@@ -58,27 +59,27 @@ namespace OpenMS
 
 //default constructor
 BayesScoring::BayesScoring() :  
+  delta_(0.5),
   number_intensity_levels_(0),
-  intensity_limits_(0),
-  delta_(0.5)
+  intensity_limits_(0)
 {
 }
 
 //custom constructor
 BayesScoring::BayesScoring(String parameter_file) :  
+  delta_(0.5),
   number_intensity_levels_(0),
-  intensity_limits_(0),
-  delta_(0.5)
+  intensity_limits_(0)
 {
   loadFile(parameter_file);
 }
 
 //copy constructor
 BayesScoring::BayesScoring(const BayesScoring & in) :
-  number_intensity_levels_(in.number_intensity_levels_),
-  intensity_limits_(in.intensity_limits_),  
   precision_(in.precision_),
   delta_(in.delta_),
+  number_intensity_levels_(in.number_intensity_levels_),
+  intensity_limits_(in.intensity_limits_),  
   number_of_sectors_(in.number_of_sectors_),
   networks_(in.networks_)
 {  
@@ -205,7 +206,9 @@ UInt BayesScoring::loadFile(String bayes_info_file)
 DoubleReal BayesScoring::getLogScore(const PeakSpectrum& spectrum, const DoubleReal prefix_mass,
     std::vector<IdSetup::interpretation> &interprets)
 {
-  std::cout<<"enter getlogscore"<<std::endl; 
+#ifdef Debug
+  std::cout<<"enter getlogscore"<<std::endl;
+#endif
   interprets.clear();
 
   //the score to be returned
@@ -286,7 +289,9 @@ UInt BayesScoring::normalizeIntensity(PeakSpectrum &S, Size number_intensity_lev
       prev_inten=fwit->getIntensity();
       fwit->setIntensity(std::max(0, (Int)(max_rank-(count/bin_size))));
     }
+#ifdef Debug
     std::cout<<"original rank: "<<count<<"  discretized:  "<<fwit->getIntensity()<<std::endl;
+#endif
   }
   //bring spectrum back into normal order
   S.sortByPosition();

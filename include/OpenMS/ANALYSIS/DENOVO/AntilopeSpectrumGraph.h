@@ -45,12 +45,13 @@
 #include <seqan/graph_algorithms.h>
 #include <seqan/graph_types.h>
 
-
 namespace OpenMS
 {
+  class MatrixSpectrumGraph;
 
   class SpectrumGraphSeqan: public DefaultParamHandler
   {
+    friend class MatrixSpectrumGraph;
 
   public:
 
@@ -69,6 +70,15 @@ namespace OpenMS
 
     typedef seqan::Size<TGraph>::Type GSize;
     const static DoubleReal INFINITYdist;
+    
+    //access for every cluster C all nodes in C
+    typedef std::vector<std::vector<VertexDescriptor> > TConflictClusterList;
+
+    //access for every node v all clusters containing v
+    typedef std::vector<std::vector<Size> > TConflictClusterInvList;
+
+    //access for every node all conflicting node ids
+    typedef std::vector<std::vector<VertexDescriptor> > TConflictingNodesList;
 
 
     struct Edge
@@ -130,8 +140,10 @@ namespace OpenMS
       {
         if(peak_id >= 0)
           generating_peaks.insert(peak_id);
+#ifdef Debug
         std::cout << "created node: " << rmass << "  " << imass << "  Score-> " << inscore << " " << peak_id << " "
                   << type << std::endl;
+#endif
       }
 
       ///default Constructor
@@ -202,7 +214,7 @@ namespace OpenMS
     void getEdgeWeights(seqan::String<DoubleReal> &weights) const;
 
     /// return whether two nodes i and j are connected via undirected edge --> are complementary
-    bool hasUndirectedEdge(VertexDescriptor, VertexDescriptor) const;
+    bool hasUndirectedEdge(VertexDescriptor, VertexDescriptor) const; // TODO: get rid off
 
     /// return whether two nodes i and j are connected via directed edge
     EdgeDescriptor findDirectedEdge(VertexDescriptor, VertexDescriptor) const;
@@ -214,7 +226,7 @@ namespace OpenMS
     UInt createEdgeSet(const IdSetup::BoolVec &A, const IdSetup::UIntVec &A_len);
 
     /// construct the set of undirected edges
-    UInt createUdirEdgeSet(const PeakSpectrum &spectrum, UInt mode = 1);
+    UInt createUdirEdgeSet();
 
     /// method to construct the node set
     UInt createNodeSet(const PeakSpectrum & spectrum, const IdSetup::BoolVec &A, const IdSetup::UIntVec &A_len);
@@ -266,32 +278,48 @@ namespace OpenMS
     /// return the number of clusters (in our case actually the number of undirected edges)
     UInt getNumberOfClusters() const
     {
-      return conflict_edges_.size();
+      return conflict_clusters.size();
     }
 
     /// return the clusters, for each node the id of the clusters containing it
     const std::vector<Size>& getClusters(VertexDescriptor vertex_idx) const
     {
-      return conflict_edge_ids_[vertex_idx];
+      return conflict_clusters_inv[vertex_idx];
     }
 
     /// return a list of nodes contained in a certain cluster
-    const std::vector<VertexDescriptor> & getConflictingNodes(VertexDescriptor vertex) const
+    const std::vector<VertexDescriptor>& getConflictingNodes(VertexDescriptor vertex_id) const
     {
-      return conflicting_nodes_[vertex];
+      return conflicting_nodes[vertex_id];
     }
 
     /// return a list of nodes contained in a certain cluster
-    void getConflictingNodesByCluster(std::vector<VertexDescriptor> &vertices, Size cluster_it) const
+    const std::vector<VertexDescriptor>& getCluster(Size cluster_id) const
     {
-      vertices.push_back(conflict_edges_[cluster_it].left_node);
-      vertices.push_back(conflict_edges_[cluster_it].right_node);
+      return conflict_clusters[cluster_id];
     }
 
     const std::vector<VertexDescriptor>& getTopologicalOrdering()
     {
       return ordering_;
     }
+    
+    void getMassesForPaths(const std::vector<std::vector<VertexDescriptor> > &paths, std::vector<std::vector<UInt> >&prms) const
+    {
+      prms.resize(paths.size());
+      std::vector<SpectrumGraphSeqan::VertexDescriptor>::const_iterator left, right;
+      for (Size i = 0; i < paths.size(); ++i)
+      {
+        prms[i].clear();
+        prms[i].reserve(paths[i].size());
+        right = paths[i].begin();
+        left = right++;
+        for (; right != paths[i].end(); ++left, ++right)
+          prms[i].push_back(getIntEdgeMass(*left, *right));
+      }
+    }
+    
+    void setEdgeWeights();
 
     void activateVertex(VertexDescriptor v)
     {
@@ -312,6 +340,13 @@ namespace OpenMS
     {
       seqan::assignProperty(edge_active_, e, false);
     }
+    
+    const std::vector<EdgeDescriptor>& getSpanningEdges(VertexDescriptor v) const
+    {
+      return spanning_edges_[v];
+    }
+    
+    void createSpanningEdges();
 
     template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
     static void dagShortestPathST(seqan::Graph<TSpec> const& g,
@@ -337,8 +372,8 @@ namespace OpenMS
                                   TPredecessorMap& predecessor,
                                   TDistanceMap& distance,
                                   seqan::String<TVertexDescriptor> const& order,
-                                  seqan::String<bool> const & is_vertex_active,
-                                  seqan::String<bool> const & is_edge_active);
+                                  seqan::String<bool> const & is_vertex_inactive,
+                                  seqan::String<bool> const & is_edge_inactive);
 
 
     //TODO can also be removed as function and be done automatically in create node set
@@ -351,18 +386,16 @@ namespace OpenMS
 
     //protected members
   protected:
-
-    /// vector containing all undirected edges the contained nodes.
-    /// their position is the conflict_edge_ids index stored fore every node
-    std::vector<ConflictEdge> conflict_edges_;
-
-    std::vector<std::vector<Size> > conflict_edge_ids_;
-
-    /// adjacency matrix for the conflict edges
-    std::vector<std::vector<bool> >conflict_edge_matrix_;
+    
+    std::vector<std::vector<bool> > pairwise_conflicting;
+    TConflictClusterInvList conflict_clusters_inv;
+    TConflictClusterList conflict_clusters;
+    TConflictingNodesList conflicting_nodes;
 
 
-    std::vector<std::vector<VertexDescriptor> > conflicting_nodes_;
+    //std::vector<std::vector<VertexDescriptor> > conflicting_nodes_;
+    
+    std::vector<std::vector<EdgeDescriptor> > spanning_edges_;
 
     /// vertices of the graph
     std::vector <Node> vertices_;
@@ -378,9 +411,282 @@ namespace OpenMS
 
     /// vector of bools for each edge (true --> edge is active (default), false --> edge is inactive)
     seqan::String<bool> edge_active_;
+    
+    /// edge weights of directed edges
+    seqan::String<DoubleReal> edge_weights_;
 
 
   };//SpectrumGraphSeqan
+  
+  
+  class MatrixSpectrumGraph : public SpectrumGraphSeqan
+  {
+    protected:
+    
+    
+    bool hasUndirectedEdge(VertexDescriptor, VertexDescriptor) const
+    {
+      //this is not available for matrix spectrum graph -- todo refactor
+      return false;
+    };
+    
+    
+    // last node in lower half of spectrum graph
+    Size border_node;
+    
+    std::vector<std::vector<VertexDescriptor> > matrix_vertices;
+    
+    std::vector<std::pair<Size,Size> > matrix_vertices_inv;
+    
+  public:
+    
+    UInt createMatrixGraph(const SpectrumGraphSeqan &base_graph)
+    {
+      //identify border node
+      Size base_last_id = base_graph.vertices_.size() - 1;
+      DoubleReal pm = base_graph.vertices_.back().real_mass;
+      DoubleReal pm_2 = pm / 2;
+      matrix_vertices.assign(base_graph.size(), std::vector<VertexDescriptor>(base_graph.size(), -1u));
+      
+      //border node is first node >= than 0.5 parent mass
+      for (border_node = 0; base_graph.vertices_[border_node].real_mass < pm_2; ++border_node);
+      
+      //create vertex set
+      for (Size i = 0; i < border_node; ++i)
+      {
+        for (Size j = base_last_id; j >= border_node; --j)
+        {
+          if ( !base_graph.pairwise_conflicting[i][j])
+          {
+            matrix_vertices[i][j] = seqan::addVertex(graph);
+            matrix_vertices_inv.push_back(std::make_pair(i,j));
+          }
+        }
+      }
+      
+      VertexDescriptor matrix_source = matrix_vertices[0][base_last_id];
+      VertexDescriptor matrix_sink = seqan::addVertex(graph);
+     
+
+      DoubleReal max_dist_e = 0;
+
+      std::vector<std::pair<EdgeDescriptor, DoubleReal> > edge_weights_tmp;
+      EdgeIterator base_it(base_graph.graph);
+      while (!seqan::atEnd(base_it))
+      {
+        VertexDescriptor s = seqan::sourceVertex(base_it);
+        VertexDescriptor t = seqan::targetVertex(base_it);
+        max_dist_e = std::max(max_dist_e, fabs(base_graph.vertices_[s].real_mass - base_graph.vertices_[t].real_mass));
+
+        //std::cerr << "s: " << s << " t: " << t << std::endl;
+        
+        if (t < border_node) // within lower half of spectrum graph
+        {
+          for (Size i = border_node; i < base_graph.size(); ++i)
+          {
+            if (matrix_vertices[s][i] == -1 || matrix_vertices[t][i] == -1)
+              continue;
+            
+            //check whether target vertex is below diagonal
+            if (base_graph.vertices_[t].real_mass + base_graph.vertices_[i].real_mass > pm)
+            {
+              //std::cerr << "(" << s << ',' << i << ") -> (" << t << ',' << i << ")" << std::endl;
+              seqan::addEdge(graph, matrix_vertices[s][i], matrix_vertices[t][i]);
+              edge_weights_tmp.push_back(std::make_pair(*base_it, seqan::property(base_graph.edge_weights_, *base_it)));
+            }
+          }
+        }
+        else if (s >= border_node) // within upper half of spectrum graph
+        {
+          for (Size i = 0; i < border_node; ++i)
+          {
+            if (matrix_vertices[i][s] == -1 || matrix_vertices[i][t] == -1)
+              continue;
+            
+            //check whether target vertex is above diagonal
+            if (base_graph.vertices_[s].real_mass + base_graph.vertices_[i].real_mass <= pm)
+            {
+              //std::cerr << "(" << i << ',' << t << ") -> (" << i << ',' << s << ")" << std::endl;
+              seqan::addEdge(graph, matrix_vertices[i][t], matrix_vertices[i][s]);
+              edge_weights_tmp.push_back(std::make_pair(*base_it, seqan::property(base_graph.edge_weights_, *base_it)));
+            }
+          }
+        }
+        else //possible accepting vertex in matrix spectrum graph
+        {
+          if (matrix_vertices[s][t] != -1)
+          {
+            seqan::addEdge(graph, matrix_vertices[s][t], matrix_sink);
+            edge_weights_tmp.push_back(std::make_pair(*base_it, seqan::property(base_graph.edge_weights_, *base_it)));
+          }
+        }
+        
+        seqan::goNext(base_it);
+      }
+      
+      // edge weights
+      EdgeIterator e_it(base_graph.graph);
+      seqan::resizeEdgeMap(graph, edge_weights_);
+      for (Size i = 0; i < edge_weights_tmp.size(); ++i)
+      {
+        seqan::property(edge_weights_, edge_weights_tmp[i].first) = edge_weights_tmp[i].second;
+      }
+
+      
+      conflict_clusters.resize(base_graph.conflict_clusters.size());
+      conflict_clusters_inv.resize(seqan::numVertices(graph));
+      conflicting_nodes.resize(seqan::numVertices(graph));
+
+      
+      // reduce graph
+      std::cerr << "SpecGraph Size: " << seqan::numVertices(base_graph.graph) << " " << seqan::numEdges(base_graph.graph) << std::endl;
+      std::cerr << "MatrixGraph Size: " << seqan::numVertices(graph) << " " << seqan::numEdges(graph) << std::endl;
+
+      seqan::String<VertexDescriptor> pred;
+      seqan::String<Size> distF, distR;
+      seqan::breadthFirstSearch(graph, matrix_source, pred, distF);
+      TGraph graph_rev;
+      seqan::transpose(graph, graph_rev);
+      
+      seqan::breadthFirstSearch(graph_rev, matrix_sink, pred, distR);
+      
+      VertexIterator v_it(graph);
+      while (!seqan::atEnd(v_it))
+      {
+        if (seqan::property(distF, *v_it) == _getInfinityDistance(distF) || seqan::property(distR, *v_it) == _getInfinityDistance(distR))
+        {
+          seqan::removeVertex(graph, *v_it);
+          matrix_vertices[matrix_vertices_inv[*v_it].first][matrix_vertices_inv[*v_it].second] = -1u;
+        }
+        seqan::goNext(v_it);
+      }
+
+//      DEBUG STUFF
+//      seqan::goBegin(v_it);
+//      DoubleReal max_dist = 0;
+//      while (!seqan::atEnd(v_it))
+//      {
+//        if (*v_it == matrix_sink)
+//        {
+//          seqan::goNext(v_it);
+//          continue;
+//        }
+//        
+//        DoubleReal tmpd = fabs(base_graph.vertices_[matrix_vertices_inv[*v_it].first].real_mass + base_graph.vertices_[matrix_vertices_inv[*v_it].second].real_mass - pm);
+//        
+//        std::cerr << matrix_vertices_inv[*v_it].first << " : " << matrix_vertices_inv[*v_it].second << " " << tmpd << std::endl;
+//        max_dist = std::max(max_dist, tmpd);
+//        seqan::goNext(v_it);
+//      }
+//      std::cerr << "MAX DIST: " << max_dist << "  Edge: " << max_dist_e << std::endl;
+
+      
+      
+      // conflict clusters
+      
+      for (Size i = 0; i < base_graph.conflict_clusters.size(); ++i)
+      {
+        for (Size j = 0; j < base_graph.conflict_clusters[i].size(); ++j)
+        {
+          VertexDescriptor node_id = base_graph.conflict_clusters[i][j];
+          
+          if (base_graph.vertices_[node_id].real_mass < pm_2)
+          {
+            for (Size k = border_node; k < base_graph.size(); ++k)
+            {
+              VertexDescriptor matrix_node_id = matrix_vertices[node_id][k];
+              if (matrix_node_id != -1u)
+              {
+                conflict_clusters[i].push_back(matrix_node_id);
+                conflict_clusters_inv[matrix_node_id].push_back(i);
+              }
+            }
+          }
+          else
+          {
+            for (Size k = 0; k < border_node; ++k)
+            {
+              VertexDescriptor matrix_node_id = matrix_vertices[k][node_id];
+              if (matrix_node_id != -1u)
+              {
+                conflict_clusters[i].push_back(matrix_node_id);
+                conflict_clusters_inv[matrix_node_id].push_back(i);
+              }
+            }
+          }
+        }
+      }
+      for (Size i = 0; i < conflict_clusters.size(); ++i)
+      {
+        for (Size j = 0; j < conflict_clusters[i].size(); ++j)
+        {
+          conflict_clusters_inv[conflict_clusters[i][j]].push_back(i);
+          for (Size k = j+1; k < conflict_clusters[i].size(); ++k)
+          {
+            conflicting_nodes[conflict_clusters[i][j]].push_back(conflict_clusters[i][k]);
+            conflicting_nodes[conflict_clusters[i][k]].push_back(conflict_clusters[i][j]);
+            
+            //pairwise_conflicting[conflict_clusters[i][j]][conflict_clusters[i][k]] = true;
+            //pairwise_conflicting[conflict_clusters[i][k]][conflict_clusters[i][j]] = true;
+          }
+        }
+      }
+      
+      //remove duplication entries in conflicting_nodes
+      for (Size i = 0; i < vertices_.size(); ++i)
+      {
+        std::vector<VertexDescriptor> &cni = conflicting_nodes[i];
+        std::sort(cni.begin(), cni.end());
+        cni.resize(std::distance(cni.begin(), std::unique(cni.begin(), cni.end() )));
+      }
+      
+      std::cerr << "SpecGraph Size: " << seqan::numVertices(base_graph.graph) << " " << seqan::numEdges(base_graph.graph) << std::endl;
+      std::cerr << "MatrixGraph Size: " << seqan::numVertices(graph) << " " << seqan::numEdges(graph) << std::endl;
+      exit(1);
+      return 0;
+    }
+    
+    void getMassesForPaths(const SpectrumGraphSeqan &base_graph,
+                         const std::vector<std::vector<VertexDescriptor> > &paths,
+                         std::vector<std::vector<UInt> >&prms) const
+    {
+      prms.resize(paths.size());
+      for (Size i = 0; i < paths.size(); ++i)
+      {
+        prms[i].clear();
+        prms[i].resize(paths[i].size()+1);
+        Size lpos = 0;
+        Size rpos = paths[i].size();
+       
+
+        Size j = 0;
+        for (; j+2 < paths[i].size(); ++j)
+        {
+          const std::pair<VertexDescriptor, VertexDescriptor> &ij = matrix_vertices_inv[paths[i][j]];
+          const std::pair<VertexDescriptor, VertexDescriptor> &kl = matrix_vertices_inv[paths[i][j+1]];
+          
+          if (ij.first != kl.first) //vertical edge
+          {
+            prms[i][lpos] = base_graph.getIntEdgeMass(ij.first, kl.first);
+            ++lpos;
+          }
+          else //horizontal edge
+          {
+            prms[i][rpos] = base_graph.getIntEdgeMass(kl.second, ij.second);
+            --rpos;
+          }
+        }
+        //the diagonal spanning edge
+        const std::pair<VertexDescriptor, VertexDescriptor> &ij = matrix_vertices_inv[paths[i][j]];
+        prms[i][lpos] = base_graph.getIntEdgeMass(ij.first, ij.second);
+      }
+    }
+
+    
+    
+    
+  };
+  
 
   template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
   void
@@ -448,15 +754,15 @@ namespace OpenMS
                                         TPredecessorMap& predecessor,
                                         TDistanceMap& distance,
                                         seqan::String<TVertexDescriptor> const& order,
-                                        seqan::String<bool> const & is_vertex_active,
-                                        seqan::String<bool> const & is_edge_active)
+                                        seqan::String<bool> const & is_vertex_inactive,
+                                        seqan::String<bool> const & is_edge_inactive)
   {
     using namespace seqan;
 
     typedef typename seqan::EdgeDescriptor<seqan::Graph<TSpec> >::Type TEdgeDescriptor;
     typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::EdgeIterator>::Type TEdgeIterator;
     typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::OutEdgeIterator>::Type TOutEdgeIterator;
-    typedef typename seqan::Iterator<const seqan::String<TVertexDescriptor>, Rooted>::Type TStringIterator;
+    typedef typename seqan::Iterator<const seqan::String<TVertexDescriptor>, Rooted>::Type TStringIterator;    
 
     // Initialization
     resizeVertexMap(g,predecessor);
@@ -474,79 +780,23 @@ namespace OpenMS
 
     while(getValue(it) != target && !atEnd(it))
     {
-      if(!getProperty(is_vertex_active, getValue(it)))
+      if(getProperty(is_vertex_inactive, getValue(it)))
+      {
+        goNext(it);
         continue;
+      }
 
       TOutEdgeIterator itout(g, getValue(it));
       for(;!atEnd(itout);++itout)
       {
-        if(getProperty(is_edge_active, getValue(itout)))
+        if(!getProperty(is_edge_inactive, getValue(itout)))
         {
-          _relax(g,weight,predecessor, distance, getValue(it), getValue(itout));
+          _relax(g, weight, predecessor, distance, getValue(it), getValue(itout));
         }
       }
       goNext(it);
     }
   }
-
-
-  template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap, typename TOrderMap, typename TStatusMap>
-  void
-  SpectrumGraphSeqan::dagShortestPathST(seqan::Graph<TSpec> const& g,
-                                        TVertexDescriptor const source,
-                                        TVertexDescriptor const target,
-                                        TWeightMap const& weight,
-                                        TPredecessorMap& predecessor,
-                                        TDistanceMap& distance,
-                                        seqan::String<TVertexDescriptor> const& order,
-                                        TOrderMap const& order_inv,
-                                        TStatusMap const & v_status)
-
-  {
-    using namespace seqan;
-
-    typedef typename seqan::EdgeDescriptor<seqan::Graph<TSpec> >::Type TEdgeDescriptor;
-    typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::EdgeIterator>::Type TEdgeIterator;
-    typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::OutEdgeIterator>::Type TOutEdgeIterator;
-    typedef typename seqan::Iterator<const seqan::String<TVertexDescriptor>, Rooted>::Type TStringIterator;
-
-    // Initialization
-    resizeVertexMap(g,predecessor);
-    resizeVertexMap(g,distance);
-    _initializeSingleSource(g, source, weight, predecessor, distance);
-
-    TStringIterator it = begin(order);
-    //jump over all vertices before source
-    while(getValue(it) != source && !atEnd(it))
-    {
-      goNext(it);
-    }
-
-    while (next_target_it != target)
-    {
-      //get next target
-      while (getProperty(v_status, getValue(it)) != ACTIVE && next_target_it != target)
-        ++next_target_it;
-
-      while(getValue(it) != next_target_it)
-      {
-        if(getProperty(v_status, getValue(it)) == INACTIVE)
-          continue;
-
-        TOutEdgeIterator itout(g, getValue(it));
-        for(;!atEnd(itout);++itout)
-        {
-          if(getProperty(order_inv, getValue(itout)) <= getProperty(order_inv, getValue(next_target_it)))
-          {
-            _relax(g,weight,predecessor, distance, getValue(it), getValue(itout));
-          }
-        }
-        goNext(it);
-      }
-    }
-  }
-
-
 
 
 }//namespace

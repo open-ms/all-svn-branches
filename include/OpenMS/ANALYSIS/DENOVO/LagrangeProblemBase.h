@@ -56,7 +56,7 @@ namespace OpenMS {
        @param PrimalSolution (OUT) holds the primal solution for the current position
     */
     virtual int EvaluateProblem( const DVector& Dual,
-				 list<int>& DualIndices,
+         const list<int>& DualIndices,
 				 double& DualValue,
 				 double& PrimalValue,
 				 DVector& Subgradient,

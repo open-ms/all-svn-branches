@@ -37,19 +37,19 @@ namespace OpenMS
       ///de_novoGraph
       SpectrumGraphSeqan* G;
       ///number of clusters
-      int clust_num;
+      Size clust_num;
       ///the first node to be used in the k-th iteration
-      int deviation_node;
+      Size deviation_node;
       ///the forbidden edges (one vector for each starting nodes)
       vector<vector<bool> > forbidden_edges;
       ///the scores of the computed paths
-      vector<double> found_path_scores;
+      vector<DoubleReal> found_path_scores;
       ///the computed paths as vector of nodes
       vector<vector<VertexDescriptor> > found_path;
       ///the heap for the candidate paths
       std::multiset<path_score_pair> cand_path_heap;
       ///the Lagrange Problem is used once for each starting node
-      DeNovoLagrangeProblemBoost *de_novo_lagrange;
+      //DeNovoLagrangeProblemBoost *de_novo_lagrange;
 
     public:
       ///constructor
@@ -61,13 +61,13 @@ namespace OpenMS
 
       //Member Functions
       ///forbid edges
-      int forbid_edges(int k, DeNovoLagrangeProblemBoost &dnlp);
+      int forbid_edges(Size k, DeNovoLagrangeProblemBoost& dnlp);
 
       ///compute the k longest paths
-      int computeLongestPaths(int k);
+      int computeLongestPaths(Size k);
 
       ///the k-th iteration step
-      path_score_pair kthIteration(UInt k, SubgradientSolver * sub_solver);
+      path_score_pair kthIteration(Size k);
 
       std::vector<std::vector<VertexDescriptor> > get_longest_paths()
       {

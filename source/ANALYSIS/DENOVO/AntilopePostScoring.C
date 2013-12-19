@@ -113,7 +113,7 @@ namespace OpenMS
     //terminate when the last iterator has reached the end of the last vector
     while (count < total_combs)
     {
-      std::cout << "in while  " << count << std::endl;
+      //std::cout << "in while  " << count << std::endl;
       ++count;
 
       UInt i = 0;
@@ -140,7 +140,7 @@ namespace OpenMS
         //output.back().push_back(**res_iter++);
       }
 
-      std::cout << "in combination:  " << tmp_sequence << std::endl;
+      //std::cout << "in combination:  " << tmp_sequence << std::endl;
       output.push_back(IdAnnot(AASequence(tmp_sequence)));
     }
     return count;
@@ -165,10 +165,10 @@ namespace OpenMS
       UInt index_value = result_masses[i];
       if (annot_map.find(index_value) != annot_map.end())
       {
-        std::cerr<<"vectorSIZE: "<<annot_map.find(index_value)->second.size()<<std::endl;
+        //std::cerr<<"vectorSIZE: "<<annot_map.find(index_value)->second.size()<<std::endl;
         if(annot_map.find(index_value)->second[0].size()==1)
         {
-          std::cerr<<"In if: "<<annot_map.find(index_value)->second[0]<<std::endl;
+          //std::cerr<<"In if: "<<annot_map.find(index_value)->second[0]<<std::endl;
           annotations.push_back(IdSetup::AASeqVec(1,annot_map.find(index_value)->second[0]));
         }
         else
@@ -185,6 +185,7 @@ namespace OpenMS
     }
     //TODO this is now a hack to prevent resolution for last edge in tryptic ids
     //annotations.back().resize(1);
+      //TODO precompute permutations
 
     //for each of the candidate annotations generate all possible permutations
     for (all_annot_it = annotations.begin(); all_annot_it != annotations.end(); ++all_annot_it)
@@ -214,7 +215,7 @@ namespace OpenMS
       }
 
       all_permutations.push_back(permutations);
-      std::cout << "number of perms: " << permutations.size() << std::endl;
+      //std::cout << "number of perms: " << permutations.size() << std::endl;
 
       permutations.clear();
       //}
@@ -463,16 +464,16 @@ namespace OpenMS
       {
         for(Size j=0; j<all_edge_annots[i].size(); ++j)
         {
-          String sequence;
+          AASequence sequence;
           for(Size kk=0; kk<all_edge_annots.size(); ++kk)
           {
             if(kk!=i)
             {
-              sequence+=all_edge_annots[kk][0].sequence.toString();
+              sequence+=all_edge_annots[kk][0].sequence;
             }
             else
             {
-              sequence+=all_edge_annots[kk][j].sequence.toString();
+              sequence+=all_edge_annots[kk][j].sequence;
             }
           }
 
@@ -577,7 +578,7 @@ namespace OpenMS
 
             for(Size i=0; i<all_candidates.size();++i)
             {
-              std::cout<<"Cand Sequence:  "<<all_candidates[i].sequence<<std::endl;
+              //std::cout<<"Cand Sequence:  "<<all_candidates[i].sequence<<std::endl;
               AASequence sequence = all_candidates[i].sequence;
               DoubleReal support=0;
               //support+=rescoreGap(sequence, edge_start*precision, (edge_start+*edge_it)*precision, orig_spec, scr_func, 0.5);
@@ -642,7 +643,7 @@ namespace OpenMS
               break;
             }
           }
-          std::cout << "in combination:  " << tmp_sequence << "   --   "<<score<<std::endl;
+          //std::cout << "in combination:  " << tmp_sequence << "   --   "<<score<<std::endl;
           ranked_candidates.insert(ScoreAnnotPair(score, IdAnnot(AASequence(tmp_sequence))));
         }        
 
@@ -811,22 +812,23 @@ namespace OpenMS
   DoubleReal IdEval::scorePSM(const PeakSpectrum & spec, const AASequence & sequence, const std::set<IdSetup::ion_type>scored_types, /*const PriorTable & priors,*/ DoubleReal delta)
   {
     const static Size number_sectors = 3;
-    static std::vector<std::vector<DoubleReal> >priors(number_sectors);
+    static std::vector<std::vector<DoubleReal> >priors;
     if(priors.empty())
     {
+      priors.resize(number_sectors);
       DoubleReal prior;
-      for(Size sector=0; sector<number_sectors; ++sector)
+      for(Size sector = 0; sector < number_sectors; ++sector)
       {
-        for(Size type=0; type<=IdSetup::LAST_TYPE; ++type)
+        for(Size type = 0; type <= IdSetup::LAST_TYPE; ++type)
         {
-          if(type==IdSetup::BIon || type==IdSetup::YIon)
-            prior=1;
-          else if(type==IdSetup::BIon2 || type==IdSetup::YIon2)
-            prior=0.5;
-          else if(type==IdSetup::CIon || type==IdSetup::ZIon)
-            prior=0.2;
+          if(type == IdSetup::BIon || type == IdSetup::YIon)
+            prior = 1;
+          else if(type == IdSetup::BIon2 || type == IdSetup::YIon2)
+            prior = 0.5;
+          else if(type == IdSetup::CIon || type == IdSetup::ZIon)
+            prior = 0.2;
           else //neutral losses
-            prior=0.5;
+            prior = 0.5;
 
           priors[sector].push_back(prior);
         }
@@ -847,7 +849,7 @@ namespace OpenMS
       Size sector=std::min(number_sectors-1, (Size)floor(number_sectors * prm/parent_mass));
 
       std::set<IdSetup::ion_type>::const_iterator type_it;
-      for(type_it=scored_types.begin(); type_it!=scored_types.end(); ++type_it)
+      for(type_it = scored_types.begin(); type_it != scored_types.end(); ++type_it)
       {
         DoubleReal score=0;
         DoubleReal offset_pos=IdSetup::getFragmentMass(*type_it, prm, parent_mass);
@@ -906,25 +908,25 @@ namespace OpenMS
             ++index;
           }
 
-          //sum up the score respecting the peak status (lone, primary, secondary), the mass_error and the prior
-          score=spec[peak_index].getIntensity()*priors[sector][*type_it];
-          score*= ((delta-mass_error)/delta);
+          //sum up the score respecting the peak status (lone, primary, secondary), the mass_error and the prior          
+          score = spec[peak_index].getIntensity() * priors[sector][*type_it];
+          score *= ((delta-mass_error)/delta);
           if(is_primary)
           {
-            score+=weight_for_isotopes*child_intensity;
+            score += weight_for_isotopes * child_intensity;
           }
           else if(is_secondary) //penalty if its a secondary peak
           {
-            score=secondary_peak_weight*score;
+            score = secondary_peak_weight * score;
           }
         }
 
         //if no peak was found penalize it
         else
-        {
-          score=(-1)*missing_peak_penalty*priors[sector][*type_it];
+        {          
+          score = (-1) * missing_peak_penalty * priors[sector][*type_it];
         }
-        total_score+=score;
+        total_score += score;
       }
     }
     return total_score;

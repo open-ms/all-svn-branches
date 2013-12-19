@@ -45,7 +45,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     struct path_score_pair
     {
         std::vector<VertexDescriptor> path;
-        float score;
+        DoubleReal score;
 
         bool operator<(const path_score_pair &b) const
         {
@@ -62,14 +62,13 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
                           prefix_(),
                           edge_weights_(),
                           edge_weights_bk_(),
-                          spanning_edges_(),
                           lower_bound_(MINUS_INF)
     {      
       best_feasible_solution_.score = MINUS_INF;
       best_infeasible_solution_.score = PLUS_INF;
 
-      seqan::resizeEdgeMap(G->graph, forbidden_edges_, std::vector<bool>(seqan::numEdges(G->graph), false));
-      seqan::resizeVertexMap(G->graph, forbidden_nodes_, std::vector<bool>(seqan::numVertices(G->graph), false));
+      seqan::resizeEdgeMap(G->graph, forbidden_edges_, false);
+      seqan::resizeVertexMap(G->graph, forbidden_nodes_, false);
 
       resetWeights(true);
     }
@@ -83,8 +82,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
                           forbidden_edges_(dnlp.forbidden_edges_),
                           prefix_(dnlp.prefix_),
                           edge_weights_(dnlp.edge_weights_),
-                          edge_weights_bk_(dnlp.edge_weights_bk_),                          
-                          spanning_edges_(dnlp.spanning_edges_),                          
+                          edge_weights_bk_(dnlp.edge_weights_bk_),
                           lower_bound_(MINUS_INF)
     {      
       best_feasible_solution_.score = MINUS_INF;
@@ -93,7 +91,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     }
 
     /// assignment operator
-    DeNovoLagrangeProblemBoost operator= (const DeNovoLagrangeProblemBoost &dnlp)
+    DeNovoLagrangeProblemBoost& operator= (const DeNovoLagrangeProblemBoost& dnlp)
     {
       LagrangeProblem::operator= (dnlp);
       G = dnlp.G;
@@ -101,13 +99,14 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
       edge_weights_bk_ = dnlp.edge_weights_bk_;
       forbidden_nodes_ = dnlp.forbidden_nodes_;
       forbidden_edges_ = dnlp.forbidden_edges_;
-      spanning_edges_ = dnlp.spanning_edges_;
       prefix_ = dnlp.prefix_;
       lower_bound_ = dnlp.lower_bound_;
 
       best_feasible_solution_.score = MINUS_INF;
       best_infeasible_solution_.score = PLUS_INF;
       resetWeights(false);
+
+      return *this;
     }
 
     /// Destructor
@@ -116,7 +115,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
 
     int EvaluateProblem( const DVector& Dual,
-         list<int>& DualIndices,
+         const list<int>& DualIndices,
          double& DualValue,
          double& PrimalValue,
          DVector& Subgradient,
@@ -127,8 +126,8 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
 
     int ComputeFeasibleSolution(
-               DVector Dual,
-               DVector Primal
+               DVector /*Dual*/,
+               DVector /*Primal*/
                ){return 0;}
 
 
@@ -169,8 +168,6 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     seqan::String<DoubleReal> edge_weights_;
 
     seqan::String<DoubleReal> edge_weights_bk_;
-
-    std::vector<std::vector<EdgeDescriptor> > spanning_edges_;
 
     //remove this. seems to be conly for testing reasons
     double lower_bound_;
@@ -213,7 +210,9 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     void setPrefix(const path_score_pair& prefix_in)
     {
       prefix_ = prefix_in;
+#ifdef Debug
       std::cout<<"Last Prefix Node:" << prefix_.path.back() <<std::endl;
+#endif
     }
 
     void forbidConflictingNodes(VertexDescriptor v);
@@ -227,7 +226,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
       path = best_infeasible_solution_.path;
     }
 
-    void reset();
+    void reset(bool hard = false);
 
     void getViolatedClusters(std::vector<Size> &clusters, const std::vector<VertexDescriptor> &path);
 

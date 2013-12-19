@@ -46,7 +46,7 @@ namespace OpenMS
     defaults_.setMinInt("number_of_sectors", 1);
     defaults_.setValue("delta", 0.5, "allowed mass deviation from PRM for each peak");
     defaults_.setValue("number_of_ranks", 100, "number of considered ranks");
-    defaults_.setValue("scoring_file", "../../data/scoring/rankScores.dat", "file to read/store rank scores");
+    defaults_.setValue("scoring_file", "./data/rankScores.dat", "file to read/store rank scores");
     defaultsToParam_();
   }
 
@@ -327,7 +327,7 @@ namespace OpenMS
         }
       }
     }
-    infile.store(file_name);
+    //infile.store(file_name);
   }
 
   DoubleReal RankScoringFunction::getRankScores(DVector &b_scores, DVector &y_scores, const PeakSpectrum &spec)
@@ -354,9 +354,13 @@ namespace OpenMS
     {
       Size sector = std::min(number_of_sectors_-1, (Size)(floor((peak_it->getMZ() / precursor_mass) * number_of_sectors_)));
       b_scores.push_back(log_odds_b_[sector][(Size)peak_it->getIntensity()]);
+#ifdef Debug
       std::cout<<"b_scores "<<sector<<"  "<<b_scores.back()<<"  "<<(Size)peak_it->getIntensity()<<std::endl;
+#endif
       y_scores.push_back(log_odds_y_[sector][(Size)peak_it->getIntensity()]);
+#ifdef Debug
       std::cout<<"y_scores "<<sector<<"  "<<y_scores.back()<<std::endl;
+#endif
     }
   }
 

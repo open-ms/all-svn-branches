@@ -47,6 +47,7 @@ RNPxl
 RNPxlXICFilter
 #SimpleSearchEngine
 #RNPxlSearch
+Antilope
 )
 
 if(NOT DISABLE_OPENSWATH)

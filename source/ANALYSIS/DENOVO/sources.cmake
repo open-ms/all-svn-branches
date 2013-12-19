@@ -13,7 +13,7 @@ CompNovoIonScoring.C
 CompNovoIdentification.C
 CompNovoIonScoringBase.C
 CompNovoIonScoringCID.C
-AntilopeIdentification.C
+#AntilopeIdentification.C
 AntilopeAlgorithm.C
 AntilopeSpectrumGraph.C
 AntilopeIonScoringBayes.C
@@ -25,6 +25,7 @@ AntilopeLagrangeProblem.C
 AntilopeIonScoringRank.C
 AntilopePostScoring.C
 AntilopeBayesNetwork.C
+AntilopeILP.C
 )
 
 ### add path to the filenames

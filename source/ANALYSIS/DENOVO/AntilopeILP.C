@@ -35,6 +35,7 @@
 
 
 #define debug 1
+#define PAIRWISE
 using namespace std;
 
 namespace OpenMS {
@@ -150,6 +151,7 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
 
     // constraint forbidding selection of two complementary nodes except source and sink (node 0 and last node)
     // the selection of a node is here modelled by the selection of incomiung edges
+#ifdef PAIRWISE
     for (UInt i = 1; i < num_of_nodes - 2; i++)
     {
       for (UInt j = i + 1; j < num_of_nodes - 1; j++)
@@ -173,6 +175,26 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
         }
       }
     }
+#else
+
+  for (UInt c = 1; c < graph.getNumberOfClusters(); ++c)
+  {
+    const std::vector<VertexDescriptor>& cluster = graph.getCluster(c);
+    IloExpr compl_const(env);
+    
+    for (UInt i = 0; i < cluster.size(); ++i)
+    {
+        VertexDescriptor v = cluster[c][i];
+        for (UInt k = v+1; k < num_of_nodes; ++k)
+        {
+          if (graph.findDirectedEdge(v, k)) compl_const += x[std::make_pair(v, k)]; //summing up all incoming edges for i
+        }
+      }
+      std::cout << "clique: " << c << std::endl;
+      M.add(compl_const <= 1); // at most one of all complementary nodes can be in the solution
+      compl_const.end();
+  }
+#endif
 
     if (debug) cout << "constraint 1 done" << endl;
 

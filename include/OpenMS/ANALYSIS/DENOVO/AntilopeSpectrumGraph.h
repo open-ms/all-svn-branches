@@ -220,7 +220,7 @@ namespace OpenMS
     EdgeDescriptor findDirectedEdge(VertexDescriptor, VertexDescriptor) const;
 
     /// adding a node
-    UInt addNodeToGraph(DoubleReal, int, DoubleReal, DoubleReal = -1);
+    //UInt addNodeToGraph(DoubleReal, int, DoubleReal, DoubleReal = -1);
 
     /// method to construct the spectrum graph (generate set of edges by editing adjacency lists)
     UInt createEdgeSet(const IdSetup::BoolVec &A, const IdSetup::UIntVec &A_len);
@@ -299,10 +299,10 @@ namespace OpenMS
       return conflict_clusters[cluster_id];
     }
 
-    const std::vector<VertexDescriptor>& getTopologicalOrdering()
-    {
-      return ordering_;
-    }
+//    const std::vector<VertexDescriptor>& getTopologicalOrdering()
+//    {
+//      return ordering_;
+//    }
     
     void getMassesForPaths(const std::vector<std::vector<VertexDescriptor> > &paths, std::vector<std::vector<UInt> >&prms) const
     {
@@ -341,12 +341,12 @@ namespace OpenMS
       seqan::assignProperty(edge_active_, e, false);
     }
     
-    const std::vector<EdgeDescriptor>& getSpanningEdges(VertexDescriptor v) const
-    {
-      return spanning_edges_[v];
-    }
+//    const std::vector<EdgeDescriptor>& getSpanningEdges(VertexDescriptor v) const
+//    {
+//      return spanning_edges_[v];
+//    }
     
-    void createSpanningEdges();
+//    void createSpanningEdges();
 
     template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
     static void dagShortestPathST(seqan::Graph<TSpec> const& g,
@@ -357,13 +357,13 @@ namespace OpenMS
                                   TDistanceMap& distance,
                                   seqan::String<TVertexDescriptor> const& order);
 
-    template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
-    static void dagShortestPathST(seqan::Graph<TSpec> const& g,
-                                  TVertexDescriptor const source,
-                                  TVertexDescriptor const target,
-                                  TWeightMap const& weight,
-                                  TPredecessorMap& predecessor,
-                                  TDistanceMap& distance);
+//    template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
+//    static void dagShortestPathST(seqan::Graph<TSpec> const& g,
+//                                  TVertexDescriptor const source,
+//                                  TVertexDescriptor const target,
+//                                  TWeightMap const& weight,
+//                                  TPredecessorMap& predecessor,
+//                                  TDistanceMap& distance);
     template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
     static void dagShortestPathST(seqan::Graph<TSpec> const& g,
                                   TVertexDescriptor const source,
@@ -371,9 +371,10 @@ namespace OpenMS
                                   TWeightMap const& weight,
                                   TPredecessorMap& predecessor,
                                   TDistanceMap& distance,
-                                  seqan::String<TVertexDescriptor> const& order,
                                   seqan::String<bool> const & is_vertex_inactive,
-                                  seqan::String<bool> const & is_edge_inactive);
+                                  seqan::String<bool> const & is_edge_inactive,
+                                  std::set<TVertexDescriptor> const &forced_vertices
+                                  );
 
 
     //TODO can also be removed as function and be done automatically in create node set
@@ -395,7 +396,7 @@ namespace OpenMS
 
     //std::vector<std::vector<VertexDescriptor> > conflicting_nodes_;
     
-    std::vector<std::vector<EdgeDescriptor> > spanning_edges_;
+    //std::vector<std::vector<EdgeDescriptor> > spanning_edges_;
 
     /// vertices of the graph
     std::vector <Node> vertices_;
@@ -404,7 +405,7 @@ namespace OpenMS
     std::vector<Edge> edges_;
 
     /// the ordering of vertices (is trivial but required for efficient call of seqan dag shortest path)
-    std::vector<VertexDescriptor> ordering_;
+    //std::vector<VertexDescriptor> ordering_;
 
     /// vector of bools for each vertex (true --> vertex is active (default), false --> vertex is inactive)
     seqan::String<bool> vertex_active_;
@@ -551,6 +552,9 @@ namespace OpenMS
       seqan::breadthFirstSearch(graph_rev, matrix_sink, pred, distR);
       
       VertexIterator v_it(graph);
+//      ordering_.clear();
+//      ordering_.reserve(seqan::numVertices(graph));
+    
       while (!seqan::atEnd(v_it))
       {
         if (seqan::property(distF, *v_it) == _getInfinityDistance(distF) || seqan::property(distR, *v_it) == _getInfinityDistance(distR))
@@ -558,6 +562,11 @@ namespace OpenMS
           seqan::removeVertex(graph, *v_it);
           matrix_vertices[matrix_vertices_inv[*v_it].first][matrix_vertices_inv[*v_it].second] = -1u;
         }
+//        else
+//        {
+//          ordering_.push_back(*v_it);
+//        }
+        
         seqan::goNext(v_it);
       }
 
@@ -642,7 +651,7 @@ namespace OpenMS
       
       std::cerr << "SpecGraph Size: " << seqan::numVertices(base_graph.graph) << " " << seqan::numEdges(base_graph.graph) << std::endl;
       std::cerr << "MatrixGraph Size: " << seqan::numVertices(graph) << " " << seqan::numEdges(graph) << std::endl;
-      exit(1);
+      //exit(1);
       return 0;
     }
     
@@ -727,42 +736,47 @@ namespace OpenMS
       goNext(it);
     }
   }
+//
+//  template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
+//  void
+//  SpectrumGraphSeqan::dagShortestPathST(seqan::Graph<TSpec> const& g,
+//                                        TVertexDescriptor const source,
+//                                        TVertexDescriptor const target,
+//                                        TWeightMap const& weight,
+//                                        TPredecessorMap& predecessor,
+//                                        TDistanceMap& distance)
+//  {
+//    // Topological sort
+//    seqan::String<TVertexDescriptor> order;
+//    seqan::topologicalSort(g, order);
+//
+//    //call dagShortestPath with ordering
+//    dagShortestPathST(g, source, target, weight, predecessor, distance, order);
+//  }
 
+  
+  //Compute shortest source - target path in dag
+  //vertex descriptors are implicitly assumed to have topological order - true for spectrum graphs by construction
   template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
   void
-  SpectrumGraphSeqan::dagShortestPathST(seqan::Graph<TSpec> const& g,
-                                        TVertexDescriptor const source,
-                                        TVertexDescriptor const target,
-                                        TWeightMap const& weight,
-                                        TPredecessorMap& predecessor,
-                                        TDistanceMap& distance)
-  {
-    // Topological sort
-    seqan::String<TVertexDescriptor> order;
-    seqan::topologicalSort(g, order);
-
-    //call dagShortestPath with ordering
-    dagShortestPathST(g, source, target, weight, predecessor, distance, order);
-  }
-
-  template<typename TSpec, typename TVertexDescriptor, typename TWeightMap, typename TPredecessorMap, typename TDistanceMap>
-  void
-  SpectrumGraphSeqan::dagShortestPathST(seqan::Graph<TSpec> const& g,
-                                        TVertexDescriptor const source,
-                                        TVertexDescriptor const target,
-                                        TWeightMap const& weight,
+  SpectrumGraphSeqan::dagShortestPathST(const seqan::Graph<TSpec> &g,
+                                        const TVertexDescriptor source,
+                                        const TVertexDescriptor target,
+                                        const TWeightMap &weight,
                                         TPredecessorMap& predecessor,
                                         TDistanceMap& distance,
-                                        seqan::String<TVertexDescriptor> const& order,
-                                        seqan::String<bool> const & is_vertex_inactive,
-                                        seqan::String<bool> const & is_edge_inactive)
+                                        const seqan::String<bool> &is_vertex_inactive,
+                                        const seqan::String<bool> &is_edge_inactive,
+                                        const std::set<TVertexDescriptor> &forced_vertices)
   {
     using namespace seqan;
 
     typedef typename seqan::EdgeDescriptor<seqan::Graph<TSpec> >::Type TEdgeDescriptor;
+    typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::VertexIterator>::Type TVertexIterator;
     typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::EdgeIterator>::Type TEdgeIterator;
     typedef typename seqan::Iterator<seqan::Graph<TSpec>, seqan::OutEdgeIterator>::Type TOutEdgeIterator;
-    typedef typename seqan::Iterator<const seqan::String<TVertexDescriptor>, Rooted>::Type TStringIterator;    
+    typedef typename seqan::Iterator<const seqan::String<TVertexDescriptor>, Rooted>::Type TStringIterator;
+    typedef typename std::set<TVertexDescriptor>::const_iterator TSetIter;
 
     // Initialization
     resizeVertexMap(g,predecessor);
@@ -770,25 +784,49 @@ namespace OpenMS
 
     _initializeSingleSource(g, source, weight, predecessor, distance);
 
-    //DAG Shortest Paths
-    TStringIterator it = begin(order);
+    TVertexIterator it(g);
+    
     //jump over all vertices before source
     while(getValue(it) != source && !atEnd(it))
     {
       goNext(it);
     }
+    
+    
+    TSetIter forced_it = forced_vertices.begin();
+    const TSetIter forced_end = forced_vertices.end();
+    TVertexDescriptor next_forced = -1u;
+
+    if (forced_it != forced_end)  //if nonempty forced vertices
+    {
+      next_forced = *forced_it;
+    }
 
     while(getValue(it) != target && !atEnd(it))
     {
-      if(getProperty(is_vertex_inactive, getValue(it)))
+      if (getProperty(is_vertex_inactive, getValue(it)))
       {
         goNext(it);
         continue;
       }
+      
+      if (getValue(it) == next_forced)
+      {
+        ++forced_it;
+        
+        if (forced_it != forced_end)
+          next_forced = *forced_it;
+        else
+          next_forced = -1u;
+      }
+    
 
       TOutEdgeIterator itout(g, getValue(it));
-      for(;!atEnd(itout);++itout)
+      for( ; !atEnd(itout); ++itout)
       {
+        if (targetVertex(itout) > next_forced)  //edge must not cross next forced vertex
+          continue;
+          
         if(!getProperty(is_edge_inactive, getValue(itout)))
         {
           _relax(g, weight, predecessor, distance, getValue(it), getValue(itout));

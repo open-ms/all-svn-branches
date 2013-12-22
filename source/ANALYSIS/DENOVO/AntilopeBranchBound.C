@@ -32,7 +32,7 @@
 namespace OpenMS
 {
   //Custom Constructor
-  BranchBoundDeNovo::BranchBoundDeNovo(DoubleReal *glb_ptr, const DeNovoLagrangeProblemBoost& dlp, path_score_pair* psp):
+  BranchBoundDeNovo::BranchBoundDeNovo(DoubleReal *glb_ptr, const DeNovoLagrangeProblemBoost& dlp, PathSolution* psp):
     glb_(glb_ptr),
     lp_(dlp),
     path_and_score_(psp)
@@ -59,11 +59,14 @@ namespace OpenMS
    }
 
 
-  void BranchBoundDeNovo::solve()
+  void BranchBoundDeNovo::solve(const DVector &initDualVec)
   {
     SubgradientSolver sub_solver;
     lp_.set_lower_bound(max(lp_.get_lower_bound(),*glb_));
     sub_solver.InitProblem(1, lp_.num_of_duals(), DVector(lp_.num_of_duals(), 0), DVector(lp_.num_of_duals(), 100));
+
+    if (!initDualVec.empty())
+      sub_solver.setDualVector(initDualVec);
 
     SubgradientSolver::SolverProgress sp = sub_solver.Solve(lp_);
 
@@ -81,10 +84,10 @@ namespace OpenMS
       std::cout<<"out of branch"<<std::endl;
 
       BranchBoundDeNovo left_node(glb_, left_lp, path_and_score_);
-      left_node.solve();
+      left_node.solve(sub_solver.getDualVector());
       std::cout<<"left node done"<<std::endl;
       BranchBoundDeNovo right_node(glb_, right_lp, path_and_score_);
-      right_node.solve();
+      right_node.solve(sub_solver.getDualVector());
       std::cout<<"right node done"<<std::endl;
     }
 
@@ -106,14 +109,16 @@ namespace OpenMS
     std::vector<VertexDescriptor> best_infeasible_path;
     lp_.getBestIllegalPath(best_infeasible_path);
 
-    std::vector<Size> viol_clusters;
-    lp_.getViolatedClusters(viol_clusters, best_infeasible_path);
+    //std::vector<Size> viol_clusters;
+    //lp_.getViolatedClusters(viol_clusters, best_infeasible_path);
 
-    std::cerr<<"VIOL: "<<viol_clusters.size()<<std::endl;
+    //std::cerr<<"VIOL: "<<viol_clusters.size()<<std::endl;
 
-    const std::vector<VertexDescriptor> &nodes_in_cl = lp_.getSpectrumGraph().getCluster(viol_clusters.front());
+    //const std::vector<VertexDescriptor> &nodes_in_cl = lp_.getSpectrumGraph().getCluster(viol_clusters.front());
     
-    VertexDescriptor branch_node = nodes_in_cl.front();
+    //VertexDescriptor branch_node = nodes_in_cl.front();
+    
+    VertexDescriptor branch_node = lp_.getBranchNode(best_infeasible_path);    
 
     std::cout<<"perform branch step over node: "<<branch_node<<std::endl;
 

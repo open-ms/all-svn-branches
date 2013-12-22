@@ -31,11 +31,11 @@
 //#define DEBUG
 namespace OpenMS
 {  
-  typedef DeNovoLagrangeProblemBoost::path_score_pair path_score_pair;
+  typedef DeNovoLagrangeProblemBoost::PathSolution PathSolution;
 
-  path_score_pair YenAlgorithm::kthIteration(Size k)
+  PathSolution YenAlgorithm::kthIteration(Size k)
   {
-    path_score_pair result_path_score, prefix;
+    PathSolution result_path_score, prefix;
     result_path_score.score = 0;
     prefix.score = 0;
     DeNovoLagrangeProblemBoost de_novo_lagrange(G);
@@ -101,7 +101,7 @@ namespace OpenMS
     //std::cerr<<"TOP CAND SCORE: "<< cand_path_heap.begin()->score <<std::endl;
     //std::cerr<<"CAND SIZE: "<<cand_path_heap.size()<<std::endl;
 
-    path_score_pair k_longest = *cand_path_heap.begin();
+    PathSolution k_longest = *cand_path_heap.begin();
     cand_path_heap.erase(cand_path_heap.begin());
 
     return k_longest;
@@ -154,8 +154,8 @@ namespace OpenMS
   int YenAlgorithm::computeLongestPaths(Size k)
   {
     cand_path_heap.clear();
-    path_score_pair tmp = { vector<VertexDescriptor>(0), -SpectrumGraphSeqan::INFINITYdist};
-    std::vector<path_score_pair>tmp_v(k, tmp);
+    PathSolution tmp = { vector<VertexDescriptor>(0), -SpectrumGraphSeqan::INFINITYdist};
+    std::vector<PathSolution>tmp_v(k, tmp);
     cand_path_heap.insert(tmp_v.begin(), tmp_v.end());
 
     double tstart = clock();
@@ -164,7 +164,7 @@ namespace OpenMS
     for (Size i = 0; i < k; i++)
     {
       cout << "start for " << i << "-th path" << endl;
-      path_score_pair longestPath_temp = kthIteration(i);
+      PathSolution longestPath_temp = kthIteration(i);
 
       found_path_scores.push_back(longestPath_temp.score);
       found_path.push_back(longestPath_temp.path);

@@ -24,8 +24,6 @@
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeLagrangeProblem.h>
 #include <OpenMS/ANALYSIS/DENOVO/LagrangeProblemBase.h>
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeSpectrumGraph.h>
-//#include <Common/CommonTypes.h>
-
 
 namespace OpenMS {
 
@@ -42,12 +40,12 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
   public:
 
-    struct path_score_pair
+    struct PathSolution
     {
         std::vector<VertexDescriptor> path;
         DoubleReal score;
 
-        bool operator<(const path_score_pair &b) const
+        bool operator<(const PathSolution &b) const
         {
           return (score > b.score);
         }
@@ -56,12 +54,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
     ///constructor
     DeNovoLagrangeProblemBoost(const SpectrumGraphSeqan *G_in):
-                          LagrangeProblem(),
                           G(G_in),
-                          forbidden_nodes_(),                                                                              
-                          prefix_(),
-                          edge_weights_(),
-                          edge_weights_bk_(),
                           lower_bound_(MINUS_INF)
     {      
       best_feasible_solution_.score = MINUS_INF;
@@ -80,10 +73,11 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
                           G(dnlp.G),
                           forbidden_nodes_(dnlp.forbidden_nodes_),
                           forbidden_edges_(dnlp.forbidden_edges_),
+                          forced_nodes_(dnlp.forced_nodes_),
                           prefix_(dnlp.prefix_),
                           edge_weights_(dnlp.edge_weights_),
                           edge_weights_bk_(dnlp.edge_weights_bk_),
-                          lower_bound_(MINUS_INF)
+                          lower_bound_(dnlp.lower_bound_)
     {      
       best_feasible_solution_.score = MINUS_INF;
       best_infeasible_solution_.score = PLUS_INF;
@@ -99,6 +93,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
       edge_weights_bk_ = dnlp.edge_weights_bk_;
       forbidden_nodes_ = dnlp.forbidden_nodes_;
       forbidden_edges_ = dnlp.forbidden_edges_;
+      forced_nodes_ = dnlp.forced_nodes_;
       prefix_ = dnlp.prefix_;
       lower_bound_ = dnlp.lower_bound_;
 
@@ -145,13 +140,13 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     const SpectrumGraphSeqan *G;
 
     /// the best longest path of the primal problem
-    path_score_pair best_feasible_solution_;
+    PathSolution best_feasible_solution_;
 
     /// best (lowest scoring) dual path
-    path_score_pair best_infeasible_solution_;
+    PathSolution best_infeasible_solution_;
 
     ///subgradient vector
-    std::vector<double> subgradient_;
+    std::vector<DoubleReal> subgradient_;
 
     // nodes that can not be selected for the path either because of Yen or because of branching
     seqan::String<bool> forbidden_nodes_;
@@ -163,14 +158,14 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     std::set<VertexDescriptor> forced_nodes_;
 
     ///the last(k-1)th path
-    path_score_pair prefix_;
+    PathSolution prefix_;
 
     seqan::String<DoubleReal> edge_weights_;
 
     seqan::String<DoubleReal> edge_weights_bk_;
 
     //remove this. seems to be conly for testing reasons
-    double lower_bound_;
+    DoubleReal lower_bound_;
 
   public:
     /// method computes the longest path
@@ -187,7 +182,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
     //Getter Methods
 
-    path_score_pair get_longest_path();
+    PathSolution get_longest_path();
 
     double get_best_primal_score()
     {
@@ -207,7 +202,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
       forbidden_edges_ = forb_edges_in;
     }
 
-    void setPrefix(const path_score_pair& prefix_in)
+    void setPrefix(const PathSolution& prefix_in)
     {
       prefix_ = prefix_in;
 #ifdef Debug
@@ -229,6 +224,8 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     void reset(bool hard = false);
 
     void getViolatedClusters(std::vector<Size> &clusters, const std::vector<VertexDescriptor> &path);
+  
+  VertexDescriptor getBranchNode(const std::vector<VertexDescriptor> &path);
 
     void updateWeights(const DVector& Lambda);
 

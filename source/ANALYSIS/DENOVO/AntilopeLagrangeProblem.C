@@ -25,7 +25,7 @@
 #include <vector>
 #include <numeric>
 #undef Debug
-//#define Debug
+#define Debug
 //using namespace std;
 
 namespace OpenMS{
@@ -63,7 +63,8 @@ namespace OpenMS{
       PrimalValue = DualValue = MINUS_INF;
       std::cout<<"INTERRUPTED"<<std::endl;
     }
-    Subgradient= subgradient_;
+    PrimalValue = std::max(PrimalValue, lower_bound_);
+    Subgradient = subgradient_;
     return 0;
   }
 
@@ -138,7 +139,8 @@ namespace OpenMS{
       seqan::appendValue(ordering, *it);
     }
 
-    SpectrumGraphSeqan::dagShortestPathST(G->graph, start_vertex, seqan::back(ordering), edge_weights_, predecessors, distance, ordering, forbidden_nodes_, forbidden_edges_);
+    seqan::String<VertexDescriptor> forced_vertices; //TODO filled
+    SpectrumGraphSeqan::dagShortestPathST(G->graph, start_vertex, seqan::back(ordering), edge_weights_, predecessors, distance, forbidden_nodes_, forbidden_edges_, forced_nodes_);
 
     if(seqan::back(distance) >= SpectrumGraphSeqan::INFINITYdist / 2)
     {
@@ -265,7 +267,7 @@ namespace OpenMS{
   //-------------------------------------------------------------------------------------------------------------------------
   //---------------------------------------------get_longest_path------------------------------------------------------------
   //-------------------------------------------------------------------------------------------------------------------------
-  DeNovoLagrangeProblemBoost::path_score_pair DeNovoLagrangeProblemBoost::get_longest_path()
+  DeNovoLagrangeProblemBoost::PathSolution DeNovoLagrangeProblemBoost::get_longest_path()
   {
     return best_feasible_solution_;
   }
@@ -291,11 +293,7 @@ namespace OpenMS{
 
   void DeNovoLagrangeProblemBoost::forceNode(VertexDescriptor node)
   {
-    const std::vector<EdgeDescriptor>& spannings = G->getSpanningEdges(node);
-    for(Size i = 0; i < spannings.size(); ++i)
-    {
-      forbidEdge(spannings[i]);
-    }
+    forced_nodes_.insert(node);
 
     //all conflicting nodes must be forbidden
     const std::vector<VertexDescriptor> &conflict_nodes = G->getConflictingNodes(node);
@@ -303,7 +301,7 @@ namespace OpenMS{
     {
       forbidNode(conflict_nodes[i]);
     }
-    std::cout<<"exit force node"<<std::endl;
+
   }
 
 
@@ -349,6 +347,24 @@ namespace OpenMS{
       }
     }
   }
+  
+  SpectrumGraphSeqan::VertexDescriptor DeNovoLagrangeProblemBoost::getBranchNode(const std::vector<VertexDescriptor> &path)
+  {
+    std::vector<int>violated_clusters(G->getNumberOfClusters(), 0);
+    
+    for(std::vector<VertexDescriptor>::const_iterator it = path.begin(); it != path.end(); ++it)
+    {
+      for(std::vector<Size>::const_iterator it_in = G->getClusters(*it).begin(); it_in != G->getClusters(*it).end(); ++it_in)
+      {
+        if(++violated_clusters[*it_in] > 1)
+        {
+          return *it;
+        }
+      }
+    }
+    return -1;
+  }
+
 
 
 
@@ -387,22 +403,6 @@ namespace OpenMS{
     if(init)
     {
       G->getEdgeWeights(edge_weights_bk_);
-//      edge_weights_ = edge_weights_bk_;
-//
-//      SpectrumGraphSeqan::EdgeIterator edge_it(G->graph);
-//      spanning_edges_.assign(G->size(), std::vector<EdgeDescriptor>());
-//
-//      while(!seqan::atEnd(edge_it))
-//      {
-//        VertexDescriptor source = seqan::sourceVertex(G->graph, *edge_it);
-//        VertexDescriptor target = seqan::targetVertex(G->graph, *edge_it);
-//        for(Size j = source + 1; j < target; ++j)
-//        {
-//          spanning_edges_[j].push_back(*edge_it);
-//        }
-//        ++edge_it;
-//      }
-//      return;
     }
     edge_weights_ = edge_weights_bk_;
   }

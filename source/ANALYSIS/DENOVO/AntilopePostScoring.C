@@ -857,40 +857,40 @@ namespace OpenMS
         //check whether peak is in allowed range
         DoubleReal mass_error = fabs(spec[peak_index].getMZ()-offset_pos);
 
-        if(mass_error<delta)
+        if(mass_error < delta)
         {
-          bool is_primary=false, is_secondary=false;
-          DoubleReal parent_intensity=0.0, child_intensity=0.0;
+          bool is_primary = false, is_secondary = false;
+          DoubleReal parent_intensity = 0., child_intensity = 0.;
           //check whether peak is lone, primary or secondary peak
-          Size index=peak_index;
-          Size charge=1;
-          if(*type_it==IdSetup::BIon2 || *type_it==IdSetup::YIon2)
+          Size index = peak_index;
+          Size charge = 1;
+          if(*type_it == IdSetup::BIon2 || *type_it == IdSetup::YIon2)
           {
             charge=2;
           }
-          DoubleReal target_pos=offset_pos - Constants::PROTON_MASS_U/charge;
+          DoubleReal target_pos = offset_pos - Constants::PROTON_MASS_U/charge;
           //check left side of the peak
-          while(index>=0)
+          while(index > 0)
           {
-            if(fabs(spec[index].getMZ()-target_pos)<delta_for_isotopes)
+            --index;
+            if(fabs(spec[index].getMZ() - target_pos) < delta_for_isotopes)
             {
-              if(spec[index].getIntensity()>spec[peak_index].getIntensity())
+              if(spec[index].getIntensity() > spec[peak_index].getIntensity())
               {
                 is_secondary=true;
                 parent_intensity=spec[index].getIntensity();
               }
               break;
             }
-            else if(spec[index].getMZ()<target_pos-delta_for_isotopes)
+            else if(spec[index].getMZ() < target_pos-delta_for_isotopes)
             {
               break;
             }
-            --index;
           }
           //check right side of the peak
           index=peak_index;
           target_pos=offset_pos + Constants::PROTON_MASS_U/charge;
-          while(index<spec.size())
+          while(index < spec.size())
           {
             if(fabs(spec[index].getMZ()-target_pos)<delta_for_isotopes)
             {

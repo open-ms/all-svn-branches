@@ -206,6 +206,25 @@ namespace OpenMS
       {
         _verbose = v;
       }
+    
+      const DVector &getDualVector()
+      {
+        return _dual;
+      
+      }
+    
+      void setDualVector(const DVector &d)
+      {
+        if (d.size() != _dual.size())
+        {
+          throw Exception::InvalidSize(__FILE__, __LINE__, __PRETTY_FUNCTION__, d.size());
+        }
+        else
+        {
+          _dual = d;
+        }
+      }
+    
 
       /*
        *  If <code>EvaluateProblem</code> returnes a value different from

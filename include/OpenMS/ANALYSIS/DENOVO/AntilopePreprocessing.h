@@ -275,27 +275,27 @@ class IdSetup{
       //returns fragment mass for ion_typ t, given the peptide mass (prefix for N-terminal, suffix for C-terminal)
       DoubleReal static getFragmentMass(ion_type t, DoubleReal m, DoubleReal parent_mass)
       {
-        parent_mass=parent_mass-Residue::getInternalToFullMonoWeight();
+        parent_mass = parent_mass - Residue::getInternalToFullMonoWeight();
         switch(t)
         {
-          case BIon: return m+BIon_offset;break;
-          case BIon2: return (m+BIon_offset+proton_m)/2.0;break;
-          case BIon_h2o: return m + BIon_h2o_offset;break;
-          case BIon_nh3: return m + BIon_nh3_offset;break;
-          case BIon_h2o_h2o: return m + BIon_h2o_h2o_offset;break;
-          case BIon_nh3_h2o: return m + BIon_nh3_h2o_offset;break;
-          case YIon: return parent_mass - m + YIon_offset;break;
-          case YIon2: return (parent_mass - m + YIon_offset + proton_m)/2;break;
-          case YIon_h2o: return parent_mass - m + YIon_h2o_offset;break;
-          case YIon_nh3: return parent_mass - m + YIon_nh3_offset;break;
-          case YIon_h2o_h2o: return parent_mass - m + YIon_h2o_h2o_offset;break;
-          case YIon_nh3_h2o: return parent_mass - m + YIon_nh3_h2o_offset;break;
-          case AIon: return m + AIon_offset;break;
-          case AIon_nh3: return m + AIon_nh3_offset;break;
-          case AIon_h2o: return m + AIon_h2o_offset;break;
-          case CIon: return m + CIon_offset;break;
-          case ZIon: return parent_mass - m + ZIon_offset;break;
-          default: std::cout<<"error in getRealOffsetMass"<<std::endl; return -1; break;
+          case BIon: return m+BIon_offset; break;
+          case BIon2: return (m+BIon_offset+proton_m)/2.0; break;
+          case BIon_h2o: return m + BIon_h2o_offset; break;
+          case BIon_nh3: return m + BIon_nh3_offset; break;
+          case BIon_h2o_h2o: return m + BIon_h2o_h2o_offset; break;
+          case BIon_nh3_h2o: return m + BIon_nh3_h2o_offset; break;
+          case YIon: return parent_mass - m + YIon_offset; break;
+          case YIon2: return (parent_mass - m + YIon_offset + proton_m)/2; break;
+          case YIon_h2o: return parent_mass - m + YIon_h2o_offset; break;
+          case YIon_nh3: return parent_mass - m + YIon_nh3_offset; break;
+          case YIon_h2o_h2o: return parent_mass - m + YIon_h2o_h2o_offset; break;
+          case YIon_nh3_h2o: return parent_mass - m + YIon_nh3_h2o_offset; break;
+          case AIon: return m + AIon_offset; break;
+          case AIon_nh3: return m + AIon_nh3_offset; break;
+          case AIon_h2o: return m + AIon_h2o_offset; break;
+          case CIon: return m + CIon_offset; break;
+          case ZIon: return parent_mass - m + ZIon_offset; break;
+          default: std::cout << "error in getRealOffsetMass" << std::endl; return -1; break;
         }
       }
 
@@ -303,26 +303,26 @@ class IdSetup{
       //returns fragment mass for ion_typ t, given the peptide mass (prefix for N-terminal, suffix for C-terminal)
       DoubleReal static getPrefixMass(ion_type t, DoubleReal m, DoubleReal parent_mass)
       {
-        parent_mass=parent_mass-Residue::getInternalToFullMonoWeight();
+        parent_mass = parent_mass - Residue::getInternalToFullMonoWeight();
         switch(t)
         {
-          case BIon: return m-BIon_offset;break;
-          case BIon2: return (2*m)-BIon_offset-proton_m;break;
-          case BIon_h2o: return m - BIon_h2o_offset;break;
-          case BIon_nh3: return m - BIon_nh3_offset;break;
-          case BIon_h2o_h2o: return m - BIon_h2o_h2o_offset;break;
-          case BIon_nh3_h2o: return m - BIon_nh3_h2o_offset;break;
-          case YIon: return parent_mass - m + YIon_offset;break;
-          case YIon2: return parent_mass - 2*m + proton_m + YIon_offset;break;
-          case YIon_h2o: return parent_mass - m + YIon_h2o_offset;break;
-          case YIon_nh3: return parent_mass - m + YIon_nh3_offset;break;
-          case YIon_h2o_h2o: return parent_mass - m + YIon_h2o_h2o_offset;break;
-          case YIon_nh3_h2o: return parent_mass - m + YIon_nh3_h2o_offset;break;
-          case AIon: return m - AIon_offset;break;
-          case AIon_nh3: return m - AIon_nh3_offset;break;
-          case AIon_h2o: return m - AIon_h2o_offset;break;
-          case CIon: return m - CIon_offset;break;
-          case ZIon: return parent_mass - m + ZIon_offset;break;
+          case BIon: return m-BIon_offset; break;
+          case BIon2: return (2*m)-BIon_offset-proton_m; break;
+          case BIon_h2o: return m - BIon_h2o_offset; break;
+          case BIon_nh3: return m - BIon_nh3_offset; break;
+          case BIon_h2o_h2o: return m - BIon_h2o_h2o_offset; break;
+          case BIon_nh3_h2o: return m - BIon_nh3_h2o_offset; break;
+          case YIon: return parent_mass - m + YIon_offset; break;
+          case YIon2: return parent_mass - 2*m + proton_m + YIon_offset; break;
+          case YIon_h2o: return parent_mass - m + YIon_h2o_offset; break;
+          case YIon_nh3: return parent_mass - m + YIon_nh3_offset; break;
+          case YIon_h2o_h2o: return parent_mass - m + YIon_h2o_h2o_offset; break;
+          case YIon_nh3_h2o: return parent_mass - m + YIon_nh3_h2o_offset; break;
+          case AIon: return m - AIon_offset; break;
+          case AIon_nh3: return m - AIon_nh3_offset; break;
+          case AIon_h2o: return m - AIon_h2o_offset; break;
+          case CIon: return m - CIon_offset; break;
+          case ZIon: return parent_mass - m + ZIon_offset; break;
           default: std::cout<<"error in getRealOffsetMass"<<std::endl; return -1; break;
         }
       }

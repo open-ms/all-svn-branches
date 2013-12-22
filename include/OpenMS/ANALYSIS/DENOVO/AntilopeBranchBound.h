@@ -36,12 +36,12 @@ namespace OpenMS
   {
     typedef SpectrumGraphSeqan::VertexDescriptor VertexDescriptor;
     typedef SpectrumGraphSeqan::EdgeDescriptor EdgeDescriptor;
-    typedef DeNovoLagrangeProblemBoost::path_score_pair path_score_pair;
+    typedef DeNovoLagrangeProblemBoost::PathSolution PathSolution;
     typedef std::vector<DoubleReal> DVector;
 
     public:
       ///Custom Constructor
-      BranchBoundDeNovo(DoubleReal* glb_ptr, const DeNovoLagrangeProblemBoost& dlp, path_score_pair* psp);
+      BranchBoundDeNovo(DoubleReal* glb_ptr, const DeNovoLagrangeProblemBoost& dlp, PathSolution* psp);
 
       ///Copy Constructor
       BranchBoundDeNovo(const BranchBoundDeNovo &bbd);
@@ -49,7 +49,7 @@ namespace OpenMS
       ///assignment operator
       BranchBoundDeNovo& operator=(const BranchBoundDeNovo &bbd);
 
-      void solve();
+      void solve(const DVector &initDualVec = DVector());
       void branch(DeNovoLagrangeProblemBoost &, DeNovoLagrangeProblemBoost &);
 
     private:
@@ -64,7 +64,7 @@ namespace OpenMS
       DeNovoLagrangeProblemBoost lp_;
 
       ///pointer to the best dual solution thus far
-      path_score_pair *path_and_score_;
+      PathSolution *path_and_score_;
   };
 
 }//namespace

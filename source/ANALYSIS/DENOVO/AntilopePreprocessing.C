@@ -46,7 +46,7 @@ namespace OpenMS {
   const  DoubleReal IdSetup::BIon_nh3_offset=BIon_offset-nh3_mass;
   const  DoubleReal IdSetup::BIon_nh3_h2o_offset=BIon_offset - h2o_mass - nh3_mass;
 
-  const  DoubleReal IdSetup::YIon_offset=Residue::getInternalToFullMonoWeight()-Residue::getYIonToFullMonoWeight();
+  const  DoubleReal IdSetup::YIon_offset=Residue::getInternalToFullMonoWeight() - Residue::getYIonToFullMonoWeight();
   const  DoubleReal IdSetup::YIon_h2o_offset=YIon_offset - h2o_mass;
   const  DoubleReal IdSetup::YIon_h2o_h2o_offset=YIon_offset-2*h2o_mass;
   const  DoubleReal IdSetup::YIon_nh3_offset=YIon_offset-nh3_mass;

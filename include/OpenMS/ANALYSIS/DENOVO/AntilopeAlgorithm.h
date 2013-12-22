@@ -31,7 +31,7 @@ namespace OpenMS
   class YenAlgorithm
   {
     typedef SpectrumGraphSeqan::VertexDescriptor VertexDescriptor;
-    typedef DeNovoLagrangeProblemBoost::path_score_pair path_score_pair;
+    typedef DeNovoLagrangeProblemBoost::PathSolution PathSolution;
 
     private:
       ///de_novoGraph
@@ -47,7 +47,7 @@ namespace OpenMS
       ///the computed paths as vector of nodes
       vector<vector<VertexDescriptor> > found_path;
       ///the heap for the candidate paths
-      std::multiset<path_score_pair> cand_path_heap;
+      std::multiset<PathSolution> cand_path_heap;
       ///the Lagrange Problem is used once for each starting node
       //DeNovoLagrangeProblemBoost *de_novo_lagrange;
 
@@ -67,7 +67,7 @@ namespace OpenMS
       int computeLongestPaths(Size k);
 
       ///the k-th iteration step
-      path_score_pair kthIteration(Size k);
+      PathSolution kthIteration(Size k);
 
       std::vector<std::vector<VertexDescriptor> > get_longest_paths()
       {

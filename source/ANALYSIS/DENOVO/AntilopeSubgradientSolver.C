@@ -51,18 +51,7 @@ namespace OpenMS {
     _currentUpperBound = LagrangeProblem::PLUS_INF;
     _currentLowerBound = LagrangeProblem::MINUS_INF;
     _bestUpperBound = LagrangeProblem::PLUS_INF;
-    //cout << "setting u to " << _bestUpperBound << endl;
     _bestLowerBound = LagrangeProblem::MINUS_INF;
-
-    // switch on signal stuff
-    //if (signal(SIGINT, catchSignals) == SIG_ERR) {  cerr << "error catching signals" << endl; exit(-1); }
-
-    // initialize with user-specific values
-    //      _noOfIterations = defaults_.getValue("noofiterations");
-    //      _noOfNondecreasingIterations = defaults_.getValue("noofnondecreasingiterations");
-    //      _my = defaults_.getValue("my");
-    //      _verbose = defaults_.getValue("verbosesolver");
-    //      _utimeLimit = defaults_.getValue("utimelimit");
   }
 
 
@@ -216,6 +205,8 @@ namespace OpenMS {
    */
   SubgradientSolver::SolverProgress SubgradientSolver::Solve( LagrangeProblem& l )
   {
+    
+    _verbose = 1;
     // all variables initialized?
     if( _sanityCheck() == false )
       return INSANE;
@@ -294,7 +285,7 @@ namespace OpenMS {
         // now check whether we already reached an optimal solution
         if( (_bestUpperBound - _bestLowerBound)< EPSILON )
         {
-          if( _verbose == 1 )
+          if( _verbose == 1 || true)
           {
             cout<<"case 1"<<endl;
             cout<<"SOLVED IN ITERATION: "<<i+1<<endl;
@@ -335,7 +326,8 @@ namespace OpenMS {
         {
           temp += (subgradient[*sg_iter]*subgradient[*sg_iter]);
         }
-        double ss= _my* ((_bestUpperBound - _bestLowerBound)/sqrt(temp));
+        //hack sandro
+        double ss= _my* ((_bestUpperBound - std::max(0.,_bestLowerBound))/sqrt(temp));
 
         //hack sandro
         ss = min(ss,2.0);
@@ -471,10 +463,10 @@ namespace OpenMS {
 
   void SubgradientSolver::setDefaultParams_()
   {
-    defaults_.setValue("noofiterations", 200, "Number of iterations for the subgradient method");
+    defaults_.setValue("noofiterations", 50, "Number of iterations for the subgradient method");
     defaults_.setMinInt("noofiterations", 0);
 
-    defaults_.setValue("noofnondecreasingiterations",20,"number of non-decreasing iteration before abort");
+    defaults_.setValue("noofnondecreasingiterations",5,"number of non-decreasing iteration before abort");
     defaults_.setMinInt("noofnondecreasingiterations", 1);
 
     defaults_.setValue("my", 1.0, "The stepsize in the subgradient method");

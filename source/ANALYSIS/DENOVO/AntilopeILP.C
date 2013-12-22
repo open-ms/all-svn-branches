@@ -35,7 +35,8 @@
 
 
 #define debug 1
-#define PAIRWISE
+//#define PAIRWISE
+#undef PAIREWISE
 using namespace std;
 
 namespace OpenMS {
@@ -107,8 +108,17 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
 
     //ILP variables for directed edges
     IloModel M(env); // get an empty ILOG model
-    std::map<std::pair<UInt, UInt>, IloBoolVar> x;
+  
     UInt num_of_nodes = graph.size();
+    std::vector <IloBoolVar> x;
+    x.reserve(num_of_nodes);
+    typedef std::list<std::pair<Size, Size> > TOutEdgeList;
+    typedef TOutEdgeList::const_iterator TOutEdgeListIter;
+    std::vector<TOutEdgeList> adj_list(num_of_nodes);
+    std::vector<TOutEdgeList> adj_list_rev(num_of_nodes);
+  
+    //std::map<std::pair<UInt, UInt>, IloBoolVar> x;
+  
 
 
     //------------------------------------objective function-----------------------------------------------
@@ -124,10 +134,13 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
       {
         if (graph.findDirectedEdge(i, j))
         {
+          x.push_back(IloBoolVar(env));
+          adj_list[i].push_back(make_pair(j, num_variables));
+          adj_list_rev[j].push_back(make_pair(i, num_variables));
+          
           num_variables++;
-          x[std::make_pair(i, j)] = IloBoolVar(env);
           std::cout<<"edge_mass:: "<<graph.getRealEdgeMass(i, j)<<std::endl;
-          obj += x[std::make_pair(i, j)] * (graph.getEdgeWeight(i, j));
+          obj += x.back() * -(graph.getEdgeWeight(i, j));
           //cout<<"create x-variable"<<i<<":"<<j<<": "<<graph.getEdgeWeight(i,j)<<endl;
         }
       }
@@ -159,15 +172,20 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
         if (graph.hasUndirectedEdge(i, j))
         {
           IloExpr compl_const(env);
-
-          for (UInt k = 0; k < i; k++)
+          
+          for (TOutEdgeListIter in_edge_it = adj_list_rev[i].begin();
+               in_edge_it != adj_list_rev[i].end();
+               ++in_edge_it)
           {
-            if (graph.findDirectedEdge(k, i)) compl_const += x[std::make_pair(k, i)]; //summing up all incoming edges for i
+            compl_const += x[in_edge_it->second]; //summing up all incoming edges for i
           }
-          for (UInt k = 0; k < j; k++)
+          
+          for (TOutEdgeListIter in_edge_it = adj_list_rev[j].begin();
+               in_edge_it != adj_list_rev[j].end();
+               ++in_edge_it)
           {
-            if (graph.findDirectedEdge(k, j)) compl_const += x[std::make_pair(k, j)]; //summing up all incoming edges for j
-          }
+            compl_const += x[in_edge_it->second]; //summing up all incoming edges for j
+          }          
 
           std::cout << "added u_edge: " << i << " --> " << j << std::endl;
           M.add(compl_const <= 1); // at most one of all complementary nodes can be in the solution
@@ -177,22 +195,24 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
     }
 #else
 
-  for (UInt c = 1; c < graph.getNumberOfClusters(); ++c)
+  typedef SpectrumGraphSeqan::VertexDescriptor VertexDescriptor;
+  for (UInt c = 0; c < graph.getNumberOfClusters(); ++c)
   {
     const std::vector<VertexDescriptor>& cluster = graph.getCluster(c);
     IloExpr compl_const(env);
     
     for (UInt i = 0; i < cluster.size(); ++i)
     {
-        VertexDescriptor v = cluster[c][i];
-        for (UInt k = v+1; k < num_of_nodes; ++k)
+        VertexDescriptor v = cluster[i];
+
+        for (TOutEdgeListIter in_edge_it = adj_list_rev[v].begin(); in_edge_it != adj_list_rev[v].end(); ++in_edge_it)
         {
-          if (graph.findDirectedEdge(v, k)) compl_const += x[std::make_pair(v, k)]; //summing up all incoming edges for i
+          compl_const += x[in_edge_it->second]; //summing up all incoming edges for v
         }
-      }
-      std::cout << "clique: " << c << std::endl;
-      M.add(compl_const <= 1); // at most one of all complementary nodes can be in the solution
-      compl_const.end();
+    }
+    std::cout << "clique: " << c << std::endl;
+    M.add(compl_const <= 1); // at most one of all complementary nodes can be in the solution
+    compl_const.end();
   }
 #endif
 
@@ -204,16 +224,18 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
       // for all nodes but source and sink
       IloExpr input_minus_output(env);
 
-      for (UInt k = 0; k < i; k++)
+      for (TOutEdgeListIter in_edge_it = adj_list_rev[i].begin();
+           in_edge_it != adj_list_rev[i].end();
+           ++in_edge_it)
       {
-        if (graph.findDirectedEdge(k, i))
-          input_minus_output += x[std::make_pair(k, i)]; // adding inputs
+        input_minus_output += x[in_edge_it->second]; // adding inputs
       }
 
-      for (UInt l = i + 1; l < num_of_nodes; l++)
+      for (TOutEdgeListIter out_edge_it = adj_list[i].begin();
+           out_edge_it != adj_list[i].end();
+           ++out_edge_it)
       {
-        if (graph.findDirectedEdge(i, l))
-          input_minus_output -= x[std::make_pair(i, l)]; // subtracting outputs
+        input_minus_output -= x[out_edge_it->second]; // subtracting outputs
       }
 
       M.add(input_minus_output == 0);
@@ -227,18 +249,20 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
 
     IloExpr sink_in(env); //all edges ending in the sink
 
-    for (UInt i = 0; i < num_of_nodes; i++)
+    for (TOutEdgeListIter in_edge_it = adj_list_rev[num_of_nodes - 1].begin();
+         in_edge_it != adj_list_rev[num_of_nodes - 1].end();
+         ++in_edge_it)
     {
-      if (graph.findDirectedEdge(0, i))
-      {
-        source_out += x[std::make_pair(0, i)];
-      }
-
-      if (graph.findDirectedEdge(i, num_of_nodes - 1))
-      {
-        sink_in += x[std::make_pair(i, num_of_nodes - 1)];
-      }
+      sink_in += x[in_edge_it->second];
     }
+  
+    for (TOutEdgeListIter out_edge_it = adj_list[0].begin();
+         out_edge_it != adj_list[0].end();
+         ++out_edge_it)
+    {
+      source_out += x[out_edge_it->second];
+    }
+
     M.add(source_out == 1); //exactly ONE edge leaving the source node
     M.add(sink_in == 1); //exactly ONE edge entering the sink node
     source_out.end();
@@ -300,7 +324,7 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
         cplex.out() << "solution status= " << cplex.getStatus() << endl;
 
         //the update for the next iteration (forbid the actual solution)
-        IloExpr update(env);
+        IloExpr update(env); // used to exclude current path from future iterations
 
         IloInt count_true_edges = 0;
 
@@ -308,37 +332,32 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
         result_vec_int.clear();
 
         DoubleReal total_score = 0.0;
-        UInt from = 0;
-        UInt to = 1;
+        Size source_v = 0;
 
-        while (to != num_of_nodes)
+        while (source_v != num_of_nodes-1)
         {
-          if (graph.findDirectedEdge(from, to))
+          for (TOutEdgeListIter out_edge_it = adj_list[source_v].begin();
+               out_edge_it != adj_list[source_v].end();
+               ++out_edge_it)
           {
-            if (cplex.getValue(x[std::make_pair(from, to)]) >= 1.0 - cplex.getParam(IloCplex::EpInt))
+            if (cplex.getValue(x[out_edge_it->second]) >= 1.0 - cplex.getParam(IloCplex::EpInt))
             {
-              cout << from << "!:!" << to << endl;
-
-              update += x[std::make_pair(from, to)];
+              Size target_v = out_edge_it->first;
+              update += x[out_edge_it->second];
               ++count_true_edges;
-
-              //result_Vec.push_back(graph.getRealEdgeMass(from, to));
-              result_vec_int.push_back(graph.getIntEdgeMass(from, to));
-
-              total_score += graph.getEdgeWeight(from, to);
-              from = to;
+              result_vec_int.push_back(graph.getIntEdgeMass(source_v, target_v));
+              total_score += graph.getEdgeWeight(source_v, target_v);
+              source_v = target_v;
+              break;
             }
           }
-          ++to;
         }
 
-        //cands.push_back(result_Vec);
         cands.push_back(result_vec_int);
-        //result_edge_masses_int_.push_back(result_Vec_int);
 
-        if(r>0 and scores.back()<cplex.getObjValue())
+        if(r > 0 and scores.back()<cplex.getObjValue())
         {
-            std::cout<<"Error, better score in later iteration!"<<std::endl;
+            std::cout<<"Warning, better score in later iteration!"<<std::endl;
         }
 
         scores.push_back(cplex.getObjValue());

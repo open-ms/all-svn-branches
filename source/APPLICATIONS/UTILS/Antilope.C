@@ -25,7 +25,10 @@
 // --------------------------------------------------------------------------
 
 #define LAGRANGE
-//#define ILP
+#undef USECPLEX
+
+//#define MATRIX
+#define ONLYPATHS
 
 #undef Debug
 //#define Debug
@@ -43,13 +46,17 @@
 //#include <Preprocessing/IdSetup.h>
 
 
+#ifdef USECPLEX
+#include <ilcplex/ilocplex.h>
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeILP.h>
+#endif
+
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeAlgorithm.h>
 #include <OpenMS/ANALYSIS/DENOVO/AntilopeSpectrumGraph.h>
 #include <OpenMS/ANALYSIS/DENOVO/AntilopePMCorrect.h>
 #include <OpenMS/ANALYSIS/DENOVO/AntilopePostScoring.h>
 
-#include <ilcplex/ilocplex.h>
+
 
 
 //#include <Preprocessing/ParentMassCorrection.h>
@@ -103,7 +110,7 @@ class DeNovoSequencer : public TOPPBase
       registerInputFile_("scoring_file","<file>","MBtan.bin","scoring function parameter file",false);
       //registerInputFile_("rank_scoring_file","<file>","rankscores","scoring function parameter file",false);
       registerDoubleOption_("delta","e.g 0.5",0.5,"allowed mz error for every peak",false);
-      registerDoubleOption_("precision","e.g 0.1",0.1,"mz precision",false);
+      registerDoubleOption_("precision","e.g 0.1",0.1,"mz precision",false);      
       registerStringOption_("tryptic","true/false","true","Flag whether spectra come from trypsin digested peptides",false);
       setValidStrings_("tryptic",tru_fal);
       registerFlag_("local_hits", "set to 1 if local hits shall be considered", 0);      
@@ -236,6 +243,8 @@ class DeNovoSequencer : public TOPPBase
       scored_types.insert(IdSetup::YIon_h2o);
       scored_types.insert(IdSetup::YIon_nh3);
 
+      DoubleReal time_solver_summed = 0;
+      DoubleReal time_solver_netto_summed = 0;
       for(PeakMap::iterator it = spec_map.begin(); it != spec_map.end(); ++it)
       //for(PeakMap::iterator it=spec_map.begin(); it!=spec_map.begin()+2;++it)
       {
@@ -280,6 +289,7 @@ class DeNovoSequencer : public TOPPBase
 //          continue;
 //        }
 
+        DoubleReal time_solver = clock();
         const PeakSpectrum& input_spec = *it;
 
         //create the spectrum graph for the input MSSpectrum
@@ -294,7 +304,7 @@ class DeNovoSequencer : public TOPPBase
 
         //create node set
         spec_graph.createNodeSet(input_spec, A, A_len);
-        spec_graph.scoreNodes(scoring_func,input_spec, true, 0.5, -0.5);
+        //spec_graph.scoreNodes(scoring_func,input_spec, true, 0.5, -0.5);
 #ifdef Debug
         std::cout<<"NODE SUMMARY"<<std::endl;
         for(UInt node=0; node<spec_graph.size(); ++node)
@@ -307,10 +317,16 @@ class DeNovoSequencer : public TOPPBase
         spec_graph.createUdirEdgeSet();
         spec_graph.createEdgeSet(A, A_len);
         spec_graph.setEdgeWeights();
-        spec_graph.createSpanningEdges();
+        //spec_graph.createSpanningEdges();
         
+#ifdef MATRIX
+        clock_t mat_start = clock();
         MatrixSpectrumGraph mat_graph;
-        mat_graph.createMatrixGraph(spec_graph);
+        mat_graph.createMatrixGraph2(spec_graph);
+        
+//        MatrixSpectrumGraph mat_tmp;
+//        mat_tmp.createMatrixGraph2(spec_graph);
+#endif
 
         //TODO: DO this during construction of spec graph!
 /*
@@ -341,19 +357,31 @@ class DeNovoSequencer : public TOPPBase
         std::vector<std::vector<UInt> > result_masses;
         std::vector<DoubleReal> scores;
 
+        DoubleReal time_solver_netto = clock();
 #ifdef LAGRANGE
 
+#ifdef MATRIX
+        YenAlgorithm solver(&mat_graph);
+#else
         YenAlgorithm solver(&spec_graph);
-        solver.computeLongestPaths(20);
-        scores = solver.get_path_scores();
-
-        std::vector< std::vector<SpectrumGraphSeqan::VertexDescriptor> > paths = solver.get_longest_paths();
+#endif
+        
+        vector<vector<SpectrumGraphSeqan::VertexDescriptor> > paths;
+        
+        solver.computeLongestPaths(50, paths, scores);
+//        std::cout << "TOTAL Matrix TIME: "<< (clock()-mat_start)/(DoubleReal)CLOCKS_PER_SEC << std::endl;
+        //scores = solver.get_path_scores();
+        //std::vector< std::vector<SpectrumGraphSeqan::VertexDescriptor> > paths = solver.get_longest_paths();
 
         result_masses.clear();
+#ifdef MATRIX
+        mat_graph.getMassesForPaths(spec_graph, paths, result_masses);
+#else
         spec_graph.getMassesForPaths(paths, result_masses);
+#endif
 
 #endif
-#ifdef ILP
+#ifdef USECPLEX
 
         de_novo_ILP ilp;
         Param ilp_par;
@@ -379,6 +407,18 @@ class DeNovoSequencer : public TOPPBase
         {
           std::cerr<<"unbekannte exception"<<std::endl;
         }
+#endif
+        std::cout << "TOTAL TIME SOLVER " << it-spec_map.begin() << ": " << (clock()-time_solver)/CLOCKS_PER_SEC << std::endl;
+        std::cout << "TOTAL TIME SOLVER NETTO" << it-spec_map.begin() << ": " << (clock()-time_solver_netto)/CLOCKS_PER_SEC << std::endl;
+        time_solver_summed += (clock()-time_solver)/CLOCKS_PER_SEC;
+        time_solver_netto_summed += (clock()-time_solver_netto)/CLOCKS_PER_SEC;
+        
+        std::cout << "TOTAL TIME SOLVER SUMMED" << it-spec_map.begin() << ": " << time_solver_summed << std::endl;
+        std::cout << "TOTAL TIME SOLVER NETTO SUMMED" << it-spec_map.begin() << ": " << time_solver_netto_summed << std::endl;
+        
+        
+#ifdef ONLYPATHS
+        continue;
 #endif
 
         //POSTPROCESSING OF THE RESULTS

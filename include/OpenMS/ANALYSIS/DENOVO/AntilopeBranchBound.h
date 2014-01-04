@@ -50,7 +50,7 @@ namespace OpenMS
       BranchBoundDeNovo& operator=(const BranchBoundDeNovo &bbd);
 
       void solve(const DVector &initDualVec = DVector());
-      void branch(DeNovoLagrangeProblemBoost &, DeNovoLagrangeProblemBoost &);
+//      void branch(DeNovoLagrangeProblemBoost &, DeNovoLagrangeProblemBoost &);
 
     private:
 

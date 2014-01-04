@@ -59,17 +59,39 @@ namespace OpenMS
    }
 
 
-  void BranchBoundDeNovo::solve(const DVector &initDualVec)
+  void BranchBoundDeNovo::solve(const DVector &init_dual_vec)
   {
     SubgradientSolver sub_solver;
-    lp_.set_lower_bound(max(lp_.get_lower_bound(),*glb_));
-    sub_solver.InitProblem(1, lp_.num_of_duals(), DVector(lp_.num_of_duals(), 0), DVector(lp_.num_of_duals(), 100));
+    lp_.setLowerBound(max(lp_.getLowerBound(),*glb_));
+    sub_solver.initProblem(1, lp_.getDualDim(), DVector(lp_.getDualDim(), 0), DVector(lp_.getDualDim(), 100));
 
-    if (!initDualVec.empty())
-      sub_solver.setDualVector(initDualVec);
+    if (!init_dual_vec.empty())
+      sub_solver.setDualVector(init_dual_vec);
 
-    SubgradientSolver::SolverProgress sp = sub_solver.Solve(lp_);
+    SubgradientSolver::SolverProgress sp = sub_solver.solve(lp_);
 
+    std::vector<VertexDescriptor> best_infeasible_path;
+    
+    if(sp != SubgradientSolver::SOLVED)
+    {
+      lp_.getBestIllegalPath(best_infeasible_path);
+      if (best_infeasible_path.empty())
+      {
+        std::cout << "ATTENTION REGET INFEASIBLE! " << std::endl;
+        //if no infeasible solution was found (is possible as we do not start with zero Lambda in branch nodes)
+        //solve a single iteration with lambda zero vector.
+        sub_solver.setDualVector(DVector(lp_.getDualDim(), 0));
+        Param pars = sub_solver.getDefaults();
+        pars.setValue("noofiterations", 1);
+        sub_solver.setParameters(pars);
+        sp = sub_solver.solve(lp_);
+        
+        lp_.getBestIllegalPath(best_infeasible_path); // now it must be non_empty or problem is feasible
+        std::cout << best_infeasible_path.size() << std::endl;
+//        exit(1);
+      }
+    }
+    
     if(sp != SubgradientSolver::SOLVED)
     {
       if(*glb_ < lp_.get_best_primal_score())
@@ -78,10 +100,27 @@ namespace OpenMS
         *path_and_score_ = lp_.get_longest_path();
       }
 
+      //perform branching
+      
       DeNovoLagrangeProblemBoost left_lp(lp_), right_lp(lp_);
+      left_lp.resetBestFeasible();
+      left_lp.resetBestInfeasible();
+      
+      right_lp.resetBestFeasible();
+      right_lp.resetBestInfeasible();
 
-      branch(left_lp, right_lp);
-      std::cout<<"out of branch"<<std::endl;
+      VertexDescriptor branch_node = lp_.getBranchNode(best_infeasible_path);
+      
+      std::cout<<"perform branch step over node: "<<branch_node<<std::endl;
+      
+      //in the left lp we force the branch node to be deactivated
+      left_lp.forbidNode(branch_node);
+      
+      //in the right lp we force the branch node to be active
+      right_lp.forceNode(branch_node);
+      
+//      branch(left_lp, right_lp);
+
 
       BranchBoundDeNovo left_node(glb_, left_lp, path_and_score_);
       left_node.solve(sub_solver.getDualVector());
@@ -104,31 +143,31 @@ namespace OpenMS
     }
   }
 
-  void BranchBoundDeNovo::branch(DeNovoLagrangeProblemBoost &left_lp, DeNovoLagrangeProblemBoost &right_lp)
-  {
-    std::vector<VertexDescriptor> best_infeasible_path;
-    lp_.getBestIllegalPath(best_infeasible_path);
-
-    //std::vector<Size> viol_clusters;
-    //lp_.getViolatedClusters(viol_clusters, best_infeasible_path);
-
-    //std::cerr<<"VIOL: "<<viol_clusters.size()<<std::endl;
-
-    //const std::vector<VertexDescriptor> &nodes_in_cl = lp_.getSpectrumGraph().getCluster(viol_clusters.front());
-    
-    //VertexDescriptor branch_node = nodes_in_cl.front();
-    
-    VertexDescriptor branch_node = lp_.getBranchNode(best_infeasible_path);    
-
-    std::cout<<"perform branch step over node: "<<branch_node<<std::endl;
-
-    //in the left lp we force the branch node to be deactivated
-    left_lp.forbidNode(branch_node);
-
-    //in the right lp we force the branch node to be active
-    right_lp.forceNode(branch_node);
-    std::cout<<"out of force node"<<std::endl;
-  }
+//  void BranchBoundDeNovo::branch(DeNovoLagrangeProblemBoost &left_lp, DeNovoLagrangeProblemBoost &right_lp)
+//  {
+//    std::vector<VertexDescriptor> best_infeasible_path;
+//    lp_.getBestIllegalPath(best_infeasible_path);
+//
+//    //std::vector<Size> viol_clusters;
+//    //lp_.getViolatedClusters(viol_clusters, best_infeasible_path);
+//
+//    //std::cerr<<"VIOL: "<<viol_clusters.size()<<std::endl;
+//
+//    //const std::vector<VertexDescriptor> &nodes_in_cl = lp_.getSpectrumGraph().getCluster(viol_clusters.front());
+//    
+//    //VertexDescriptor branch_node = nodes_in_cl.front();
+//    
+//    VertexDescriptor branch_node = lp_.getBranchNode(best_infeasible_path);    
+//
+//    std::cout<<"perform branch step over node: "<<branch_node<<std::endl;
+//
+//    //in the left lp we force the branch node to be deactivated
+//    left_lp.forbidNode(branch_node);
+//
+//    //in the right lp we force the branch node to be active
+//    right_lp.forceNode(branch_node);
+//    std::cout<<"out of force node"<<std::endl;
+//  }
 
 
 

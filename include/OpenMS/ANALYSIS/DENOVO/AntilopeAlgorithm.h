@@ -32,51 +32,74 @@ namespace OpenMS
   {
     typedef SpectrumGraphSeqan::VertexDescriptor VertexDescriptor;
     typedef DeNovoLagrangeProblemBoost::PathSolution PathSolution;
+    typedef std::vector<PathSolution> PathSolutionList;
+    
+    typedef std::vector<VertexDescriptor> Path;
+    typedef std::vector<Path> PathList;
+    typedef std::vector<DoubleReal> PathScoreList;
+
 
     private:
-      ///de_novoGraph
-      SpectrumGraphSeqan* G;
-      ///number of clusters
-      Size clust_num;
-      ///the first node to be used in the k-th iteration
-      Size deviation_node;
-      ///the forbidden edges (one vector for each starting nodes)
-      vector<vector<bool> > forbidden_edges;
-      ///the scores of the computed paths
-      vector<DoubleReal> found_path_scores;
-      ///the computed paths as vector of nodes
-      vector<vector<VertexDescriptor> > found_path;
-      ///the heap for the candidate paths
-      std::multiset<PathSolution> cand_path_heap;
-      ///the Lagrange Problem is used once for each starting node
-      //DeNovoLagrangeProblemBoost *de_novo_lagrange;
+    
+      enum HeuristicReturn
+      {
+        FEASIBLE,
+        INFEASIBLE,
+        PRUNED,
+        NOPATH
+      };
 
+      ///de_novoGraph
+      SpectrumGraphSeqan* g_;
+    
+      ///the heap for the candidate paths
+      std::multiset<PathSolution> cand_heap_;
+    
+      seqan::String<DoubleReal> dist_backward;
+      seqan::String<VertexDescriptor> pred_backward;
+
+    
     public:
       ///constructor
-      YenAlgorithm(SpectrumGraphSeqan* G_in) :
-        G(G_in)
+      YenAlgorithm(SpectrumGraphSeqan* g_in) :
+        g_(g_in)
       {
-        deviation_node = 0;
       }
+    
+      ///compute the k longest paths
+      int computeLongestPaths(Size k, PathList& paths, PathScoreList& scores);
+    
+    
+    protected:
+
+      SpectrumGraphSeqan::TGraph graph_rev;
 
       //Member Functions
       ///forbid edges
-      int forbid_edges(Size k, DeNovoLagrangeProblemBoost& dnlp);
-
-      ///compute the k longest paths
-      int computeLongestPaths(Size k);
+      Size forbidEdges_(Size k, const PathSolutionList& found_paths, DeNovoLagrangeProblemBoost& dnlp);
 
       ///the k-th iteration step
-      PathSolution kthIteration(Size k);
+      void singleIteration_(Size k,
+                                  const PathSolutionList& found_paths,
+                                  PathSolution &path);
+    
+    HeuristicReturn backWardHeuristic1(const DeNovoLagrangeProblemBoost& de_novo_lagrange,
+                                       const seqan::String<DoubleReal>& dist_backward,
+                                       const seqan::String<VertexDescriptor>& pred_backward,
+                                       DoubleReal lower_bound,
+                                       PathSolution& cand_path
+                                       );
+    
+   void backWardHeuristic2(const DeNovoLagrangeProblemBoost& de_novo_lagrange,
+                           const seqan::String<DoubleReal>& weights,
+                           SpectrumGraphSeqan::TGraph& rev_graph,
+                           DoubleReal lower_bound,
+                           Size s,
+                           std::vector<std::pair<HeuristicReturn, PathSolution> >& candidates,
+                           const std::vector<VertexDescriptor>& parent_path
+                           );
 
-      std::vector<std::vector<VertexDescriptor> > get_longest_paths()
-      {
-        return found_path;
-      }
-      vector<double> get_path_scores()
-      {
-        return found_path_scores;
-      }
+
   };
 
 }

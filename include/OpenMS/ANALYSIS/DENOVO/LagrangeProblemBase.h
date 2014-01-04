@@ -55,7 +55,7 @@ namespace OpenMS {
        @param SubgradientIndices (OUT) holds a list of subgradient indices for the _current_ iteration, where {abs(Subgradient[x]) = 1, x in SubgradientIndices}
        @param PrimalSolution (OUT) holds the primal solution for the current position
     */
-    virtual int EvaluateProblem( const DVector& Dual,
+    virtual int evaluateProblem( const DVector& Dual,
          const list<int>& DualIndices,
 				 double& DualValue,
 				 double& PrimalValue,
@@ -70,7 +70,7 @@ namespace OpenMS {
        @param Dual (IN) holds the multipliers
        @param Primal (OUT) holds the feasible solution to the original problem
     */
-    virtual int ComputeFeasibleSolution(
+    virtual int computeFeasibleSolution(
 					DVector Dual,
 					DVector Primal
 					) = 0;

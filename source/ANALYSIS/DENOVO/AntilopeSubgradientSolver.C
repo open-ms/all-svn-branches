@@ -38,7 +38,7 @@ using namespace std;
 namespace OpenMS {
 
 
-  void SubgradientSolver::InitProblem( int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds )
+  void SubgradientSolver::initProblem( int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds )
   {
     // initialize problem with the correct dimension, set upper and lower bounds
     // on the value of the multipliers
@@ -55,7 +55,7 @@ namespace OpenMS {
   }
 
 
-  void SubgradientSolver::InitProblem( int PrimalDimension, int DualDimension )
+  void SubgradientSolver::initProblem( int PrimalDimension, int DualDimension )
   {
     // initialize problem with the correct dimension
     _primal = DVector( PrimalDimension );
@@ -94,7 +94,7 @@ namespace OpenMS {
   /**
    * SubgradientSolver specific problem initialization
    */
-  void SubgradientSolver::InitProblem(int PrimalDimension,int DualDimension,DVector LBounds,DVector UBounds,
+  void SubgradientSolver::initProblem(int PrimalDimension,int DualDimension,DVector LBounds,DVector UBounds,
                                       int NoOfIterations,int NoOfNondecreasingIterations, double My)
   {
     _primal = DVector( PrimalDimension );
@@ -122,7 +122,7 @@ namespace OpenMS {
   /**
    * SubgradientSolver specific problem initialization
    */
-  void SubgradientSolver::InitProblem(int PrimalDimension,int DualDimension,int NoOfIterations,
+  void SubgradientSolver::initProblem(int PrimalDimension,int DualDimension,int NoOfIterations,
                                       int NoOfNondecreasingIterations, double My)
   {
     // initialize problem with the correct dimension
@@ -164,25 +164,25 @@ namespace OpenMS {
    */
   typedef std::vector<DoubleReal> DVector;
 
-  void SubgradientSolver::SetMultiplierLowerBound( DVector LBounds ) { _multiplierLowerBound = LBounds; }
+  void SubgradientSolver::setMultiplierLowerBound( DVector LBounds ) { _multiplierLowerBound = LBounds; }
 
-  void SubgradientSolver::SetMultiplierUpperBound( DVector UBounds ) { _multiplierUpperBound = UBounds; }
+  void SubgradientSolver::setMultiplierUpperBound( DVector UBounds ) { _multiplierUpperBound = UBounds; }
 
-  SubgradientSolver::DVector SubgradientSolver::GetFinalSolution( void ) const { return _dual; }
+  SubgradientSolver::DVector SubgradientSolver::getFinalSolution( void ) const { return _dual; }
 
-  DVector SubgradientSolver::GetFinalHeuristicSolution( void ) const { return _primal; }
+  DVector SubgradientSolver::getFinalHeuristicSolution( void ) const { return _primal; }
 
-  DVector SubgradientSolver::GetDualVariables( void ) const { return _dual; }
+  DVector SubgradientSolver::getDualVariables( void ) const { return _dual; }
 
-  DVector SubgradientSolver::GetPrimalVariables( void ) const { return _primal; }
+  DVector SubgradientSolver::getPrimalVariables( void ) const { return _primal; }
 
-  double SubgradientSolver::GetCurrentUpperBound( void ) const { return _currentUpperBound; }
+  double SubgradientSolver::getCurrentUpperBound( void ) const { return _currentUpperBound; }
 
-  double SubgradientSolver::GetCurrentLowerBound( void ) const { return _currentLowerBound; }
+  double SubgradientSolver::getCurrentLowerBound( void ) const { return _currentLowerBound; }
 
-  int SubgradientSolver::GetPrimalDimension( void ) const { return _primal.size(); }
+  int SubgradientSolver::getPrimalDimension( void ) const { return _primal.size(); }
 
-  int SubgradientSolver::GetDualDimension( void ) const { return _dual.size(); }
+  int SubgradientSolver::getDualDimension( void ) const { return _dual.size(); }
 
 
   /**
@@ -197,13 +197,13 @@ namespace OpenMS {
    *  moment.
    *  @return index of last iteration
    */
-  int SubgradientSolver::GetLastIterationIdx() const { return _noOfLastIteration; }
+  int SubgradientSolver::getLastIterationIdx() const { return _noOfLastIteration; }
 
   /**
    * Solve iteratively the dual problem by subgradient optimization
    * @return 0 if successful, 1 otherwise
    */
-  SubgradientSolver::SolverProgress SubgradientSolver::Solve( LagrangeProblem& l )
+  SubgradientSolver::SolverProgress SubgradientSolver::solve( LagrangeProblem& l )
   {
     
     _verbose = 1;
@@ -242,7 +242,7 @@ namespace OpenMS {
         // guwek: removed the dependency on the return code from
         // evaluateProblem. i did not understand.
 
-        evalProb_returnVal = l.EvaluateProblem( _dual,
+        evalProb_returnVal = l.evaluateProblem( _dual,
                                                 dualIndices,
                                                 _currentUpperBound,
                                                 _currentLowerBound,
@@ -430,7 +430,7 @@ namespace OpenMS {
    * Perform one single subgradient step
    * @return 0 if successful, 1 otherwise
    */
-  int SubgradientSolver::SolveSingleIteration( LagrangeProblem& l )
+  int SubgradientSolver::solveSingleIteration( LagrangeProblem& l )
   {
     return 0;
   }

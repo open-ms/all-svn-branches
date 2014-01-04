@@ -92,7 +92,7 @@ namespace OpenMS
   conflict_clusters_inv(in.conflict_clusters_inv),
   vertices_(in.vertices_),
   edges_(in.edges_),
-  //    ordering_(in.ordering_),
+  ordering_(in.ordering_),
   edge_weights_(in.edge_weights_)
   {
   }
@@ -109,7 +109,7 @@ namespace OpenMS
       conflict_clusters_inv = in.conflict_clusters_inv;
       vertices_ = in.vertices_;
       edges_ = in.edges_;
-      //      ordering_ = in.ordering_;
+      ordering_ = in.ordering_;
       graph = in.graph;
       edge_weights_ = in.edge_weights_;
     }
@@ -133,6 +133,12 @@ namespace OpenMS
     {
       return seqan::getProperty(edge_weights_, ed);
     }
+  }
+  
+  // return weight of edge (i,j)
+  DoubleReal SpectrumGraphSeqan::getEdgeWeight(EdgeDescriptor ed) const
+  {
+      return seqan::getProperty(edge_weights_, ed);
   }
   
   
@@ -243,6 +249,8 @@ namespace OpenMS
     rnk_scf.loadModel();
     rnk_scf.getRankScores(b_rank_scores,y_rank_scores,tmp_spectrum);
     
+    DoubleReal max_node_mass = parent_peptide_mass - 56.; //TODO exact mass of minimum amino acid
+    
     UInt index = 0;
     for (PeakSpectrum::ConstIterator it = tmp_spectrum.begin(); it != tmp_spectrum.end(); ++it)
     {
@@ -253,36 +261,36 @@ namespace OpenMS
         real_MZ = IdSetup::getPrefixMass(IdSetup::BIon, it->getMZ(), parent_mass);
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
         
-        if (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1)))
+        if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1))))
         {
-          //          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
-          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::BIon, it->getIntensity()));//b-ion
+          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
+          //nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::BIon, it->getIntensity()));//b-ion
         }
         
         //add node for Y-Ions
         real_MZ = IdSetup::getPrefixMass(IdSetup::YIon, it->getMZ(), parent_mass);
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
-        if (integer_MZ>=A.size() || A[integer_MZ])
+        if (real_MZ < max_node_mass && (integer_MZ>=A.size() || A[integer_MZ]))
         {
-          //          nodes.push_back(Node(real_MZ, integer_MZ, y_rank_scores[index], index, IdSetup::YIon, it->getIntensity()));//y-ion
+//          nodes.push_back(Node(real_MZ, integer_MZ, y_rank_scores[index], index, IdSetup::YIon, it->getIntensity()));//y-ion
           nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::YIon, it->getIntensity()));//y-ion
         }
         
-        //add node for A-Ions
+        //add node for Y2-Ions
         real_MZ = IdSetup::getPrefixMass(IdSetup::AIon, it->getMZ(), parent_mass);
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
         
-        if (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1)))
+        if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1))))
         {
-          //          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
-          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::AIon, it->getIntensity()));//b-ion
+          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
+//          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::AIon, it->getIntensity()));//b-ion
         }
         
         //add node for B-NH3-Ions
         real_MZ = IdSetup::getPrefixMass(IdSetup::BIon_nh3, it->getMZ(), parent_mass);
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
         
-        if (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1)))
+        if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1))))
         {
           //          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
           nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::BIon_nh3, it->getIntensity()));//b-ion
@@ -292,7 +300,7 @@ namespace OpenMS
         real_MZ = IdSetup::getPrefixMass(IdSetup::YIon_h2o, it->getMZ(), parent_mass);
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
         
-        if (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1)))
+        if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ])))
         {
           //          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
           nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::YIon_h2o, it->getIntensity()));//b-ion
@@ -336,6 +344,8 @@ namespace OpenMS
       std::cout << "  has intensity:  " << nodes[i].score << std::endl;
     }
 #endif
+    
+    std::cout << "numV before merging: " << nodes.size() << std::endl;
     
     //---------------------------------------------------------------
     //--------------------NODE MERGING-------------------------------
@@ -420,7 +430,7 @@ namespace OpenMS
            fabs(nodes[i].real_mass - (parent_peptide_mass - 128.1) ) > delta)
         {
           deleted[i] = true;
-          std::cout<<"delete node "<<i<<std::endl;
+          std::cout<<"delete node "<< i <<std::endl;
         }
         --i;
       }
@@ -431,16 +441,12 @@ namespace OpenMS
     std::vector<Node> tmp_nodes(nodes);
     nodes.clear();
     
-    //    ordering_.clear();
-    //    ordering_.reserve(nodes.size());
-    
     Size pos = 0;
     for (std::vector<Node>::iterator it = tmp_nodes.begin(); it != tmp_nodes.end(); ++it, ++pos)
     {
       if (!deleted[pos])
       {
         nodes.push_back(*it);
-        //        ordering_.push_back(pos);
       }
     }
     
@@ -448,6 +454,13 @@ namespace OpenMS
     
     vertices_.clear();
     vertices_ = nodes;
+    
+    seqan::resize(ordering_, nodes.size());
+    for (Size i = 0; i < nodes.size(); ++i)
+      ordering_[i] = i;
+    
+    
+    std::cout << "numV after merging: " << vertices_.size() << std::endl;
     
 #ifdef Debug
     //test output
@@ -526,10 +539,11 @@ namespace OpenMS
          (tryptic && i >= tmp_vertices.size() - 3))
       {
         vertices_.push_back(tmp_vertices[i]);
+        std::cout << "v " << vertices_.size() << ": " << tmp_vertices[i].score << " " << tmp_vertices[i].real_mass << std::endl;
       }
     }
     
-    //    ordering_.resize(vertices_.size()-1);
+    seqan::resize(ordering_, vertices_.size());
     
     return 0;
   }
@@ -703,29 +717,44 @@ namespace OpenMS
     for (Size i = 1; i < vertices_.size() - 1; ++i)
     {
       std::set<Size>::iterator gen_it;
-      for (gen_it = seqan::property(vertices_, i).generating_peaks.begin(); gen_it != seqan::getProperty(vertices_, i).generating_peaks.end(); ++gen_it)
+      for (gen_it = vertices_[i].generating_peaks.begin(); gen_it != vertices_[i].generating_peaks.end(); ++gen_it)
       {
         if (*gen_it >= mapping.capacity())
           mapping.reserve(2 * *gen_it);
         if (*gen_it >= mapping.size())
           mapping.resize(*gen_it + 1, -1u);
-        
+
         if (mapping[*gen_it] == -1u)
         {
           mapping[*gen_it] = nextId;
           ++nextId;
         }
-        
-        
+
+
         Size id = mapping[*gen_it];
         assert(id <= conflict_clusters.size());
-        
+
         if (id == conflict_clusters.size())
           conflict_clusters.push_back(std::vector<VertexDescriptor>(1,i));
         else
           conflict_clusters[id].push_back(i);
       }
     }
+   
+    //remove singleton or duplicated clusters
+    Size new_size = 0;
+    for (Size i = 0; i < conflict_clusters.size(); ++i)
+    {
+      if (conflict_clusters[i].size() >= 2)
+      {
+        conflict_clusters[i].swap(conflict_clusters[new_size]);
+        ++new_size;
+      }
+    }
+    conflict_clusters.resize(new_size);
+    std::sort(conflict_clusters.begin(), conflict_clusters.end());
+    conflict_clusters.erase(std::unique(conflict_clusters.begin(), conflict_clusters.end()),conflict_clusters.end());
+    
     
     //create the inverse table --> for each node all clusters it appears in
     conflict_clusters_inv.assign(vertices_.size(), std::vector<Size>());
@@ -752,8 +781,29 @@ namespace OpenMS
     {
       std::vector<VertexDescriptor> &cni = conflicting_nodes[i];
       std::sort(cni.begin(), cni.end());
-      cni.resize(std::distance(cni.begin(), std::unique(cni.begin(), cni.end() )));
+      cni.erase(std::unique(cni.begin(), cni.end()), cni.end());
     }
+    
+//    DEBUG OUTPUT
+//    for (Size i = 0; i < conflict_clusters.size(); ++i)
+//    {
+//      std::cout << "cluster " << i << ": ";
+//      for (Size j = 0; j < conflict_clusters[i].size(); ++j)
+//      {
+//        std::cout << conflict_clusters[i][j] << '\t';
+//      }
+//      std::cout << std::endl;
+//    }
+//    
+//    for (Size i = 0; i < conflict_clusters_inv.size(); ++i)
+//    {
+//      std::cout << "vertex " << i << "contained in: ";
+//      for (Size j = 0; j < conflict_clusters_inv[i].size(); ++j)
+//      {
+//        std::cout << conflict_clusters_inv[i][j] << '\t';
+//      }
+//      std::cout << std::endl;
+//    }
     
     return 0;
   }

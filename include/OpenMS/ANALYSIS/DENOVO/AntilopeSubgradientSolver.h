@@ -128,81 +128,75 @@ namespace OpenMS
       /**
        * methods declared virtual in LagrangeSolverInterface.h
        */
-      void InitProblem(int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds);
-      void InitProblem(int PrimalDimension, int DualDimension);
-      void SetMultiplierLowerBound(DVector LBounds);
-      void SetMultiplierUpperBound(DVector UBounds);
-      SolverProgress Solve(LagrangeProblem& l);
+      void initProblem(int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds);
+      void initProblem(int PrimalDimension, int DualDimension);
+      void setMultiplierLowerBound(DVector LBounds);
+      void setMultiplierUpperBound(DVector UBounds);
+      SolverProgress solve(LagrangeProblem& l);
 
-      int SolveSingleIteration(LagrangeProblem& l);
-      DVector GetFinalSolution(void) const;
-      DVector GetFinalHeuristicSolution(void) const;
-      DVector GetDualVariables(void) const;
-      DVector GetPrimalVariables(void) const;
-      double GetBestUpperBound() const
+      int solveSingleIteration(LagrangeProblem& l);
+      DVector getFinalSolution(void) const;
+      DVector getFinalHeuristicSolution(void) const;
+      DVector getDualVariables(void) const;
+      DVector getPrimalVariables(void) const;
+      double getBestUpperBound() const
       {
         return _bestUpperBound;
       }
-      double GetBestLowerBound() const
+      double getBestLowerBound() const
       {
         return _bestLowerBound;
       }
-      double GetCurrentUpperBound(void) const;
-      double GetCurrentLowerBound(void) const;
-      int GetPrimalDimension(void) const;
-      int GetDualDimension(void) const;
+      double getCurrentUpperBound(void) const;
+      double getCurrentLowerBound(void) const;
+      int getPrimalDimension(void) const;
+      int getDualDimension(void) const;
 
       /**
        * SubgradientSolver specific methods
        */
-      void InitProblem(int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds, int NoOfIterations, int NoOfNondecreasingIterations, double My);
+      void initProblem(int PrimalDimension, int DualDimension, DVector LBounds, DVector UBounds, int NoOfIterations, int NoOfNondecreasingIterations, double My);
 
-      void InitProblem(int PrimalDimension, int DualDimension, int NoOfIterations, int NoOfNondecreasingIterations, double My);
+      void initProblem(int PrimalDimension, int DualDimension, int NoOfIterations, int NoOfNondecreasingIterations, double My);
 
-      double GetCurrentStepsize() const
+      double getCurrentStepsize() const
       {
         return _stepsize;
       }
-      ;
 
-      double GetMy() const
+      double getMy() const
       {
         return _my;
       }
-      ;
-      void SetMy(double m)
+    
+      void setMy(double m)
       {
         _my = m;
       }
-      ;
 
-      int GetNoOfIterations() const
+      int getNoOfIterations() const
       {
         return _noOfIterations;
       }
-      ;
-      void SetNoOfIterations(int n)
+      void setNoOfIterations(int n)
       {
         _noOfIterations = n;
       }
-      ;
 
-      int GetNoOfNondecreasingIterations() const
+      int getNoOfNondecreasingIterations() const
       {
         return _noOfNondecreasingIterations;
       }
-      ;
-      void SetNoOfNondecreasingIterations(int n)
+      void setNoOfNondecreasingIterations(int n)
       {
         _noOfNondecreasingIterations = n;
       }
-      ;
 
-      int GetVerbose() const
+      int getVerbose() const
       {
         return _verbose;
       }
-      void SetVerbose(int v)
+      void setVerbose(int v)
       {
         _verbose = v;
       }
@@ -234,7 +228,7 @@ namespace OpenMS
        *  moment.
        *  @return index of last iteration
        */
-      int GetLastIterationIdx() const;
+      int getLastIterationIdx() const;
 
 
       /**

@@ -42,8 +42,11 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
     struct PathSolution
     {
-        std::vector<VertexDescriptor> path;
+        typedef std::vector<VertexDescriptor> Path;
+        Path path;
         DoubleReal score;
+        Size deviation_node;
+        Size parent_id;
 
         bool operator<(const PathSolution &b) const
         {
@@ -62,8 +65,10 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
       seqan::resizeEdgeMap(G->graph, forbidden_edges_, false);
       seqan::resizeVertexMap(G->graph, forbidden_nodes_, false);
+      
+      G->getEdgeWeights(edge_weights_bk_);
 
-      resetWeights(true);
+      //resetWeights(true);
     }
 
 
@@ -77,11 +82,13 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
                           prefix_(dnlp.prefix_),
                           edge_weights_(dnlp.edge_weights_),
                           edge_weights_bk_(dnlp.edge_weights_bk_),
-                          lower_bound_(dnlp.lower_bound_)
+                          lower_bound_(dnlp.lower_bound_),
+                          best_feasible_solution_(dnlp.best_feasible_solution_),
+                          best_infeasible_solution_(dnlp.best_infeasible_solution_)  
     {      
-      best_feasible_solution_.score = MINUS_INF;
-      best_infeasible_solution_.score = PLUS_INF;
-      resetWeights(false);
+//      best_feasible_solution_.score = MINUS_INF;
+//      best_infeasible_solution_.score = PLUS_INF;
+//      resetWeights(false);
     }
 
     /// assignment operator
@@ -97,10 +104,9 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
       prefix_ = dnlp.prefix_;
       lower_bound_ = dnlp.lower_bound_;
 
-      best_feasible_solution_.score = MINUS_INF;
-      best_infeasible_solution_.score = PLUS_INF;
-      resetWeights(false);
-
+      best_feasible_solution_ = dnlp.best_feasible_solution_;
+      best_infeasible_solution_ = dnlp.best_infeasible_solution_;
+      //resetWeights(false);
       return *this;
     }
 
@@ -109,7 +115,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
 
 
-    int EvaluateProblem( const DVector& Dual,
+    int evaluateProblem( const DVector& Dual,
          const list<int>& DualIndices,
          double& DualValue,
          double& PrimalValue,
@@ -120,16 +126,19 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
          );
 
 
-    int ComputeFeasibleSolution(
+    int computeFeasibleSolution(
                DVector /*Dual*/,
                DVector /*Primal*/
                ){return 0;}
 
 
-    void set_lower_bound(double LB_in){lower_bound_ = LB_in;}
+    void setLowerBound(double LB_in){lower_bound_ = LB_in;}
 
 
-    DoubleReal get_lower_bound(){ return lower_bound_;}
+    DoubleReal getLowerBound()const
+    {
+      return lower_bound_;
+    }
 
   private:
 
@@ -146,7 +155,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     PathSolution best_infeasible_solution_;
 
     ///subgradient vector
-    std::vector<DoubleReal> subgradient_;
+    //std::vector<DoubleReal> subgradient_;
 
     // nodes that can not be selected for the path either because of Yen or because of branching
     seqan::String<bool> forbidden_nodes_;
@@ -169,7 +178,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
   public:
     /// method computes the longest path
-    void computeLongestPath(DoubleReal &dual_score, DoubleReal &primal_score, const DVector& Lambda);
+    bool computeLongestPath(DoubleReal &dual_score, DoubleReal &primal_score, DVector &subgradient, const DVector& lambda);
 
     /// check wether found solution is feasible
     bool check_feasibility();
@@ -178,13 +187,13 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     double compute_primal_score();
 
     ///return the list of subgradient indices
-    void computeSubgradientIndices(std::list<int> &subgradient_ind);
+    void computeSubgradientIndices(std::list<int> &subgradient_ind, const DoubleList &subgradient) const;
 
     //Getter Methods
 
     PathSolution get_longest_path();
 
-    double get_best_primal_score()
+    double get_best_primal_score() const
     {
       return best_feasible_solution_.score;
     }
@@ -192,7 +201,7 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     //TODO check whether here is really the right place. returning the path in terms of nodes should be sufficient
     //vector<float> get_best_solution();
 
-    int num_of_duals()
+    Size getDualDim() const
     {
       return G->getNumberOfClusters();
     }
@@ -201,6 +210,18 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     {
       forbidden_edges_ = forb_edges_in;
     }
+  
+    const seqan::String<bool>& getForbiddenEdges() const
+    {
+      return forbidden_edges_;
+    }
+  
+    const seqan::String<bool>& getForbiddenNodes() const
+    {
+      return forbidden_nodes_;
+    }
+
+
 
     void setPrefix(const PathSolution& prefix_in)
     {
@@ -208,6 +229,18 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 #ifdef Debug
       std::cout<<"Last Prefix Node:" << prefix_.path.back() <<std::endl;
 #endif
+    }
+  
+    void resetBestFeasible()
+    {
+      best_feasible_solution_.score = MINUS_INF;
+      best_feasible_solution_.path.clear();
+    }
+  
+    void resetBestInfeasible()
+    {
+      best_infeasible_solution_.score = PLUS_INF;
+      best_infeasible_solution_.path.clear();
     }
 
     void forbidConflictingNodes(VertexDescriptor v);
@@ -225,11 +258,11 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
 
     void getViolatedClusters(std::vector<Size> &clusters, const std::vector<VertexDescriptor> &path);
   
-  VertexDescriptor getBranchNode(const std::vector<VertexDescriptor> &path);
+    VertexDescriptor getBranchNode(const std::vector<VertexDescriptor> &path);
 
     void updateWeights(const DVector& Lambda);
 
-    void resetWeights(bool init);
+    //void resetWeights(bool init);
 
     void forbidEdge(EdgeDescriptor edge);
 
@@ -239,6 +272,17 @@ class DeNovoLagrangeProblemBoost : public LagrangeProblem {
     {
       return *G;
     }
+  
+    bool isEdgeForbidden(const EdgeDescriptor& e) const
+    {
+      return seqan::getProperty(forbidden_edges_, e);
+    }
+  
+    bool isVertexForbidden(const VertexDescriptor& v) const
+    {
+      return seqan::getProperty(forbidden_nodes_, v);
+    }
+
 
 
 }; //k_longest_lagrangeProblem

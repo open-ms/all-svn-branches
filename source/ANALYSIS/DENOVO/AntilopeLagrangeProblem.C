@@ -25,7 +25,7 @@
 #include <vector>
 #include <numeric>
 #undef Debug
-#define Debug
+//#define Debug
 //using namespace std;
 
 namespace OpenMS{
@@ -34,7 +34,7 @@ namespace OpenMS{
   const DoubleReal LagrangeProblem::MINUS_INF = -1 * PLUS_INF;
 
 
-  int DeNovoLagrangeProblemBoost::EvaluateProblem(
+  int DeNovoLagrangeProblemBoost::evaluateProblem(
       const DVector& Dual,
       const list<int>& DualIndices,
       double& DualValue,
@@ -45,14 +45,14 @@ namespace OpenMS{
       DVector& PrimalFeasibleSolution
       )
   {
-    computeLongestPath(DualValue, PrimalValue, Dual);
+    computeLongestPath(DualValue, PrimalValue, Subgradient, Dual);
     if(DualValue == MINUS_INF)
     {
       PrimalValue = MINUS_INF;
     }
     else
     {
-      computeSubgradientIndices(SubgradientIndices);
+      computeSubgradientIndices(SubgradientIndices, Subgradient);
     }
 #ifdef Debug
     std::cout<<"   "<<DualValue<<" :: "<<PrimalValue<<"  ::  "<<lower_bound_<<std::endl;
@@ -64,7 +64,7 @@ namespace OpenMS{
       std::cout<<"INTERRUPTED"<<std::endl;
     }
     PrimalValue = std::max(PrimalValue, lower_bound_);
-    Subgradient = subgradient_;
+    //Subgradient = subgradient_;
     return 0;
   }
 
@@ -110,7 +110,8 @@ namespace OpenMS{
   }
 
   ///compute the longest path from node start to node end
-  void DeNovoLagrangeProblemBoost::computeLongestPath(DoubleReal &dual_score, DoubleReal &primal_score, const DVector& lambda)
+  //return false if no path exists, true otherwise
+  bool DeNovoLagrangeProblemBoost::computeLongestPath(DoubleReal &dual_score, DoubleReal &primal_score, DVector &subgradient, const DVector& lambda)
   {
 #ifdef Debug
     std::cout << "start Pathfinding" << std::endl;
@@ -139,13 +140,13 @@ namespace OpenMS{
       seqan::appendValue(ordering, *it);
     }
 
-    seqan::String<VertexDescriptor> forced_vertices; //TODO filled
-    SpectrumGraphSeqan::dagShortestPathST(G->graph, start_vertex, seqan::back(ordering), edge_weights_, predecessors, distance, forbidden_nodes_, forbidden_edges_, forced_nodes_);
+    //seqan::String<VertexDescriptor> forced_vertices; //TODO filled
+    SpectrumGraphSeqan::dagShortestPathST(G->graph, start_vertex, seqan::back(ordering), edge_weights_, predecessors, distance, forbidden_nodes_, forbidden_edges_, forced_nodes_, G->getTopologicalOrdering());
 
     if(seqan::back(distance) >= SpectrumGraphSeqan::INFINITYdist / 2)
     {
       std::cout << "no path found!!" << std::endl;
-      return;
+      return false;
     }
 
     dual_score = seqan::back(distance);
@@ -156,7 +157,8 @@ namespace OpenMS{
 #endif
     std::vector<VertexDescriptor> path;
     path.reserve(30);
-    subgradient_.assign(G->getNumberOfClusters(), 1);
+    std::fill(subgradient.begin(), subgradient.end(), 1);
+    //subgradient_.assign(G->getNumberOfClusters(), 1);
 
     VertexDescriptor next_vertex = seqan::back(ordering);
 
@@ -173,12 +175,19 @@ namespace OpenMS{
     //compute subgradients
     std::vector<Size>::const_iterator cluster_it;
     std::vector<VertexDescriptor>::const_iterator v_it = path.begin();
+    bool primal_feasible = true;
     for (; v_it != path.end(); ++v_it)
     {
+//      std::cout << "V: " << *v_it << "  -  ";
       for(cluster_it = G->getClusters(*v_it).begin(); cluster_it != G->getClusters(*v_it).end(); ++cluster_it)
       {
-        --subgradient_[*cluster_it];
+//        std::cout << *cluster_it << ", ";
+        --subgradient[*cluster_it];
+//        if (subgradient[*cluster_it] <= -1)
+//          std::cout << "!!!(" << *cluster_it << ") " << std::endl;
+        primal_feasible = primal_feasible && (subgradient[*cluster_it] > -1);
       }
+//      std::cout << std::endl;
     }
 
     //Debug out
@@ -199,10 +208,10 @@ namespace OpenMS{
     dual_score += prefix_.score - lambda_update;
     dual_score *= -1; //go from minimization back to maximization
 
-    //If necessary adapt be primal and dual solution solution found until now
+    //If necessary adapt best primal and dual solution solution found until now
     if(!path.empty())
     {
-      if(check_feasibility())
+      if(primal_feasible)
       {
         //compute the primal score of actual solution. Udate best primal solution if necessary.
         primal_score = 0;
@@ -228,6 +237,7 @@ namespace OpenMS{
         best_infeasible_solution_.path = path;
       }
     }
+    return true;
   }
 
 
@@ -249,18 +259,18 @@ namespace OpenMS{
   //---------------------------------------------check_feasibility----------------------------------------------------------
   //-------------------------------------------------------------------------------------------------------------------------
   //TODO remove this stuff. can be computed within the computeLongestPath function
-  bool DeNovoLagrangeProblemBoost::check_feasibility()
-  {
-    bool feasible = true;
-    for (int i = 0; i < subgradient_.size(); i++) {
-      feasible = feasible && (subgradient_[i] > -1);
-    }
-#ifdef Debug
-    if (feasible)
-      std::cout << "FEASIBLE!!" << std::endl;
-#endif
-    return feasible;
-  }
+//  bool DeNovoLagrangeProblemBoost::check_feasibility()
+//  {
+//    bool feasible = true;
+//    for (int i = 0; i < subgradient_.size(); i++) {
+//      feasible = feasible && (subgradient_[i] > -1);
+//    }
+//#ifdef Debug
+//    if (feasible)
+//      std::cout << "FEASIBLE!!" << std::endl;
+//#endif
+//    return feasible;
+//  }
 
 
 
@@ -278,12 +288,13 @@ namespace OpenMS{
   //------------------------------------------------compute_subgradient_indices----------------------------------------------
   //-------------------------------------------------------------------------------------------------------------------------
 
-  void DeNovoLagrangeProblemBoost::computeSubgradientIndices(std::list<int> &subgradient_ind)
+  void DeNovoLagrangeProblemBoost::computeSubgradientIndices(std::list<int> &subgradient_ind,
+                                                             const DoubleList &subgradient) const
   {
     subgradient_ind.clear();
     for (Size i = 0; i < G->getNumberOfClusters(); ++i)
     {
-      if (subgradient_[i])
+      if (subgradient[i])
       {
         subgradient_ind.push_back(i);
       }
@@ -297,7 +308,7 @@ namespace OpenMS{
 
     //all conflicting nodes must be forbidden
     const std::vector<VertexDescriptor> &conflict_nodes = G->getConflictingNodes(node);
-    for(Size i = 0; i < conflict_nodes.size(); ++ i)
+    for(Size i = 0; i < conflict_nodes.size(); ++i)
     {
       forbidNode(conflict_nodes[i]);
     }
@@ -323,9 +334,9 @@ namespace OpenMS{
   {
     if(EdgeDescriptor edge = seqan::findEdge(G->graph, source, target))
     {
-#ifdef Debug
-      std::cerr<<"forbid edge: "<<source<<"   --->   " << target << "   " << edge << std::endl;
-#endif
+//#ifdef Debug
+      std::cout<<"forbid edge: "<<source<<"   --->   " << target << "   " << edge << std::endl;
+//#endif
       forbidEdge(edge);
     }
   }
@@ -334,17 +345,21 @@ namespace OpenMS{
 
   void DeNovoLagrangeProblemBoost::getViolatedClusters(std::vector<Size> &clusters, const std::vector<VertexDescriptor> &path)
   {
+    
     std::vector<int>violated_clusters(G->getNumberOfClusters(),-2);
 
     for(std::vector<VertexDescriptor>::const_iterator it = path.begin(); it != path.end(); ++it)
     {
+      std::cout << "V: " << *it << ": ";
       for(std::vector<Size>::const_iterator it_in = G->getClusters(*it).begin(); it_in != G->getClusters(*it).end(); ++it_in)
       {
+        std::cout << *it_in << ", ";
         if(!(++violated_clusters[*it_in]) )
         {
           clusters.push_back(*it_in);
         }
       }
+      std::cout << std::endl;
     }
   }
   
@@ -387,10 +402,12 @@ namespace OpenMS{
       //put weights onto outgoing edges
       for (; v_it != vertices.end(); ++v_it)
       {
+//        std::cout << "update V: (" << id << ") " << *v_it << " : " << *l_it << std::endl;
         OutEdgeIterator out_it(G->graph, *v_it);
         for(; !seqan::atEnd(out_it); ++out_it)
         {
           seqan::property(edge_weights_, *out_it) += *l_it;
+//          std::cout << seqan::property(edge_weights_, *out_it) << std::endl;
         }
       }
     }
@@ -398,14 +415,14 @@ namespace OpenMS{
 
 
 
-  void DeNovoLagrangeProblemBoost::resetWeights(bool init)
-  {
-    if(init)
-    {
-      G->getEdgeWeights(edge_weights_bk_);
-    }
-    edge_weights_ = edge_weights_bk_;
-  }
+//  void DeNovoLagrangeProblemBoost::resetWeights(bool init)
+//  {
+//    if(init)
+//    {
+//      G->getEdgeWeights(edge_weights_bk_);
+//    }
+//    edge_weights_ = edge_weights_bk_;
+//  }
 
 
 }//namespace

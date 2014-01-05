@@ -322,7 +322,7 @@ namespace OpenMS
   {
     cand_heap_.clear();
     PathSolutionList found_paths;
-    PathSolution tmp = { vector<VertexDescriptor>(0), -SpectrumGraphSeqan::INFINITYdist};
+    PathSolution tmp = { vector<VertexDescriptor>(0), -SpectrumGraphSeqan::INFINITYdist, -1u, -1u};
     std::vector<PathSolution>tmp_v(k, tmp);
     cand_heap_.insert(tmp_v.begin(), tmp_v.end());
 

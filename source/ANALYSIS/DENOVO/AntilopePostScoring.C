@@ -81,7 +81,7 @@ namespace OpenMS
   }
 
   //compute all possible combinations of edge annotations for a single ID result (e set of edge lengths)
-  UInt IdEval::getAllCombinations_(const std::vector<StringVec>& input, std::vector<IdAnnot>&output)
+  UInt IdEval::getAllCombinations_(const std::vector<AASeqVec>& input, std::vector<IdAnnot>&output)
   {
     //number of Combinations
     UInt count = 0;
@@ -90,14 +90,11 @@ namespace OpenMS
     UInt size = input.size();
 
     //vector of iterators
-    std::vector<StringVec::const_iterator> iters;
+    std::vector<AASeqVec::const_iterator> iters;
 
     //iterator on vector of iterators
-    std::vector<StringVec::const_iterator>::iterator res_iter;
-
-    //temporary AASequence
-    String tmp_sequence;
-
+    std::vector<AASeqVec::const_iterator>::iterator res_iter;
+    
     for (UInt i = 0; i < size; ++i)
     {
       iters.push_back(input[i].begin());
@@ -131,7 +128,8 @@ namespace OpenMS
       //output.push_back(IdAnnot());
       res_iter = iters.begin();
 
-      tmp_sequence.clear();
+      //temporary AASequence
+      AASequence tmp_sequence;
 
       //now add the current combination to the output vector
       while (res_iter != iters.end())
@@ -152,8 +150,8 @@ namespace OpenMS
   {
     std::vector<std::vector<AASequence> > annotations;
 
-    std::vector<std::vector<String> > all_permutations;
-    std::vector<String> permutations;
+//    std::vector<std::vector<String> > all_permutations;
+//    std::vector<String> permutations;
 
     std::vector<IdSetup::AASeqVec>::iterator all_annot_it;
     IdSetup::AASeqVec::iterator single_annot_it;
@@ -188,40 +186,40 @@ namespace OpenMS
       //TODO precompute permutations
 
     //for each of the candidate annotations generate all possible permutations
-    for (all_annot_it = annotations.begin(); all_annot_it != annotations.end(); ++all_annot_it)
-    {
-      for (single_annot_it = all_annot_it->begin(); single_annot_it != all_annot_it->end(); ++single_annot_it)
-      {
-        //compute all permutations for the given edge annotation of a single edge
-        //getPermutations(*single_annot_it, permutations);
-        String annot_string = single_annot_it->toString();
-        if (annot_string[0] == '[')
-        {
-          permutations.push_back(annot_string);
-        }
-        else
-        {
-          //first the String needs to be sorted
-          stable_sort(annot_string.begin(), annot_string.end());
-          //UInt count=0;
-          permutations.push_back(annot_string);
-          //then all permutations are appended to the vector
-          while (next_permutation(annot_string.begin(), annot_string.end()))
-          {
-            permutations.push_back(annot_string);
-            //++count;
-          }
-        }
-      }
+//    for (all_annot_it = annotations.begin(); all_annot_it != annotations.end(); ++all_annot_it)
+//    {
+//      for (single_annot_it = all_annot_it->begin(); single_annot_it != all_annot_it->end(); ++single_annot_it)
+//      {
+//        //compute all permutations for the given edge annotation of a single edge
+//        //getPermutations(*single_annot_it, permutations);
+//        String annot_string = single_annot_it->toString();
+//        if (annot_string[0] == '[')
+//        {
+//          permutations.push_back(annot_string);
+//        }
+//        else
+//        {
+//          //first the String needs to be sorted
+//          stable_sort(annot_string.begin(), annot_string.end());
+//          //UInt count=0;
+//          permutations.push_back(annot_string);
+//          //then all permutations are appended to the vector
+//          while (next_permutation(annot_string.begin(), annot_string.end()))
+//          {
+//            permutations.push_back(annot_string);
+//            //++count;
+//          }
+//        }
+//      }
+//
+//      all_permutations.push_back(permutations);
+//      //std::cout << "number of perms: " << permutations.size() << std::endl;
+//
+//      permutations.clear();
+//      //}
+//    }
 
-      all_permutations.push_back(permutations);
-      //std::cout << "number of perms: " << permutations.size() << std::endl;
-
-      permutations.clear();
-      //}
-    }
-
-    return getAllCombinations_(all_permutations, all_candidates);
+    return getAllCombinations_(annotations, all_candidates);
   }
 
   //TODO: modify this function to allow for smarter checking in case of gaps. actually they are also identified as matches but
@@ -431,12 +429,13 @@ namespace OpenMS
     }
   }
 
+/*
   void IdEval::smart_rescoring(const IdSetup::AASeqVecMap &annot_map, const DoubleReal &precision, const std::vector<UIntVec> &result_masses,
         std::multimap<DoubleReal, IdAnnot> &ranked_candidates, const PeakSpectrum & orig_spec)
   {
-    std::vector<IdAnnot>all_filtered_candidates,  all_candidates;
+    std::vector<IdAnnot> all_filtered_candidates,  all_candidates;
     std::vector<std::vector<IdAnnot> > all_edge_annots;
-    std::vector<StringVec>selected_edge_annots;
+    std::vector<AASeqVec> selected_edge_annots;
     std::multimap<DoubleReal, String> scr_map;
 
     TheoreticalSpectrumGenerator t_gen;
@@ -460,20 +459,20 @@ namespace OpenMS
       //TODO  this is a hack to prevent resolution of last edge in tryptic peptides
       all_edge_annots.back().erase(all_edge_annots.back().begin(), all_edge_annots.back().begin()+2);
 
-      for(Size i=0; i<all_edge_annots.size();++i)
+      for(Size i = 0; i < all_edge_annots.size();++i)
       {
-        for(Size j=0; j<all_edge_annots[i].size(); ++j)
+        for(Size j = 0; j < all_edge_annots[i].size(); ++j)
         {
           AASequence sequence;
-          for(Size kk=0; kk<all_edge_annots.size(); ++kk)
+          for(Size kk = 0; kk < all_edge_annots.size(); ++kk)
           {
-            if(kk!=i)
+            if(kk != i)
             {
-              sequence+=all_edge_annots[kk][0].sequence;
+              sequence += all_edge_annots[kk][0].sequence;
             }
             else
             {
-              sequence+=all_edge_annots[kk][j].sequence;
+              sequence += all_edge_annots[kk][j].sequence;
             }
           }
 
@@ -494,7 +493,7 @@ namespace OpenMS
           }
 
           DoubleReal score = SpectrumAlignmentScore()(tmp_peak_spec, orig_spec);
-          scr_map.insert(std::pair<DoubleReal, String>(score, all_edge_annots[i][j].sequence.toString()));
+          scr_map.insert(std::pair<DoubleReal, AASequence>(score, all_edge_annots[i][j].sequence));
         }
         //extract the best n edge annotations to be used in a full combinatorial trial
         for(std::multimap<DoubleReal, String>::reverse_iterator r_it = scr_map.rbegin(); r_it!=scr_map.rend(); ++r_it)
@@ -542,7 +541,7 @@ namespace OpenMS
       ranked_candidates.insert(std::pair<DoubleReal, IdAnnot>(score, *filtered_it));
     }
   }
-
+*/
 
   void IdEval::smart_rescoring2(const IdSetup::AASeqVecMap &annot_map, const DoubleReal &precision, const std::vector<UIntVec> &result_masses,
           std::set<ScoreAnnotPair > &ranked_candidates, const PeakSpectrum & orig_spec, const BayesScoring &scr_func)

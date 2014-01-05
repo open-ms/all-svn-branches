@@ -86,6 +86,42 @@ namespace OpenMS {
     std::vector<int>tmp(k);
     nChooseKCombinations(n, k, combinations, tmp);
   }
+  
+  void IdSetup::getAllCombinations(const std::vector<Size>& max_values, std::vector<std::vector<Size> >& combs)
+  {
+    Size num_combs = 1;
+    Size bins = max_values.size();
+    std::vector<Size> act_values(bins,0);
+    
+    for (Size i = 0; i < bins; ++i)
+      num_combs *= (1 + max_values[i]);
+    
+    combs.resize(num_combs);
+    
+    for (Size i = 0; i < num_combs; ++i)
+    {
+      for (Size j = 0; j < bins; ++j)
+      {
+        combs[i].push_back(act_values[j]);
+      }
+      
+      Size lb = 0;
+      while (lb < bins && ++act_values[lb] > max_values[lb])
+      {
+        act_values[lb] = 0;
+        ++lb;
+      }
+    }
+    
+//    for (Size i = 0; i < num_combs; ++i)
+//    {
+//      for (Size j = 0; j < bins; ++j)
+//      {
+//        std::cout << combs[i][j] << '\t';
+//      }
+//      std::cout << std::endl;
+//    }
+  }
 
 
 int IdSetup::create_vector_A(BoolVec &A, UIntVec & A_len, AASeqVecMap & annot_map)
@@ -113,12 +149,16 @@ int IdSetup::create_vector_A(BoolVec &A, UIntVec & A_len, AASeqVecMap & annot_ma
 
   UInt number_aa = all_amino_acids.size();
   std::sort(all_amino_acids.begin(), all_amino_acids.end());
-  std::vector<std::vector<int> >aa_tag_ids;
 
-  for(Size len=1; len<=max_span_; ++len)
+  std::vector<Size> max_vals;
+  for(Size len = 1; len <= max_span_; ++len)
   {
-    aa_tag_ids.clear();
-    nChooseKCombinations(number_aa, len, aa_tag_ids);
+    max_vals.push_back(number_aa - 1);
+    std::vector<std::vector<Size> >aa_tag_ids;
+    getAllCombinations(max_vals, aa_tag_ids);
+//    nChooseKCombinations(number_aa, len, aa_tag_ids);
+    
+    
     for(Size comb = 0; comb < aa_tag_ids.size(); ++comb)
     {
       //get the AAs
@@ -126,7 +166,8 @@ int IdSetup::create_vector_A(BoolVec &A, UIntVec & A_len, AASeqVecMap & annot_ma
       for(Size pos = 0; pos < len; ++pos)
       {
         tag+=all_amino_acids[aa_tag_ids[comb][pos]];
-      }      
+      }
+      std::cout << tag << std::endl;
       int mass_index = (int)(tag.getMonoWeight(Residue::Internal)/precision_ + 0.5);
       for(Int offset = Int(-delta_/precision_); offset <= Int(delta_/precision_); ++offset)
       {

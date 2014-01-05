@@ -348,6 +348,8 @@ class IdSetup{
 
       ///generate vector containing all possible k-mer combinations of a set of size n
      void static nChooseKCombinations(int n, int k, std::vector<std::vector<int> > &combinations, std::vector<int> &tmp_comb);
+  
+     void static getAllCombinations(const std::vector<Size>& max_values, std::vector<std::vector<Size> >& combs);
 
 
 

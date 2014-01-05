@@ -54,15 +54,17 @@ public:
 
 protected:
 
-    typedef std::vector<UInt>UIntVec;
-    typedef std::vector<Int>IntVec;
-    typedef std::vector<String>StringVec;
+    typedef std::vector<UInt> UIntVec;
+    typedef std::vector<Int> IntVec;
+    typedef std::vector<String> StringVec;
+    typedef std::vector<AASequence> AASeqVec;
+  
     typedef std::pair<DoubleReal, IdAnnot> ScoreAnnotPair;
     typedef std::pair<UInt, UInt> IndexPair;
 
 
     //compute all possible combinations of edge annotations for a single ID result (e set of edge lengths)
-    static UInt getAllCombinations_(const std::vector<StringVec> &input, std::vector<IdAnnot> &output);
+    static UInt getAllCombinations_(const std::vector<AASeqVec> &input, std::vector<IdAnnot> &output);
 
 public:
 
@@ -91,7 +93,7 @@ public:
     static void brute_rescoring(const IdSetup::AASeqVecMap &annot_map, const DoubleReal &precision, const std::vector<UIntVec> &result_masses, std::multimap<DoubleReal, IdAnnot> &ranked_candidates, const PeakSpectrum & orig_spec);
 
     ///perform a brute force rescoring by generating the theoretical spectrum for every possible combination and permutation and perform spectrum similarity scoring
-    static void smart_rescoring(const IdSetup::AASeqVecMap &annot_map, const DoubleReal &precision, const std::vector<UIntVec> &result_masses, std::multimap<DoubleReal, IdAnnot> &ranked_candidates, const PeakSpectrum & orig_spec);
+//    static void smart_rescoring(const IdSetup::AASeqVecMap &annot_map, const DoubleReal &precision, const std::vector<UIntVec> &result_masses, std::multimap<DoubleReal, IdAnnot> &ranked_candidates, const PeakSpectrum & orig_spec);
 
     ///perform a brute force rescoring by generating the theoretical spectrum for every possible combination and permutation and perform spectrum similarity scoring
     static void smart_rescoring2(const IdSetup::AASeqVecMap &annot_map, const DoubleReal &precision, const std::vector<UIntVec> &result_masses, std::set<ScoreAnnotPair> &ranked_candidates, const PeakSpectrum & orig_spec, const BayesScoring &scr_func);

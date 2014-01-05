@@ -62,15 +62,15 @@ namespace OpenMS {
 
   void IdSetup::nChooseKCombinations(int n, int k, std::vector<std::vector<int> > &combinations, std::vector<int> &tmp_comb)
   {
-    if(n>k)
+    if(n > k)
     {
         nChooseKCombinations(n-1,k, combinations, tmp_comb);
     }
-    if(n>=k)
+    if(n >= k)
     {
       k--;
       tmp_comb[k]=n-1;
-      if(k>0)
+      if(k > 0)
       {
         nChooseKCombinations(n,k, combinations, tmp_comb);
       }
@@ -111,32 +111,33 @@ int IdSetup::create_vector_A(BoolVec &A, UIntVec & A_len, AASeqVecMap & annot_ma
     }
   }
 
-  UInt number_aa=all_amino_acids.size();  
+  UInt number_aa = all_amino_acids.size();
+  std::sort(all_amino_acids.begin(), all_amino_acids.end());
   std::vector<std::vector<int> >aa_tag_ids;
 
   for(Size len=1; len<=max_span_; ++len)
   {
     aa_tag_ids.clear();
     nChooseKCombinations(number_aa, len, aa_tag_ids);
-    for(Size comb=0; comb<aa_tag_ids.size(); ++comb)
+    for(Size comb = 0; comb < aa_tag_ids.size(); ++comb)
     {
       //get the AAs
       AASequence tag;//tag="";
-      for(Size pos=0; pos<len;++pos)
+      for(Size pos = 0; pos < len; ++pos)
       {
         tag+=all_amino_acids[aa_tag_ids[comb][pos]];
       }      
-      int mass_index=(int)(tag.getMonoWeight(Residue::Internal)/precision_ + 0.5);
-      for(Int offset=Int(-delta_/precision_); offset<=Int(delta_/precision_);++offset)
+      int mass_index = (int)(tag.getMonoWeight(Residue::Internal)/precision_ + 0.5);
+      for(Int offset = Int(-delta_/precision_); offset <= Int(delta_/precision_); ++offset)
       {
-        Size mass_index_off=mass_index+offset;
-        if (mass_index_off<numelem)
+        Size mass_index_off = mass_index+offset;
+        if (mass_index_off < numelem)
         {
-          A[mass_index_off]=true;
+          A[mass_index_off] = true;
           annot_map[mass_index_off].push_back(tag);
-          if(A_len[mass_index_off]!=1)
+          if(A_len[mass_index_off] != 1)
           {
-            A_len[mass_index_off]=len;
+            A_len[mass_index_off] = len;
           }
         }
       }

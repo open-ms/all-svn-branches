@@ -206,7 +206,7 @@ namespace OpenMS {
   SubgradientSolver::SolverProgress SubgradientSolver::solve( LagrangeProblem& l )
   {
     
-    _verbose = 1;
+    //_verbose = 1;
     // all variables initialized?
     if( _sanityCheck() == false )
       return INSANE;
@@ -285,7 +285,7 @@ namespace OpenMS {
         // now check whether we already reached an optimal solution
         if( (_bestUpperBound - _bestLowerBound)< EPSILON )
         {
-          if( _verbose == 1 || true)
+          if( _verbose == 1)
           {
             cout<<"case 1"<<endl;
             cout<<"SOLVED IN ITERATION: "<<i+1<<endl;

@@ -90,7 +90,6 @@ namespace OpenMS
         parent_id = found_paths[parent_id].parent_id;
         de_novo_lagrange.forbidEdge(found_paths[parent_id].path[deviation_node], found_paths[parent_id].path[deviation_node+1]);
       }
-      std::cout << "k" <<std::endl;
 #else
       Size deviation_node = forbidEdges_(k, found_paths, de_novo_lagrange);
 #endif
@@ -201,10 +200,10 @@ namespace OpenMS
         if (candidates[i].first == FEASIBLE)
         {
           cand_path = candidates[i].second;
-          std::cout << "1" << std::endl;
-          for (Size tt = 0; tt < candidates[i].second.path.size(); ++tt)
-            std::cout << candidates[i].second.path[tt] << '\t';
-          std::cout << std::endl;
+//          std::cout << "1" << std::endl;
+//          for (Size tt = 0; tt < candidates[i].second.path.size(); ++tt)
+//            std::cout << candidates[i].second.path[tt] << '\t';
+//          std::cout << std::endl;
         }
         else if (candidates[i].first == INFEASIBLE) //not previously solved for deviation node i
         {
@@ -216,21 +215,21 @@ namespace OpenMS
             if (candidates[i].first == FEASIBLE)
             {
               cand_path = candidates[i].second;
-              std::cout << "2" << std::endl;
-              for (Size tt = 0; tt < candidates[i].second.path.size(); ++tt)
-                std::cout << candidates[i].second.path[tt] << '\t';
-              std::cout << std::endl;
+//              std::cout << "2" << std::endl;
+//              for (Size tt = 0; tt < candidates[i].second.path.size(); ++tt)
+//                std::cout << candidates[i].second.path[tt] << '\t';
+//              std::cout << std::endl;
 
             }
             else if (candidates[i].first == INFEASIBLE)//still not solved for deviation node i?
             {              
 #endif
               cand_path.score = LagrangeProblem::MINUS_INF;
-              DoubleReal timeBB = clock();
+//              DoubleReal timeBB = clock();
               DoubleReal global_lower_bound = DeNovoLagrangeProblemBoost::MINUS_INF;
               BranchBoundDeNovo branch_bound(&global_lower_bound, de_novo_lagrange, &cand_path);
               branch_bound.solve();
-              std::cout << "BB: " << (clock() - timeBB)/CLOCKS_PER_SEC << std::endl;
+//              std::cout << "BB: " << (clock() - timeBB)/CLOCKS_PER_SEC << std::endl;
 #ifdef FASTSUBOPT
             }
           }
@@ -260,9 +259,9 @@ namespace OpenMS
           cand_heap_.insert(cand_path);
           cand_heap_.erase(--cand_heap_.end());
 
-          std::cout<<"added candidate path " << i << ": " << cand_path.score << std::endl;
-          for (Size tt = 0; tt < cand_path.path.size(); ++tt)
-            std::cout << cand_path.path[tt] << '\t';
+//          std::cout<<"added candidate path " << i << ": " << cand_path.score << std::endl;
+//          for (Size tt = 0; tt < cand_path.path.size(); ++tt)
+//            std::cout << cand_path.path[tt] << '\t';
 
         }
         prefix.path.push_back(parent_path[i+1]);
@@ -332,7 +331,7 @@ namespace OpenMS
 
     for (Size i = 0; i < k; i++)
     {
-      cout << "start for " << i << "-th path" << endl;
+//      cout << "start for " << i << "-th path" << endl;
       PathSolution longest_path_tmp;
       singleIteration_(i, found_paths, longest_path_tmp);
       
@@ -343,15 +342,15 @@ namespace OpenMS
       //found_path_scores.push_back(longest_path_tmp.score);
       //found_path.push_back(longest_path_tmp.path);
       cout << "found path number: " << i <<"  with score  " << found_paths.back().score << endl;
-
+#ifdef DEBUG
       for(UInt tt = 0; tt < found_paths[i].path.size();++tt)
       {
         std::cout<<" - "<< found_paths[i].path[tt] << std::endl;
       }
-
+#endif
       double time = (clock() - tstart) / CLOCKS_PER_SEC;
       time_total = time;
-      cout << "TIME_LAGRANGE::" << i << "::" << time << "::" << time_total << endl;
+//      cout << "TIME_LAGRANGE::" << i << "::" << time << "::" << time_total << endl;
     }
 
     cout << " TOTAL TIME_LAGRANGE:: " <<time_total << endl;
@@ -423,7 +422,7 @@ namespace OpenMS
     }
     
     bool feasible = g_->isPathFeasible(cand_path.path);
-    std::cout << "Fast: " << (clock() - timeFast)/CLOCKS_PER_SEC << std::endl;
+//    std::cout << "Fast: " << (clock() - timeFast)/CLOCKS_PER_SEC << std::endl;
     if (!feasible)
     {
       cand_path.path.clear();
@@ -531,7 +530,7 @@ namespace OpenMS
         }
       }
     }
-     std::cout << "Fast: " << (clock() - timeFast)/CLOCKS_PER_SEC << std::endl;
+//     std::cout << "Fast: " << (clock() - timeFast)/CLOCKS_PER_SEC << std::endl;
   }
 
 }//namespace

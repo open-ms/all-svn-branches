@@ -251,6 +251,7 @@ namespace OpenMS
     
     DoubleReal max_node_mass = parent_peptide_mass - 56.; //TODO exact mass of minimum amino acid
     
+    
     UInt index = 0;
     for (PeakSpectrum::ConstIterator it = tmp_spectrum.begin(); it != tmp_spectrum.end(); ++it)
     {
@@ -264,7 +265,7 @@ namespace OpenMS
         if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1))))
         {
           nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
-          //nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::BIon, it->getIntensity()));//b-ion
+//          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::BIon, it->getIntensity()));//b-ion
         }
         
         //add node for Y-Ions
@@ -272,18 +273,17 @@ namespace OpenMS
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
         if (real_MZ < max_node_mass && (integer_MZ>=A.size() || A[integer_MZ]))
         {
-//          nodes.push_back(Node(real_MZ, integer_MZ, y_rank_scores[index], index, IdSetup::YIon, it->getIntensity()));//y-ion
-          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::YIon, it->getIntensity()));//y-ion
+          nodes.push_back(Node(real_MZ, integer_MZ, y_rank_scores[index], index, IdSetup::YIon, it->getIntensity()));//y-ion
+//          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::YIon, it->getIntensity()));//y-ion
         }
-        
+/*
         //add node for Y2-Ions
         real_MZ = IdSetup::getPrefixMass(IdSetup::AIon, it->getMZ(), parent_mass);
         integer_MZ = (UInt) floor(real_MZ / precision + 0.5);
         
         if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1))))
         {
-          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
-//          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::AIon, it->getIntensity()));//b-ion
+          nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::AIon, it->getIntensity()));//b-ion
         }
         
         //add node for B-NH3-Ions
@@ -292,7 +292,6 @@ namespace OpenMS
         
         if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ] && (A_len[integer_MZ] > 1))))
         {
-          //          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
           nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::BIon_nh3, it->getIntensity()));//b-ion
         }
 
@@ -302,10 +301,9 @@ namespace OpenMS
         
         if (real_MZ < max_node_mass && (integer_MZ >= A.size() || (A[integer_MZ])))
         {
-          //          nodes.push_back(Node(real_MZ, integer_MZ, b_rank_scores[index], index, IdSetup::BIon, it->getIntensity()));//b-ion
           nodes.push_back(Node(real_MZ, integer_MZ, it->getIntensity(), index, IdSetup::YIon_h2o, it->getIntensity()));//b-ion
         }
-
+*/
       }
       ++index;
     }
@@ -430,7 +428,7 @@ namespace OpenMS
            fabs(nodes[i].real_mass - (parent_peptide_mass - 128.1) ) > delta)
         {
           deleted[i] = true;
-          std::cout<<"delete node "<< i <<std::endl;
+//          std::cout<<"delete node "<< i <<std::endl;
         }
         --i;
       }
@@ -539,7 +537,7 @@ namespace OpenMS
          (tryptic && i >= tmp_vertices.size() - 3))
       {
         vertices_.push_back(tmp_vertices[i]);
-        std::cout << "v " << vertices_.size() << ": " << tmp_vertices[i].score << " " << tmp_vertices[i].real_mass << std::endl;
+//        std::cout << "v " << vertices_.size() << ": " << tmp_vertices[i].score << " " << tmp_vertices[i].real_mass << std::endl;
       }
     }
     

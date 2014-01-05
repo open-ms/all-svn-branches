@@ -557,10 +557,10 @@ namespace OpenMS
       for (std::vector<UIntVec>::const_iterator cand_it = result_masses.begin(); cand_it != result_masses.end(); ++cand_it)
       {
         UInt edge_start=0;
-        for(UIntVec::const_iterator edge_it= cand_it->begin(); edge_it!=cand_it->end(); ++edge_it)
+        for(UIntVec::const_iterator edge_it = cand_it->begin(); edge_it != cand_it->end(); ++edge_it)
         {
           //if this edge has already been evaluated skip it
-          if(edge_map.find(std::pair<UInt, UInt>(edge_start, *edge_it)) ==edge_map.end())
+          if(edge_map.find(std::pair<UInt, UInt>(edge_start, *edge_it)) == edge_map.end())
           {
             std::multimap<DoubleReal, AASequence>single_edge_map;
             //selected_edge_annots.assign(cand_it->size(), StringVec());
@@ -591,29 +591,29 @@ namespace OpenMS
             }
             edge_map.insert(std::pair<IndexPair, std::multimap<DoubleReal, AASequence> >(IndexPair(edge_start, *edge_it), single_edge_map));
           }
-          edge_start+=*edge_it;
+          edge_start += *edge_it;
         }
 
-        edge_start=0;
+        edge_start = 0;
 
-        std::vector<std::multimap<DoubleReal, AASequence>::const_reverse_iterator>begin_iters, end_iters, iters;
+        std::vector<std::multimap<DoubleReal, AASequence>::const_reverse_iterator> begin_iters, end_iters, iters;
 
         //now generate the combinations for one candidate (for each edge only the best n candidates are considered)
-        for(UIntVec::const_iterator edge_it= cand_it->begin(); edge_it!=cand_it->end(); ++edge_it)
+        for(UIntVec::const_iterator edge_it = cand_it->begin(); edge_it != cand_it->end(); ++edge_it)
         {
           begin_iters.push_back(edge_map[IndexPair(edge_start, *edge_it)].rbegin());
-          std::multimap<DoubleReal, AASequence>::const_reverse_iterator end_iter=begin_iters.back();
+          std::multimap<DoubleReal, AASequence>::const_reverse_iterator end_iter = begin_iters.back();
           int count=0;
           Size N=5;
-          while(count++!=N && end_iter!=edge_map[IndexPair(edge_start, *edge_it)].rend())
+          while(count++ != N && end_iter != edge_map[IndexPair(edge_start, *edge_it)].rend())
           {
             ++end_iter;
           }
           end_iters.push_back(end_iter);
-          edge_start+=*edge_it;
+          edge_start += *edge_it;
         }
 
-        iters=begin_iters;
+        iters = begin_iters;
 
         //terminate when the last iterator has reached the end of the last vector
         while (iters.back() != end_iters.back())
@@ -623,11 +623,11 @@ namespace OpenMS
           UInt i = 0;
           while (i < begin_iters.size())
           {
-            tmp_sequence+=iters[i]->second;
-            score+=iters[i]->first;
+            tmp_sequence += iters[i]->second;
+            score += iters[i]->first;
             if (++iters[i] == end_iters[i])
             {
-              if(i!=begin_iters.size()-1)
+              if(i != begin_iters.size()-1)
               {
                 iters[i] = begin_iters[i];
               }
@@ -637,8 +637,8 @@ namespace OpenMS
             {
               while (++i < begin_iters.size())
               {
-                tmp_sequence+=iters[i]->second;
-                score+=iters[i]->first;
+                tmp_sequence += iters[i]->second;
+                score += iters[i]->first;
               }
               break;
             }

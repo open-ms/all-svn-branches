@@ -61,7 +61,9 @@ namespace OpenMS{
     if(DualValue < lower_bound_)
     {
       PrimalValue = DualValue = MINUS_INF;
+#ifdef Debug
       std::cout<<"INTERRUPTED"<<std::endl;
+#endif
     }
     PrimalValue = std::max(PrimalValue, lower_bound_);
     //Subgradient = subgradient_;
@@ -145,7 +147,7 @@ namespace OpenMS{
 
     if(seqan::back(distance) >= SpectrumGraphSeqan::INFINITYdist / 2)
     {
-      std::cout << "no path found!!" << std::endl;
+//      std::cout << "no path found!!" << std::endl;
       return false;
     }
 
@@ -334,9 +336,9 @@ namespace OpenMS{
   {
     if(EdgeDescriptor edge = seqan::findEdge(G->graph, source, target))
     {
-//#ifdef Debug
+#ifdef Debug
       std::cout<<"forbid edge: "<<source<<"   --->   " << target << "   " << edge << std::endl;
-//#endif
+#endif
       forbidEdge(edge);
     }
   }

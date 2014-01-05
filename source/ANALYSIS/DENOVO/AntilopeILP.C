@@ -111,7 +111,7 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
   
     UInt num_of_nodes = graph.size();
     std::vector <IloBoolVar> x;
-    x.reserve(num_of_nodes);
+    x.reserve(num_of_nodes * num_of_nodes);
     typedef std::list<std::pair<Size, Size> > TOutEdgeList;
     typedef TOutEdgeList::const_iterator TOutEdgeListIter;
     std::vector<TOutEdgeList> adj_list(num_of_nodes);
@@ -139,7 +139,7 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
           adj_list_rev[j].push_back(make_pair(i, num_variables));
           
           num_variables++;
-          std::cout<<"edge_mass:: "<<graph.getRealEdgeMass(i, j)<<std::endl;
+          //std::cout<<"edge_mass:: "<<graph.getRealEdgeMass(i, j)<<std::endl;
           obj += x.back() * -(graph.getEdgeWeight(i, j));
           //cout<<"create x-variable"<<i<<":"<<j<<": "<<graph.getEdgeWeight(i,j)<<endl;
         }
@@ -210,7 +210,7 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
           compl_const += x[in_edge_it->second]; //summing up all incoming edges for v
         }
     }
-    std::cout << "clique: " << c << std::endl;
+    //std::cout << "clique: " << c << std::endl;
     M.add(compl_const <= 1); // at most one of all complementary nodes can be in the solution
     compl_const.end();
   }
@@ -284,8 +284,9 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
     IloCplex cplex(M);
 
     std::cout << "model created" << std::endl;
-    cplex.exportModel("de_novo_ILP.lp");
+    //cplex.exportModel("de_novo_ILP.lp");
     //cplex.setParam(IloCplex::EpInt,0.0);
+    cplex.setOut(env.getNullStream());
 
     DoubleReal time_compl_solv = 0;
     DoubleReal tstart5 = clock();
@@ -303,7 +304,6 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
       //Begin zweite Zeitmessung
       tstart2 = clock(); // start
 
-      //cplex.clear()
       //solve model
       if (!cplex.solve())
       {
@@ -320,8 +320,8 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
         //if (debug) cout << "  Zeit fuer solving TTT = " << time_compl_solv/CLOCKS_PER_SEC << " sec." <<"::::"<<time_compl_solv<<endl;
         if (debug) cout << "  Zeit fuer solving TTT = " << time_compl_solv << " sec." << "::::" << time_compl_solv << endl;
 
-        cout << "after timing" << endl;
-        cplex.out() << "solution status= " << cplex.getStatus() << endl;
+        //cout << "after timing" << endl;
+        //cplex.out() << "solution status= " << cplex.getStatus() << endl;
 
         //the update for the next iteration (forbid the actual solution)
         IloExpr update(env); // used to exclude current path from future iterations
@@ -362,7 +362,8 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
 
         scores.push_back(cplex.getObjValue());
 
-        cout << "score " << cplex.getObjValue() << endl;
+        //cout << "score " << cplex.getObjValue() << endl;
+	cout << "found path number: " << r << "  with score  " <<  cplex.getObjValue() << endl;
 
         //add update constraint to model (forbid actual solution)
         M.add(update <= count_true_edges - 1);
@@ -372,15 +373,14 @@ void de_novo_ILP::computeCandidates(const SpectrumGraphSeqan &graph, CandSetInt 
 
     double time5 = clock() - tstart5;
     if (debug) cout << "  TOTAL Zeit fuer solving = " << time5 / CLOCKS_PER_SEC << " sec." << endl;
-
     cout << "after getObjValue" << endl;
 
     //clear model
-    x.clear();
+    //x.clear();
     cplex.end();
 
     //compiler problems
-    //env.end();
+    env.end();
   }
 
 }// namespace
